@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tabbar) {
     const indicator = tabbar.querySelector('.tab-indicator');
     const updateIndicator = () => {
-      const active = tabbar.querySelector('.tab.active') || tabbar.querySelector('.tab');
+      const active = tabbar.querySelector('.tab.active') || tabbar.querySelector('.tab[data-indicator]') || tabbar.querySelector('.tab');
       if (!indicator || !active) {
         return;
       }

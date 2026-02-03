@@ -187,6 +187,10 @@ body.auth .topbar::before {
   padding: 0 20px;
 }
 
+.has-tabbar .topbar {
+  display: none;
+}
+
 .container-auth {
   max-width: 1200px;
   margin-top: 10px;
@@ -772,7 +776,7 @@ button.secondary {
 .tabbar {
   position: fixed;
   left: 50%;
-  bottom: 20px;
+  top: 16px;
   transform: translateX(-50%);
   --tab-size: 64px;
   --tab-indicator-size: 40px;
@@ -792,13 +796,13 @@ button.secondary {
   z-index: 100;
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  animation: tabbar-slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: tabbar-slide-down 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes tabbar-slide-up {
+@keyframes tabbar-slide-down {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(-50%) translateY(-20px);
   }
   to {
     opacity: 1;
@@ -842,6 +846,78 @@ button.secondary {
   z-index: 1;
   gap: 4px;
   padding-top: 8px;
+}
+
+.tabbar .tab.brand-tab {
+  width: auto;
+  padding: 0 14px 0 10px;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.tabbar .tab.brand-tab::before {
+  display: none;
+}
+
+.tabbar .brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 243, 245, 0.18);
+  background: rgba(17, 21, 28, 0.8);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.3px;
+}
+
+.tabbar .brand-pill img {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+.tabbar .brand-pill span {
+  font-family: "Fraunces", serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+
+.mobile-brand {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 101;
+  display: none;
+}
+
+.mobile-brand .brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 243, 245, 0.18);
+  background: rgba(17, 21, 28, 0.85);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.3px;
+  text-decoration: none;
+}
+
+.mobile-brand .brand-pill img {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+.mobile-brand .brand-pill span {
+  font-family: "Fraunces", serif;
+  font-size: 14px;
+  color: var(--ink);
 }
 
 .tabbar .tab::before {
@@ -940,8 +1016,13 @@ button.secondary {
   }
 }
 
+.has-tabbar .container {
+  padding-top: 120px;
+}
+
 @media (max-width: 900px) {
   .has-tabbar .container {
+    padding-top: 0;
     padding-bottom: 140px;
   }
   
@@ -956,6 +1037,14 @@ button.secondary {
 }
 
 @media (max-width: 720px) {
+  .mobile-brand {
+    display: block;
+  }
+
+  .tabbar .tab.brand-tab {
+    display: none;
+  }
+
   .topbar {
     padding: 10px 16px;
   }
@@ -965,6 +1054,7 @@ button.secondary {
   }
   
   .tabbar {
+    top: auto;
     bottom: 16px;
     --tab-size: 52px;
     --tab-indicator-size: 38px;
@@ -977,6 +1067,7 @@ button.secondary {
 
 @media (max-width: 480px) {
   .tabbar {
+    top: auto;
     bottom: 12px;
     border-radius: 20px;
     --tab-size: 48px;

@@ -88,6 +88,12 @@ function render_header(string $title, string $body_class = ''): void {
     }
     echo '</header>';
 
+    if (!$is_auth && !$is_login_page) {
+        echo '<div class="mobile-brand">';
+        echo '<a class="brand-pill" href="/"><img src="/assets/Ogol.png" alt="" width="26" height="26"><span>RuangMeet</span></a>';
+        echo '</div>';
+    }
+
     if ($user) {
         if ($user['role'] === 'superadmin') {
             $dash_path = '/dashboard_superadmin';
@@ -111,7 +117,8 @@ function render_header(string $title, string $body_class = ''): void {
 
         echo '<nav class="tabbar" aria-label="Primary">';
         echo '<span class="tab-indicator" aria-hidden="true"></span>';
-        echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
+        echo '<a class="tab brand-tab" href="/"><span class="brand-pill"><img src="/assets/Ogol.png" alt="" width="26" height="26"><span>RuangMeet</span></span></a>';
+        echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" data-indicator="1" href="/">' . $icon_home . '<span>Home</span></a>';
         echo '<a class="tab' . ($is_active($dash_path) ? ' active' : '') . '" href="' . $dash_path . '">' . $icon_dash . '<span>Dashboard</span></a>';
         
         if ($user['role'] === 'superadmin') {
@@ -147,7 +154,8 @@ function render_header(string $title, string $body_class = ''): void {
         $icon_home = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
         $icon_article = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h7M8 12h7M8 16h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
         echo '<nav class="tabbar" aria-label="Primary">';
-        echo '<a class="tab tab-primary' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
+        echo '<a class="tab brand-tab" href="/"><span class="brand-pill"><img src="/assets/Ogol.png" alt="" width="26" height="26"><span>RuangMeet</span></span></a>';
+        echo '<a class="tab tab-primary' . ($is_active('/') ? ' active' : '') . '" data-indicator="1" href="/">' . $icon_home . '<span>Home</span></a>';
         echo '<a class="tab' . ($is_active('/articles') ? ' active' : '') . '" href="/articles">' . $icon_article . '<span>Articles</span></a>';
         echo '</nav>';
     }
