@@ -33,7 +33,8 @@ function render_header(string $title, string $body_class = ''): void {
     }
     $body_class_attr = $body_classes ? ' class="' . htmlspecialchars(implode(' ', $body_classes)) . '"' : '';
     $body_data_attr = '';
-    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user)) {
+    $is_admin_dashboard = $path === '/dashboard_admin';
+    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user) && !$is_admin_dashboard) {
         $plan_message = admin_plan_message($user) ?? 'Akses terkunci karena masa trial/pembayaran habis.';
         $body_data_attr = ' data-plan-blocked="1" data-plan-message="' . htmlspecialchars($plan_message) . '"';
     }
@@ -46,6 +47,8 @@ function render_header(string $title, string $body_class = ''): void {
     echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
     echo '<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">';
     echo '<link rel="stylesheet" href="/assets/style.css">';
+    echo '<link rel="icon" type="image/png" href="/assets/Ogol.png">';
+    echo '<link rel="apple-touch-icon" href="/assets/Ogol.png">';
     echo '</head><body' . $body_class_attr . $body_data_attr . '>'; 
     echo '<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>';
     echo '<header class="topbar">';
@@ -177,7 +180,7 @@ function render_header(string $title, string $body_class = ''): void {
 
 function render_footer(): void {
     $user = current_user();
-    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user)) {
+    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user) && $path !== '/dashboard_admin') {
         $plan_message = admin_plan_message($user) ?? 'Akses terkunci karena masa trial/pembayaran habis.';
         echo '<div class="modal" data-plan-blocked-modal>';
         echo '<div class="modal-content">';

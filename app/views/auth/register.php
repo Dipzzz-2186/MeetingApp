@@ -312,14 +312,19 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            cursor: pointer;
             margin: 15px 0;
             color: var(--muted);
             font-size: 14px;
         }
 
         .checkbox input {
-            width: auto;
+            width: 16px;
+            height: 16px;
+            flex: 0 0 auto;
+        }
+
+        .checkbox label {
+            cursor: pointer;
         }
 
         .terms {
@@ -354,6 +359,12 @@
 
         button[type="submit"]:hover {
             background: var(--accent-2);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(10%);
         }
 
         .auth-foot {
@@ -559,12 +570,12 @@
                     </div>
                 </div>
                 
-                <label class="checkbox">
-                    <input type="checkbox" name="terms" value="1" required>
-                    Saya setuju dengan <a href="#">Syarat & Ketentuan</a> dan <a href="#">Kebijakan Privasi</a>
-                </label>
+                <div class="checkbox">
+                    <input type="checkbox" id="terms" name="terms" value="1" required>
+                    <label for="terms">Saya setuju dengan <a href="#">Syarat & Ketentuan</a> dan <a href="#">Kebijakan Privasi</a></label>
+                </div>
                 
-                <button type="submit">Buat Akun</button>
+                <button type="submit" id="submitBtn" disabled>Buat Akun</button>
                 
                 <div class="auth-foot">
                     <span class="muted">Sudah punya akun?</span>
@@ -579,6 +590,8 @@
             const planOptions = document.querySelectorAll('.plan-option');
             const trialDetails = document.getElementById('trial-details');
             const permanentDetails = document.getElementById('permanent-details');
+            const termsCheckbox = document.getElementById('terms');
+            const submitBtn = document.getElementById('submitBtn');
             
             planOptions.forEach(option => {
                 option.addEventListener('click', function() {
@@ -604,13 +617,20 @@
                     }
                 });
             });
+
+            const syncSubmitState = () => {
+                submitBtn.disabled = !termsCheckbox.checked;
+            };
+
+            termsCheckbox.addEventListener('change', syncSubmitState);
+            syncSubmitState();
             
             // Form submission
             const registerForm = document.getElementById('registerForm');
             registerForm.addEventListener('submit', function(e) {
                 // Client-side validation
                 const password = document.querySelector('input[name="password"]').value;
-                const terms = document.querySelector('input[name="terms"]').checked;
+                const terms = termsCheckbox.checked;
                 
                 // if (password.length < 8) {
                 //     e.preventDefault();

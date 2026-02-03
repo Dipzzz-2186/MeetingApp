@@ -775,7 +775,7 @@
 
                 <!-- Subscription Status -->
                 <?php if (!empty($blocked)): ?>
-                <div class="card" style="margin-top: 30px;">
+                <div class="card" id="subscription" style="margin-top: 30px;">
                     <div class="card-header">
                         <h2 class="card-title">
                             <i class="fas fa-credit-card"></i>
@@ -968,16 +968,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-show modal if blocked
             const blocked = document.body.dataset.planBlocked === '1';
             const modal = document.getElementById('subscriptionModal');
-            
-            if (blocked && modal) {
-                setTimeout(() => {
-                    modal.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                }, 1000);
-            }
             
             // Close modal function
             window.closeModal = function() {
