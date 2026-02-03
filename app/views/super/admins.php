@@ -5,38 +5,40 @@
 <h1>Daftar Admin</h1>
 
 <div class="card">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($admins as $a): ?>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td><?= htmlspecialchars($a['name']) ?></td>
-                    <td><?= htmlspecialchars($a['email']) ?></td>
-                    <td><?= htmlspecialchars($a['plan_type']) ?></td>
-                    <td>
-                        <?php if ($a['plan_type'] === 'trial'): ?>
-                            <span class="badge">Trial</span>
-                        <?php else: ?>
-                            <span class="badge">Paid</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <button class="btn small" onclick="openAdminDetail(<?= (int)$a['id'] ?>)">
-                            Detail
-                        </button>
-                    </td>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Plan</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
                 </tr>
-            <?php endforeach ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php foreach ($admins as $a): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($a['name']) ?></td>
+                        <td><?= htmlspecialchars($a['email']) ?></td>
+                        <td><?= htmlspecialchars($a['plan_type']) ?></td>
+                        <td>
+                            <?php if ($a['plan_type'] === 'trial'): ?>
+                                <span class="badge">Trial</span>
+                            <?php else: ?>
+                                <span class="badge">Paid</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <button class="btn small" onclick="openAdminDetail(<?= (int)$a['id'] ?>)">
+                                Detail
+                            </button>
+                        </td>
+                    </tr>
+                <?php endforeach ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 <div id="adminModal" class="modal hidden">
   <div class="modal-card">
@@ -104,12 +106,28 @@ function closeAdminModal() {
 
     .modal-card {
         background: #0b1220;
-        padding: 20px;
-        width: 420px;
+        padding: 16px;
+        width: 100%;
+        max-width: 420px;
+        margin: 12px;
         border-radius: 14px;
+        max-height: 85vh;
+        overflow-y: auto;
     }
+
     .muted {
         color: #8b93a7;
         font-style: italic;
     }
+    
+    .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        min-width: 640px;
+    }
+
 </style>

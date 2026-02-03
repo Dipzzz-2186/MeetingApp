@@ -113,12 +113,17 @@ class AdminController {
 
         $notice = null;
         $error = null;
+        
+        // Tangani form submission dengan POST
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name = trim($_POST['name'] ?? '');
             $capacity = (int)($_POST['capacity'] ?? 0);
 
             if ($name === '' || $capacity <= 0) {
-                $error = 'Nama room dan kapasitas wajib diisi.';
+                // Simpan error di session
+                $_SESSION['error'] = 'Nama room dan kapasitas wajib diisi.';
+            } elseif ($capacity > 100) {
+                $_SESSION['error'] = 'Kapasitas maksimal 100 orang.';
             } else {
                 try {
                     Room::create($pdo, [
@@ -127,20 +132,86 @@ class AdminController {
                         'capacity' => $capacity,
                         'created_at' => now_iso(),
                     ]);
-                    $notice = 'Room berhasil ditambahkan.';
+                    $_SESSION['notice'] = 'Room berhasil ditambahkan.';
                 } catch (PDOException $e) {
-                    $error = 'Nama room sudah digunakan.';
+                    $_SESSION['error'] = 'Nama room sudah digunakan.';
                 }
             }
+            
+            // Redirect untuk menghindari form resubmission
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        }
+        
+        // Ambil pesan dari session (jika ada)
+        if (isset($_SESSION['notice'])) {
+            $notice = $_SESSION['notice'];
+            unset($_SESSION['notice']);
+        }
+        
+        if (isset($_SESSION['error'])) {
+            $error = $_SESSION['error'];
+            unset($_SESSION['error']);
         }
 
-        $rooms = Room::allByOwner($pdo, (int)$user['id']);
+        // Konfigurasi pagination
+        $itemsPerPage = 5;
+        $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($currentPage < 1) $currentPage = 1;
+        
+        // Hitung offset
+        $offset = ($currentPage - 1) * $itemsPerPage;
+        
+        // Query dengan LIMIT untuk pagination (sesuai schema)
+        $stmt = $pdo->prepare("
+            SELECT id, name, capacity, created_at 
+            FROM rooms 
+            WHERE owner_admin_id = :owner_admin_id 
+            ORDER BY created_at DESC
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindValue(':owner_admin_id', $user['id'], PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $itemsPerPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $rooms = $stmt->fetchAll();
+        
+        // Hitung total rooms untuk pagination
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM rooms WHERE owner_admin_id = :owner_admin_id");
+        $stmt->execute([':owner_admin_id' => $user['id']]);
+        $totalResult = $stmt->fetch();
+        $totalRooms = $totalResult['total'];
+        $totalPages = ceil($totalRooms / $itemsPerPage);
+        
+        // Validasi page number
+        if ($currentPage > $totalPages && $totalPages > 0) {
+            $currentPage = $totalPages;
+        }
+
+        // Tambahkan status dummy untuk tampilan (opsional)
+        foreach ($rooms as &$room) {
+            $statuses = ['available', 'booked', 'maintenance'];
+            $room['status'] = $statuses[array_rand($statuses)];
+            // Tambahkan dummy equipment untuk demo
+            $equipmentOptions = [
+                'Proyektor, Whiteboard, AC',
+                'TV, Sound System',
+                'Papan Tulis, AC',
+                'Proyektor, Microphone',
+                'Whiteboard, Speaker'
+            ];
+            $room['equipment'] = $equipmentOptions[array_rand($equipmentOptions)];
+            $room['description'] = 'Ruangan meeting standar';
+        }
 
         render_view('admin/rooms', [
             'notice' => $notice,
             'error' => $error,
             'rooms' => $rooms,
-        ], 'Add Room');
+            'currentPage' => $currentPage,
+            'totalPages' => $totalPages,
+            'totalRooms' => $totalRooms,
+        ], 'Kelola Ruangan');
     }
 
     public static function bookings(): void {
