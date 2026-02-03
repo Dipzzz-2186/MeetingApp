@@ -31,6 +31,48 @@ class SuperAdminController
         render_view('super/admins', compact('admins'), 'List Admin');
     }
 
+    public static function adminDetail(): void {
+        require_superadmin();
+        global $pdo;
+
+        $adminId = (int)($_GET['id'] ?? 0);
+        if ($adminId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid admin id']);
+            exit;
+        }
+
+        // admin info
+        $admin = $pdo->prepare("SELECT id, name, email, plan_type FROM users WHERE id=:id AND role='admin'");
+        $admin->execute([':id' => $adminId]);
+        $admin = $admin->fetch(PDO::FETCH_ASSOC);
+
+        // users under admin
+        $users = $pdo->prepare("
+            SELECT id, name, email
+            FROM users
+            WHERE owner_admin_id=:id AND role='user'
+            ORDER BY name
+        ");
+        $users->execute([':id' => $adminId]);
+
+        // rooms under admin
+        $rooms = $pdo->prepare("
+            SELECT id, name, capacity
+            FROM rooms
+            WHERE owner_admin_id=:id
+            ORDER BY name
+        ");
+        $rooms->execute([':id' => $adminId]);
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'admin' => $admin,
+            'users' => $users->fetchAll(),
+            'rooms' => $rooms->fetchAll(),
+        ]);
+    }
+
     public static function users(): void {
         require_superadmin();
         global $pdo;
@@ -44,6 +86,55 @@ class SuperAdminController
         ")->fetchAll();
 
         render_view('super/users', compact('users'), 'List Users');
+    }
+
+    public static function userDetail(): void {
+        require_superadmin();
+        global $pdo;
+
+        $userId = (int)($_GET['id'] ?? 0);
+        if ($userId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid user id']);
+            exit;
+        }
+
+        // user + admin info
+        $stmt = $pdo->prepare("
+            SELECT u.id, u.name, u.email, a.name AS admin_name
+            FROM users u
+            LEFT JOIN users a ON a.id = u.owner_admin_id
+            WHERE u.id = :id AND u.role = 'user'
+        ");
+        $stmt->execute([':id' => $userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['error' => 'User not found']);
+            exit;
+        }
+
+        // bookings / rooms user
+        $rooms = $pdo->prepare("
+            SELECT r.name AS room_name, b.start_time, b.end_time
+            FROM bookings b
+            JOIN rooms r ON r.id = b.room_id
+            WHERE b.user_id = :uid
+            ORDER BY b.start_time DESC
+        ");
+        $rooms->execute([':uid' => $userId]);
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'user' => [
+                'id'    => $user['id'],
+                'name'  => $user['name'],
+                'email' => $user['email'],
+            ],
+            'admin_name' => $user['admin_name'],
+            'rooms' => $rooms->fetchAll(),
+        ]);
     }
 
     public static function bookings(): void {

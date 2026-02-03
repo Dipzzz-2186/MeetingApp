@@ -33,7 +33,9 @@ $routes = [
     '/user/schedules' => ['UserController', 'schedules'],
     '/dashboard_superadmin' => ['SuperAdminController', 'dashboard'],
     '/super/admins'        => ['SuperAdminController', 'admins'],
+    '/super/admin-detail' => ['SuperAdminController', 'adminDetail'],
     '/super/users'         => ['SuperAdminController', 'users'],
+    '/super/user-detail' => ['SuperAdminController', 'userDetail'],
     '/super/bookings'      => ['SuperAdminController', 'bookings'],
     '/super/articles'      => ['SuperAdminController', 'articles'],
 ];
