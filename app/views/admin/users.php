@@ -552,7 +552,7 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-users"></i> Manajemen User</h1>
-            <a href="/dashboard" class="back-btn">
+            <a href="/dashboard_admin" class="back-btn">
                 <i class="fas fa-arrow-left"></i>
                 Kembali ke Dashboard
             </a>

@@ -227,6 +227,10 @@ class AdminController {
 
         $notice = null;
         $error = null;
+        
+        // AMBIL WAKTU SEKARANG DENGAN TIMEZONE YANG SESUAI
+        date_default_timezone_set('Asia/Jakarta'); // Sesuaikan dengan timezone Anda
+        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user_id = (int)($_POST['user_id'] ?? 0);
             $room_id = (int)($_POST['room_id'] ?? 0);
@@ -263,6 +267,31 @@ class AdminController {
             $bookings = Booking::all($pdo);
         } else {
             $bookings = Booking::byAdmin($pdo, (int)$user['id']);
+        }
+
+        // TAMBAHKAN LOGIKA UPDATE STATUS OTOMATIS DI CONTROLLER
+        // Update status booking yang sudah lewat
+        $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+        
+        foreach ($bookings as &$booking) {
+            try {
+                $start = new DateTime($booking['start_time'], new DateTimeZone('Asia/Jakarta'));
+                $end = new DateTime($booking['end_time'], new DateTimeZone('Asia/Jakarta'));
+                
+                // Tambahkan margin 1 menit untuk menghindari perbedaan waktu kecil
+                if ($now > $end) {
+                    // Status sudah selesai
+                    $booking['status_override'] = 'completed';
+                } elseif ($now >= $start && $now <= $end) {
+                    // Sedang berlangsung
+                    $booking['status_override'] = 'ongoing';
+                } else {
+                    // Akan datang
+                    $booking['status_override'] = 'upcoming';
+                }
+            } catch (Exception $e) {
+                $booking['status_override'] = 'upcoming';
+            }
         }
 
         render_view('admin/bookings', [
