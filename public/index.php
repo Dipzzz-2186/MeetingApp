@@ -20,6 +20,7 @@ if ($path === '') {
 
 $routes = [
     '/' => ['HomeController', 'index'],
+    '/articles' => ['HomeController', 'articles'],
     '/login' => ['AuthController', 'login'],
     '/register' => ['AuthController', 'register'],
     '/logout' => ['AuthController', 'logout'],
@@ -34,6 +35,7 @@ $routes = [
     '/super/admins'        => ['SuperAdminController', 'admins'],
     '/super/users'         => ['SuperAdminController', 'users'],
     '/super/bookings'      => ['SuperAdminController', 'bookings'],
+    '/super/articles'      => ['SuperAdminController', 'articles'],
 ];
 
 if (!isset($routes[$path])) {

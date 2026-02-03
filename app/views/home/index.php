@@ -9,6 +9,7 @@ $user = current_user();
       <div class="home-cta">
         <a class="btn" href="/register">Mulai Sekarang</a>
         <a class="btn ghost" href="/login">Login</a>
+        <a class="btn ghost" href="/articles">Artikel</a>
       </div>
       
       <div class="home-badges">
@@ -30,6 +31,9 @@ $user = current_user();
             </span>
           <?php endif; ?>
         </div>
+      </div>
+      <div class="home-cta">
+        <a class="btn ghost" href="/articles">Artikel</a>
       </div>
     <?php endif; ?>
 
