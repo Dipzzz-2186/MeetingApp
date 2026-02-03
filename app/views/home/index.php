@@ -1,5 +1,10 @@
 <?php
 $user = current_user();
+
+$articleUrl = '/articles';
+if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
+    $articleUrl = '/super/articles';
+}
 ?>
 <section class="home-hero">
   <div class="home-hero-text">
@@ -9,7 +14,7 @@ $user = current_user();
       <div class="home-cta">
         <a class="btn" href="/register">Mulai Sekarang</a>
         <a class="btn ghost" href="/login">Login</a>
-        <a class="btn ghost" href="/articles">Artikel</a>
+        <a class="btn ghost" href="<?= $articleUrl ?>">Artikel</a>
       </div>
       
       <div class="home-badges">
@@ -24,16 +29,17 @@ $user = current_user();
         </div>
         <div class="home-user-meta">
           <span class="role"><?= ucfirst($user['role']) ?></span>
-          <?php if ($user['role'] !== 'admin'): ?>
+
+          <?php if ($user['role'] === 'user'): ?>
             <span class="sep">•</span>
             <span class="admin">
-              Admin: <?= htmlspecialchars($user['owner_admin_name'] ?? '-') ?>
+              Admin: <?= htmlspecialchars($user['owner_admin_name']) ?>
             </span>
           <?php endif; ?>
         </div>
       </div>
       <div class="home-cta">
-        <a class="btn ghost" href="/articles">Artikel</a>
+        <a class="btn ghost" href="<?= $articleUrl ?>">Artikel</a>
       </div>
     <?php endif; ?>
 
