@@ -24,6 +24,13 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
   background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #1e2530 100%);
 }
 
+/* Fullscreen layout override for home */
+.container {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .hero-background {
   position: absolute;
   top: 0;
@@ -789,21 +796,22 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
   <div class="hero-content">
     <div class="hero-header">
       <h1 class="hero-title">
-        <span class="brand-name">MeetFlow</span>: Solusi Booking Meeting Rooted in 
-        <span class="highlight">Efisiensi</span>, Driven by <span class="highlight">Inovasi</span>
+        <span class="brand-name">RuangMeet</span>:
+        Booking Ruang Meeting Tanpa Bentrok,
+        Lebih <span class="highlight">Rapi</span> dan <span class="highlight">Terukur</span>
       </h1>
-      <p class="hero-subtitle">Empowering Indonesian businesses dengan sistem manajemen ruang meeting yang intelligent dan terukur</p>
+      <p class="hero-subtitle">Atur jadwal rapat, kapasitas ruangan, dan akses tim dalam satu dashboard yang simpel untuk operasional harian.</p>
     </div>
 
     <div class="hero-features">
       <a href="#multi-admin" class="feature-link">
-        <span>MultiAdmin</span>
+        <span>Multi Admin</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path d="M8 0L10 6H16L11 10L13 16L8 12L3 16L5 10L0 6H6L8 0Z"/>
         </svg>
       </a>
       <a href="#smart-scheduling" class="feature-link">
-        <span>SmartSchedule</span>
+        <span>Smart Scheduling</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path d="M8 0L10 6H16L11 10L13 16L8 12L3 16L5 10L0 6H6L8 0Z"/>
         </svg>
@@ -835,10 +843,10 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
             <path d="M6 0C2.7 0 0 2.7 0 6s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6z"/>
           </svg>
-          <span>https://www.meetflow.id</span>
+          <span>https://www.ruangmeet.id</span>
         </div>
         <div class="window-actions">
-          <button class="download-btn">Download Extension</button>
+          <button class="download-btn">Lihat Demo</button>
         </div>
       </div>
       
@@ -846,14 +854,14 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
         <div class="demo-sidebar">
           <div class="sidebar-brand">
             <div class="brand-icon"></div>
-            <span>MeetFlow</span>
+            <span>RuangMeet</span>
           </div>
           
           <button class="new-booking-btn">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 0v16M0 8h16" stroke="currentColor" stroke-width="2"/>
             </svg>
-            New Booking
+            Buat Booking
           </button>
 
           <div class="folder-section">
@@ -866,49 +874,49 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M2 2h3l1 1h4v7H2V2z"/>
                 </svg>
-                <span>Daily</span>
+              <span>Rapat Harian</span>
               </li>
               <li class="folder-item">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M2 2h3l1 1h4v7H2V2z"/>
                 </svg>
-                <span>UI/UX</span>
+              <span>Tim Produk</span>
               </li>
               <li class="folder-item">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M2 2h3l1 1h4v7H2V2z"/>
                 </svg>
-                <span>Client Nusantara</span>
+              <span>Client Utama</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div class="demo-main">
-          <h3 class="section-title">Start a new booking</h3>
-          <p class="section-subtitle">Please Choose Room Type and Date to start a new booking</p>
+          <h3 class="section-title">Buat booking baru</h3>
+          <p class="section-subtitle">Pilih jenis ruangan dan tanggal, sistem otomatis cek bentrok.</p>
           
           <div class="select-wrapper">
             <select class="room-select">
-              <option>Select a Room</option>
+              <option>Pilih Ruangan</option>
             </select>
           </div>
 
           <div class="booking-cards">
             <div class="booking-card">
               <div class="card-icon general"></div>
-              <h4>General</h4>
-              <p>Lorem ipsum dolor sit amet consectetur. Condimentum sem et commodo morbi ut adipiscing</p>
+              <h4>Meeting Umum</h4>
+              <p>Ruang serbaguna untuk rapat koordinasi lintas tim dan update mingguan.</p>
             </div>
             <div class="booking-card">
               <div class="card-icon ux-writer"></div>
-              <h4>UX Writer</h4>
-              <p>Lorem ipsum dolor sit amet consectetur. Condimentum sem et commodo morbi ut adipiscing</p>
+              <h4>Rapat Produk</h4>
+              <p>Diskusi roadmap, review backlog, dan sinkronisasi fitur dengan tim terkait.</p>
             </div>
             <div class="booking-card">
               <div class="card-icon ux-researcher"></div>
-              <h4>UX Researcher</h4>
-              <p>Lorem ipsum dolor sit amet consectetur. Condimentum sem et commodo morbi ut adipiscing</p>
+              <h4>Client Meeting</h4>
+              <p>Jadwalkan presentasi dan kickoff dengan waktu yang bebas bentrok.</p>
             </div>
           </div>
         </div>
@@ -920,9 +928,9 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
 <?php if (!$user): ?>
   <section class="cta-section">
     <div class="cta-buttons">
-      <a class="btn primary" href="/register">Mulai Sekarang</a>
-      <a class="btn secondary" href="/login">Login</a>
-      <a class="btn tertiary" href="<?= $articleUrl ?>">Artikel</a>
+      <a class="btn primary" href="/register">Mulai Trial</a>
+      <a class="btn secondary" href="/login">Masuk</a>
+      <a class="btn tertiary" href="<?= $articleUrl ?>">Lihat Artikel</a>
     </div>
     
     <div class="trust-badges">
@@ -934,7 +942,7 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
 <?php else: ?>
   <section class="user-welcome">
     <div class="welcome-card">
-      <h2>Selamat datang, <?= htmlspecialchars($user['name']) ?>!</h2>
+      <h2>Selamat datang di RuangMeet, <?= htmlspecialchars($user['name']) ?>!</h2>
       <div class="user-info">
         <span class="role-badge"><?= ucfirst($user['role']) ?></span>
         <?php if ($user['role'] === 'user'): ?>
@@ -942,7 +950,7 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
           <span class="admin-info">Admin: <?= htmlspecialchars($user['owner_admin_name']) ?></span>
         <?php endif; ?>
       </div>
-      <a class="btn secondary" href="<?= $articleUrl ?>">Lihat Artikel</a>
+      <a class="btn secondary" href="<?= $articleUrl ?>">Buka Artikel</a>
     </div>
   </section>
 <?php endif; ?>
@@ -955,9 +963,9 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
           <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
         </svg>
       </div>
-      <h3>Profil Perusahaan</h3>
+      <h3>Tentang RuangMeet</h3>
     </div>
-    <p>FCOM Inti Teknologi fokus pada solusi internal workflow, termasuk pengelolaan meeting, kolaborasi, dan penjadwalan terpadu untuk meningkatkan produktivitas tim.</p>
+    <p>RuangMeet membantu tim mengelola ruang meeting, jadwal, dan akses pengguna dengan alur yang jelas serta minim bentrok.</p>
   </div>
   
   <div class="info-card">
@@ -967,9 +975,9 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
           <path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/>
         </svg>
       </div>
-      <h3>Layanan Utama</h3>
+      <h3>Fitur Utama</h3>
     </div>
-    <p>Implementasi sistem booking, integrasi kalender, monitoring penggunaan ruang meeting, dan dashboard analytics untuk efisiensi maksimal kantor Anda.</p>
+    <p>Booking otomatis, pengelolaan user & ruangan, serta rekap pemakaian untuk keputusan operasional yang lebih cepat.</p>
   </div>
   
   <div class="info-card">
@@ -979,10 +987,10 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
           <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
         </svg>
       </div>
-      <h3>Hubungi Kami</h3>
+      <h3>Kontak</h3>
     </div>
     <div class="contact-info">
-      <p><strong>Email:</strong> info@fcominti.co.id</p>
+      <p><strong>Email:</strong> hello@ruangmeet.id</p>
       <p><strong>Telp:</strong> +62 21 555 0101</p>
       <p><strong>Jam Kerja:</strong> Senin - Jumat, 09:00 - 17:00 WIB</p>
     </div>
