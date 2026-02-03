@@ -23,30 +23,6 @@ body.auth {
   background: #0f1218;
 }
 
-.bg-orb {
-  position: fixed;
-  border-radius: 999px;
-  filter: blur(2px);
-  opacity: 0.25;
-  z-index: 0;
-}
-
-.orb-a {
-  width: 320px;
-  height: 320px;
-  background: #3b3f48;
-  top: -120px;
-  right: -80px;
-}
-
-.orb-b {
-  width: 420px;
-  height: 420px;
-  background: #1f232c;
-  bottom: -160px;
-  left: -120px;
-}
-
 /* ===========================
    IMPROVED TOPBAR NAVIGATION
    =========================== */

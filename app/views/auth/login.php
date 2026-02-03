@@ -2,9 +2,6 @@
   <div class="auth-side">
     <div class="auth-mini">
     </div>
-    <div class="doodle note"></div>
-    <div class="doodle dots"></div>
-    <div class="doodle card"></div>
   </div>
 
   <div class="auth-card">
@@ -29,11 +26,5 @@
         <a href="/register">Register sekarang</a>
       </div>
     </form>
-  </div>
-
-  <div class="auth-side right">
-    <div class="doodle woman"></div>
-    <div class="doodle dots"></div>
-    <div class="doodle stack"></div>
   </div>
 </div>
