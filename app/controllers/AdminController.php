@@ -29,12 +29,193 @@ class AdminController {
 
         $plan_message = admin_plan_message($user);
         $blocked = admin_plan_blocked($user);
-        $recent = Booking::recentByAdmin($pdo, (int)$user['id']);
+        
+        // SET TIMEZONE SAMA SEPERTI DI METHOD BOOKINGS
+        date_default_timezone_set('Asia/Jakarta');
+        
+        // Inisialisasi array stats
+        $stats = [
+            'total_users' => 0,
+            'total_rooms' => 0,
+            'monthly_bookings' => 0,
+            'active_meetings' => 0,
+            'last_month_bookings' => 0,
+            'total_capacity' => 0,
+            'last_month_users' => 0
+        ];
+        
+        // 1. Total Users (hitung user yang dimiliki oleh admin ini)
+        try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM users WHERE owner_admin_id = :owner_admin_id AND role = 'user'");
+            $stmt->execute([':owner_admin_id' => $user['id']]);
+            $result = $stmt->fetch();
+            $stats['total_users'] = $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting total users: ' . $e->getMessage());
+        }
+        
+        // 2. Total Rooms (hitung room yang dimiliki oleh admin ini)
+        try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM rooms WHERE owner_admin_id = :owner_admin_id");
+            $stmt->execute([':owner_admin_id' => $user['id']]);
+            $result = $stmt->fetch();
+            $stats['total_rooms'] = $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting total rooms: ' . $e->getMessage());
+        }
+        
+        // 3. Total Bookings bulan ini
+        try {
+            $firstDayOfMonth = date('Y-m-01 00:00:00');
+            $lastDayOfMonth = date('Y-m-t 23:59:59');
+            
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total 
+                FROM bookings 
+                WHERE admin_id = :admin_id 
+                AND created_at BETWEEN :first_day AND :last_day
+            ");
+            $stmt->execute([
+                ':admin_id' => $user['id'],
+                ':first_day' => $firstDayOfMonth,
+                ':last_day' => $lastDayOfMonth
+            ]);
+            $result = $stmt->fetch();
+            $stats['monthly_bookings'] = $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting monthly bookings: ' . $e->getMessage());
+        }
+        
+        // 4. Active Meetings (booking yang sedang berlangsung sekarang) - SAMA SEPERTI DI METHOD BOOKINGS
+        try {
+            $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            $nowStr = $now->format('Y-m-d H:i:s');
+            
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total 
+                FROM bookings 
+                WHERE admin_id = :admin_id 
+                AND start_time <= :now 
+                AND end_time >= :now
+            ");
+            $stmt->execute([
+                ':admin_id' => $user['id'],
+                ':now' => $nowStr
+            ]);
+            $result = $stmt->fetch();
+            $stats['active_meetings'] = $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting active meetings: ' . $e->getMessage());
+        }
+        
+        // 5. Total Bookings bulan lalu (untuk perbandingan)
+        try {
+            $firstDayLastMonth = date('Y-m-01 00:00:00', strtotime('-1 month'));
+            $lastDayLastMonth = date('Y-m-t 23:59:59', strtotime('-1 month'));
+            
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total 
+                FROM bookings 
+                WHERE admin_id = :admin_id 
+                AND created_at BETWEEN :first_day AND :last_day
+            ");
+            $stmt->execute([
+                ':admin_id' => $user['id'],
+                ':first_day' => $firstDayLastMonth,
+                ':last_day' => $lastDayLastMonth
+            ]);
+            $result = $stmt->fetch();
+            $stats['last_month_bookings'] = $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting last month bookings: ' . $e->getMessage());
+        }
+        
+        // 6. Total kapasitas semua ruangan
+        try {
+            $stmt = $pdo->prepare("SELECT SUM(capacity) as total_capacity FROM rooms WHERE owner_admin_id = :owner_admin_id");
+            $stmt->execute([':owner_admin_id' => $user['id']]);
+            $result = $stmt->fetch();
+            $stats['total_capacity'] = $result['total_capacity'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting total capacity: ' . $e->getMessage());
+        }
+        
+        // 7. User growth (perbandingan dengan bulan lalu)
+        try {
+            $firstDayLastMonth = date('Y-m-01 00:00:00', strtotime('-1 month'));
+            $lastDayLastMonth = date('Y-m-t 23:59:59', strtotime('-1 month'));
+            
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total 
+                FROM users 
+                WHERE owner_admin_id = :owner_admin_id 
+                AND role = 'user'
+                AND created_at <= :last_day_last_month
+            ");
+            $stmt->execute([
+                ':owner_admin_id' => $user['id'],
+                ':last_day_last_month' => $lastDayLastMonth
+            ]);
+            $result = $stmt->fetch();
+            $stats['last_month_users'] = $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Error getting last month users: ' . $e->getMessage());
+        }
+        
+        // 8. Ambil 5 recent bookings saja untuk admin
+        try {
+            $stmt = $pdo->prepare("
+                SELECT 
+                    b.id,
+                    b.start_time,
+                    b.end_time,
+                    b.purpose,
+                    u.name as user_name,
+                    r.name as room_name
+                FROM bookings b
+                JOIN users u ON b.user_id = u.id
+                JOIN rooms r ON b.room_id = r.id
+                WHERE b.admin_id = :admin_id 
+                ORDER BY b.start_time DESC
+                LIMIT 5  -- HANYA 5 DATA SAJA
+            ");
+            $stmt->execute([':admin_id' => $user['id']]);
+            $recent = $stmt->fetchAll();
+            
+            // Tambahkan status override seperti di method bookings
+            $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            foreach ($recent as &$booking) {
+                try {
+                    $start = new DateTime($booking['start_time'], new DateTimeZone('Asia/Jakarta'));
+                    $end = new DateTime($booking['end_time'], new DateTimeZone('Asia/Jakarta'));
+                    
+                    if ($now > $end) {
+                        $booking['status_override'] = 'completed';
+                    } elseif ($now >= $start && $now <= $end) {
+                        $booking['status_override'] = 'ongoing';
+                    } else {
+                        $booking['status_override'] = 'upcoming';
+                    }
+                } catch (Exception $e) {
+                    $booking['status_override'] = 'upcoming';
+                }
+            }
+            
+        } catch (PDOException $e) {
+            error_log('Error getting recent bookings: ' . $e->getMessage());
+            $recent = [];
+        }
+
+        // Debug log
+        error_log('Dashboard Stats: ' . print_r($stats, true));
+        error_log('Active Meetings Count: ' . $stats['active_meetings']);
+        error_log('Recent Bookings Count: ' . count($recent));
 
         render_view('admin/dashboard', [
             'plan_message' => $plan_message,
             'blocked' => $blocked,
             'recent' => $recent,
+            'stats' => $stats,
         ], 'Dashboard Admin');
     }
 
