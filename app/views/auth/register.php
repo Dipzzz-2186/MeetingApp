@@ -10,6 +10,7 @@
   </div>
 
   <div class="auth-card">
+    <a class="auth-back" href="/">← Kembali ke Home</a>
     <h1>Register Admin</h1>
     <p class="muted">Isi data admin, lalu pilih paket yang diinginkan.</p>
     <?php if (!empty($success)): ?>

@@ -469,6 +469,26 @@ label { font-weight: 600; font-size: 13px; }
   font-size: 26px;
 }
 
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 243, 245, 0.25);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--ink);
+  background: rgba(17, 21, 28, 0.7);
+  margin-bottom: 12px;
+}
+
+.auth-back:hover {
+  border-color: rgba(247, 200, 66, 0.45);
+  color: var(--accent);
+}
+
 .auth-card p,
 .auth-card label,
 .auth-card .auth-foot {

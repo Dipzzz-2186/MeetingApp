@@ -8,6 +8,7 @@
   </div>
 
   <div class="auth-card">
+    <a class="auth-back" href="/">← Kembali ke Home</a>
     <h1>Admin Login</h1>
     <p class="muted">Masuk untuk mengelola meeting room dan jadwal.</p>
     <?php if (!empty($error)): ?>
