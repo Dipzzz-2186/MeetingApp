@@ -24,6 +24,10 @@ function render_header(string $title, string $body_class = ''): void {
         }
         return $path === $target;
     };
+    
+    // Cek apakah ini halaman login
+    $is_login_page = strpos($path, '/login') !== false || strpos($path, '/auth') !== false;
+    
     echo '<!doctype html><html lang="id"><head><meta charset="utf-8">';
     echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
     echo '<title>' . htmlspecialchars($title) . '</title>';
@@ -34,23 +38,32 @@ function render_header(string $title, string $body_class = ''): void {
     echo '</head><body' . $body_class_attr . '>'; 
     echo '<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>';
     $is_auth = strpos(' ' . $body_class . ' ', ' auth ') !== false;
+    
     echo '<header class="topbar">';
-    echo '<a class="brand" href="/"><span class="brand-mark" aria-hidden="true">';
-    echo '<img src="/assets/Ogol.png" alt="" width="34" height="34">';
-    echo '</span><span class="brand-text">RuangMeet</span></a>';
-    if (!$is_auth) {
+    
+    // Hanya tampilkan brand jika bukan halaman login
+    if (!$is_login_page && !$is_auth) {
+        echo '<a class="brand" href="/"><span class="brand-mark" aria-hidden="true">';
+        echo '<img src="/assets/Ogol.png" alt="" width="34" height="34">';
+        echo '</span><span class="brand-text">RuangMeet</span></a>';
+    } else {
+        // Untuk halaman login, kita beri brand kosong dengan tinggi yang sama
+        echo '<div class="brand-placeholder"></div>';
+    }
+    
+    if (!$is_auth && !$is_login_page) {
         if ($user) {
-                echo '<nav class="nav nav-desktop">';
+            echo '<nav class="nav nav-desktop">';
 
-                echo '<a href="/"'
-                    . ($is_active('/') ? ' class="active"' : '')
-                    . '>Home</a>';
+            echo '<a href="/"'
+                . ($is_active('/') ? ' class="active"' : '')
+                . '>Home</a>';
 
-                $dashPath = '/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user');
+            $dashPath = '/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user');
 
-                echo '<a href="' . $dashPath . '"'
-                    . ($is_active($dashPath) ? ' class="active"' : '')
-                    . '>Dashboard</a>';
+            echo '<a href="' . $dashPath . '"'
+                . ($is_active($dashPath) ? ' class="active"' : '')
+                . '>Dashboard</a>';
             if ($user['role'] === 'admin') {
                 echo '<a href="/users">Add User</a>';
                 echo '<a href="/rooms">Add Room</a>';
@@ -98,7 +111,7 @@ function render_header(string $title, string $body_class = ''): void {
 
         echo '<a class="tab" href="/logout">' . $icon_logout . '<span>Logout</span></a>';
         echo '</nav>';
-    } elseif (!$is_auth) {
+    } elseif (!$is_auth && !$is_login_page) {
         $icon_home = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
         echo '<nav class="tabbar" aria-label="Primary">';
         echo '<a class="tab tab-primary active" href="/">' . $icon_home . '<span>Home</span></a>';

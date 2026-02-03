@@ -899,3 +899,29 @@ button.secondary {
     height: 22px;
   }
 }
+
+
+/* Placeholder brand untuk halaman login */
+.brand-placeholder {
+    display: inline-block;
+    height: 34px; /* Sesuaikan dengan tinggi brand */
+}
+
+/* Untuk halaman login, atur topbar jadi transparan */
+body.auth .topbar {
+    background: transparent !important;
+    border-bottom: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+/* Hilangkan topbar before gradient di halaman login */
+body.auth .topbar::before {
+    display: none;
+}
+
+/* Untuk halaman login dengan user login, sembunyikan tabbar */
+body.auth.has-tabbar .tabbar {
+    display: none;
+}
