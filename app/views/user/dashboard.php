@@ -1,29 +1,8 @@
-<?php
-require_once __DIR__ . '/../app/helpers/layout.php';
-require_login();
-refresh_user($pdo);
-$user = current_user();
-
-$stmt = $pdo->prepare('SELECT bookings.*, rooms.name AS room_name
-  FROM bookings
-  JOIN rooms ON rooms.id = bookings.room_id
-  WHERE bookings.user_id = :uid AND bookings.admin_id = :admin_id
-  ORDER BY start_time DESC');
-$stmt->execute([':uid' => $user['id'], ':admin_id' => $user['owner_admin_id']]);
-$my_bookings = $stmt->fetchAll();
-
-$stmt = $pdo->prepare('SELECT * FROM rooms WHERE owner_admin_id = :owner_admin_id ORDER BY name ASC');
-$stmt->execute([':owner_admin_id' => $user['owner_admin_id']]);
-$rooms = $stmt->fetchAll();
-
-render_header('Dashboard User');
-?>
-
 <div class="grid two">
   <div class="card">
     <h1>Halo, <?php echo htmlspecialchars($user['name']); ?></h1>
     <p class="muted">Lihat room yang tersedia dan buat booking meeting.</p>
-    <a href="booking_user">Buat Booking</a>
+    <a href="/booking_user">Buat Booking</a>
   </div>
   <div class="card">
     <h2>Room Tersedia</h2>
@@ -59,5 +38,3 @@ render_header('Dashboard User');
     </tbody>
   </table>
 </div>
-
-<?php render_footer(); ?>

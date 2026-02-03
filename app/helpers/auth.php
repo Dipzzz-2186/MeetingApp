@@ -34,7 +34,7 @@ function refresh_user(PDO $pdo): void {
 
 function require_login(): void {
     if (!current_user()) {
-        header('Location: login');
+        header('Location: /login');
         exit;
     }
 }
@@ -42,7 +42,7 @@ function require_login(): void {
 function require_admin(): void {
     require_login();
     if (current_user()['role'] !== 'admin') {
-        header('Location: dashboard_user');
+        header('Location: /dashboard_user');
         exit;
     }
 }

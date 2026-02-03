@@ -1,56 +1,3 @@
-<?php
-require_once __DIR__ . '/../app/helpers/layout.php';
-
-$success = null;
-$error = null;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $plan_type = $_POST['plan_type'] ?? 'trial';
-    $pay_now = ($_POST['pay_now'] ?? '0') === '1';
-
-    if ($name === '' || $email === '' || $password === '') {
-        $error = 'Semua field wajib diisi.';
-    } else {
-        $trial_end = null;
-        $paid_until = null;
-        if ($plan_type === 'trial') {
-            $trial_end = date('Y-m-d H:i:s', strtotime('+10 days'));
-        } else {
-            if ($pay_now) {
-                $paid_until = date('Y-m-d H:i:s', strtotime('+30 days'));
-            }
-        }
-
-        try {
-            $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash, role, plan_type, trial_end, paid_until, created_at)
-                VALUES (:name, :email, :password_hash, :role, :plan_type, :trial_end, :paid_until, :created_at)');
-            $stmt->execute([
-                ':name' => $name,
-                ':email' => $email,
-                ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                ':role' => 'admin',
-                ':plan_type' => $plan_type,
-                ':trial_end' => $trial_end,
-                ':paid_until' => $paid_until,
-                ':created_at' => now_iso(),
-            ]);
-            $admin_id = (int)$pdo->lastInsertId();
-            $stmt = $pdo->prepare('UPDATE users SET owner_admin_id = :owner_admin_id WHERE id = :id');
-            $stmt->execute([':owner_admin_id' => $admin_id, ':id' => $admin_id]);
-            header('Location: login');
-            exit;
-        } catch (PDOException $e) {
-            $error = 'Gagal register. Pastikan email belum terpakai.';
-        }
-    }
-}
-
-render_header('Register Admin', 'auth');
-?>
-
 <div class="auth-layout">
   <div class="auth-side">
     <div class="auth-mini">
@@ -65,9 +12,9 @@ render_header('Register Admin', 'auth');
   <div class="auth-card">
     <h1>Register Admin</h1>
     <p class="muted">Isi data admin, lalu pilih paket yang diinginkan.</p>
-    <?php if ($success): ?>
+    <?php if (!empty($success)): ?>
       <div class="alert"><?php echo htmlspecialchars($success); ?></div>
-    <?php elseif ($error): ?>
+    <?php elseif (!empty($error)): ?>
       <div class="alert"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
     <form method="post" class="grid">
@@ -92,7 +39,7 @@ render_header('Register Admin', 'auth');
         <div class="modal-content">
           <div class="modal-head">
             <h2>Pilih Paket</h2>
-            <button type="button" class="modal-close" data-close-plan>✕</button>
+            <button type="button" class="modal-close" data-close-plan>x</button>
           </div>
           <p class="muted">Klik salah satu paket lalu lanjutkan registrasi.</p>
           <div class="plan-grid">
@@ -130,7 +77,7 @@ render_header('Register Admin', 'auth');
       </div>
       <div class="auth-foot">
         <span class="muted">Sudah punya akun?</span>
-        <a href="index">Login</a>
+        <a href="/login">Login</a>
       </div>
     </form>
   </div>
@@ -141,5 +88,3 @@ render_header('Register Admin', 'auth');
     <div class="doodle stack"></div>
   </div>
 </div>
-
-<?php render_footer(); ?>

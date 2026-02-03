@@ -1,33 +1,3 @@
-<?php
-require_once __DIR__ . '/../app/helpers/layout.php';
-
-if (current_user()) {
-    $target = current_user()['role'] === 'admin' ? 'dashboard_admin' : 'dashboard_user';
-    header('Location: ' . $target);
-    exit;
-}
-
-$error = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email');
-    $stmt->execute([':email' => $email]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($password, $user['password_hash'])) {
-        login_user($user);
-        $target = $user['role'] === 'admin' ? 'dashboard_admin' : 'dashboard_user';
-        header('Location: ' . $target);
-        exit;
-    }
-    $error = 'Email atau password salah.';
-}
-
-render_header('Login', 'auth');
-?>
-
 <div class="auth-layout">
   <div class="auth-side">
     <div class="auth-mini">
@@ -40,7 +10,7 @@ render_header('Login', 'auth');
   <div class="auth-card">
     <h1>Admin Login</h1>
     <p class="muted">Masuk untuk mengelola meeting room dan jadwal.</p>
-    <?php if ($error): ?>
+    <?php if (!empty($error)): ?>
       <div class="alert"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
     <form method="post" class="grid">
@@ -55,7 +25,7 @@ render_header('Login', 'auth');
       <button type="submit">Sign in</button>
       <div class="auth-foot">
         <span class="muted">Belum punya admin?</span>
-        <a href="register">Register sekarang</a>
+        <a href="/register">Register sekarang</a>
       </div>
     </form>
   </div>
@@ -66,5 +36,3 @@ render_header('Login', 'auth');
     <div class="doodle stack"></div>
   </div>
 </div>
-
-<?php render_footer(); ?>
