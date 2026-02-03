@@ -10,6 +10,7 @@ require_once __DIR__ . '/../app/controllers/HomeController.php';
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/controllers/AdminController.php';
 require_once __DIR__ . '/../app/controllers/UserController.php';
+require_once __DIR__ . '/../app/controllers/SuperAdminController.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = rtrim($path, '/');
@@ -29,6 +30,10 @@ $routes = [
     '/bookings' => ['AdminController', 'bookings'],
     '/booking_user' => ['UserController', 'booking'],
     '/user/schedules' => ['UserController', 'schedules'],
+    '/dashboard_superadmin' => ['SuperAdminController', 'dashboard'],
+    '/super/admins'        => ['SuperAdminController', 'admins'],
+    '/super/users'         => ['SuperAdminController', 'users'],
+    '/super/bookings'      => ['SuperAdminController', 'bookings'],
 ];
 
 if (!isset($routes[$path])) {

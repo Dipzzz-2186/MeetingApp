@@ -61,6 +61,14 @@ function require_admin(): void {
     }
 }
 
+function require_superadmin(): void {
+    require_login();
+    if (current_user()['role'] !== 'superadmin') {
+        http_response_code(403);
+        exit('Forbidden');
+    }
+}
+
 function admin_plan_blocked(array $user): bool {
     if ($user['role'] !== 'admin') {
         return false;

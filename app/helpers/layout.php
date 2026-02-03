@@ -80,7 +80,13 @@ function render_header(string $title, string $body_class = ''): void {
     echo '</header>';
 
     if ($user) {
-        $dash_path = '/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user');
+        if ($user['role'] === 'superadmin') {
+            $dash_path = '/dashboard_superadmin';
+        } elseif ($user['role'] === 'admin') {
+            $dash_path = '/dashboard_admin';
+        } else {
+            $dash_path = '/dashboard_user';
+        }
         $icon_home = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
         $icon_dash = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
         $icon_users = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19a5 5 0 0 1 9 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M13.5 19a4 4 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -97,7 +103,19 @@ function render_header(string $title, string $body_class = ''): void {
         echo '<span class="tab-indicator" aria-hidden="true"></span>';
         echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
         echo '<a class="tab' . ($is_active($dash_path) ? ' active' : '') . '" href="' . $dash_path . '">' . $icon_dash . '<span>Dashboard</span></a>';
-        if ($user['role'] === 'admin') {
+        
+        if ($user['role'] === 'superadmin') {
+
+            echo '<a class="tab' . ($is_active('/super/admins') ? ' active' : '') . '" href="/super/admins">'
+                . $icon_users . '<span>Admins</span></a>';
+
+            echo '<a class="tab' . ($is_active('/super/users') ? ' active' : '') . '" href="/super/users">'
+                . $icon_users . '<span>Users</span></a>';
+
+            echo '<a class="tab' . ($is_active('/super/bookings') ? ' active' : '') . '" href="/super/bookings">'
+                . $icon_book . '<span>Bookings</span></a>';
+
+        } else if ($user['role'] === 'admin') {
             echo '<a class="tab' . ($is_active('/users') ? ' active' : '') . '" href="/users">' . $icon_users . '<span>Users</span></a>';
             echo '<a class="tab' . ($is_active('/rooms') ? ' active' : '') . '" href="/rooms">' . $icon_room . '<span>Rooms</span></a>';
             echo '<a class="tab' . ($is_active('/bookings') ? ' active' : '') . '" href="/bookings">' . $icon_book . '<span>Schedule</span></a>';

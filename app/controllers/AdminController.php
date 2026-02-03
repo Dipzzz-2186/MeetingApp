@@ -170,7 +170,12 @@ class AdminController {
         $stmt->execute([':owner_admin_id' => $user['id']]);
         $users = $stmt->fetchAll();
         $rooms = Room::availableByOwner($pdo, (int)$user['id']);
-        $bookings = Booking::byAdmin($pdo, (int)$user['id']);
+
+        if ($user['role'] === 'superadmin') {
+            $bookings = Booking::all($pdo);
+        } else {
+            $bookings = Booking::byAdmin($pdo, (int)$user['id']);
+        }
 
         render_view('admin/bookings', [
             'notice' => $notice,

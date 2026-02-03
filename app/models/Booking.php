@@ -68,4 +68,14 @@ class Booking {
         ]);
         return $stmt->fetchAll();
     }
+    
+    public static function all(PDO $pdo): array {
+        return $pdo->query("
+            SELECT b.*, r.name AS room_name, u.name AS user_name
+            FROM bookings b
+            JOIN rooms r ON r.id = b.room_id
+            JOIN users u ON u.id = b.user_id
+            ORDER BY b.start_time DESC
+        ")->fetchAll();
+    }
 }

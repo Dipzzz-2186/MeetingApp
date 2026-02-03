@@ -3,7 +3,16 @@
 class AuthController {
     public static function login(): void {
         if (current_user()) {
-            $target = current_user()['role'] === 'admin' ? '/dashboard_admin' : '/dashboard_user';
+            switch (current_user()['role']) {
+                case 'superadmin':
+                    $target = '/dashboard_superadmin';
+                    break;
+                case 'admin':
+                    $target = '/dashboard_admin';
+                    break;
+                default:
+                    $target = '/dashboard_user';
+            }
             header('Location: ' . $target);
             exit;
         }
@@ -18,7 +27,18 @@ class AuthController {
 
             if ($user && password_verify($password, $user['password_hash'])) {
                 login_user($user);
-                $target = $user['role'] === 'admin' ? '/dashboard_admin' : '/dashboard_user';
+
+                switch ($user['role']) {
+                    case 'superadmin':
+                        $target = '/dashboard_superadmin';
+                        break;
+                    case 'admin':
+                        $target = '/dashboard_admin';
+                        break;
+                    default:
+                        $target = '/dashboard_user';
+                }
+
                 header('Location: ' . $target);
                 exit;
             }
