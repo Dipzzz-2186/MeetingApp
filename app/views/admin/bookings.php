@@ -548,6 +548,17 @@
                 padding: 12px 14px;
             }
         }
+        
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.9;
+            cursor: pointer;
+        }
+
+        /* Optional: hover biar konsisten */
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>

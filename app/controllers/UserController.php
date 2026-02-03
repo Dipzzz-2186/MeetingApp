@@ -20,15 +20,19 @@ class UserController {
     public static function booking(): void {
         require_login();
         global $pdo;
+
         refresh_user($pdo);
         $user = current_user();
 
-        $notice = null;
         $error = null;
+
+        // =====================
+        // POST (CREATE BOOKING)
+        // =====================
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $room_id = (int)($_POST['room_id'] ?? 0);
-            $start = normalize_datetime($_POST['start_time'] ?? '');
-            $end = normalize_datetime($_POST['end_time'] ?? '');
+            $start   = normalize_datetime($_POST['start_time'] ?? '');
+            $end     = normalize_datetime($_POST['end_time'] ?? '');
             $purpose = trim($_POST['purpose'] ?? '');
 
             if ($room_id <= 0 || $start === '' || $end === '') {
@@ -39,24 +43,43 @@ class UserController {
                 $error = 'Room sudah terbooking pada waktu tersebut.';
             } else {
                 Booking::create($pdo, [
-                    'admin_id' => $user['owner_admin_id'],
-                    'user_id' => $user['id'],
-                    'room_id' => $room_id,
+                    'admin_id'   => $user['owner_admin_id'],
+                    'user_id'    => $user['id'],
+                    'room_id'    => $room_id,
                     'start_time' => $start,
-                    'end_time' => $end,
-                    'purpose' => $purpose,
+                    'end_time'   => $end,
+                    'purpose'    => $purpose,
                     'created_at' => now_iso(),
                 ]);
-                $notice = 'Booking berhasil dibuat.';
+
+                $_SESSION['notice'] = 'Booking berhasil dibuat.';
+                header('Location: /user/booking');
+                exit;
             }
         }
 
-        $rooms = Room::availableByOwner($pdo, (int)$user['owner_admin_id']);
+        // =====================
+        // GET (AFTER REDIRECT)
+        // =====================
+        $notice = $_SESSION['notice'] ?? null;
+        unset($_SESSION['notice']);
+
+        $bookings = Booking::byUser(
+            $pdo,
+            (int)$user['id'],
+            (int)$user['owner_admin_id']
+        );
+
+        $rooms = Room::availableByOwner(
+            $pdo,
+            (int)$user['owner_admin_id']
+        );
 
         render_view('user/booking', [
-            'notice' => $notice,
-            'error' => $error,
-            'rooms' => $rooms,
+            'notice'   => $notice,
+            'error'    => $error,
+            'rooms'    => $rooms,
+            'bookings' => $bookings,
         ], 'Booking User');
     }
 
