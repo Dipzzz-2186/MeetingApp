@@ -47,6 +47,10 @@ function refresh_user(PDO $pdo): void {
 
 
 function require_login(): void {
+    global $pdo;
+    if ($pdo && current_user()) {
+        refresh_user($pdo);
+    }
     if (!current_user()) {
         header('Location: /login');
         exit;

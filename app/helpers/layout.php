@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 
 function render_header(string $title, string $body_class = ''): void {
+    global $pdo;
+    if ($pdo && current_user()) {
+        refresh_user($pdo);
+    }
     $user = current_user();
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     $path = rtrim($path, '/');

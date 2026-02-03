@@ -12,6 +12,10 @@ require_once __DIR__ . '/../app/controllers/AdminController.php';
 require_once __DIR__ . '/../app/controllers/UserController.php';
 require_once __DIR__ . '/../app/controllers/SuperAdminController.php';
 
+if (current_user()) {
+    refresh_user($pdo);
+}
+
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = rtrim($path, '/');
 if ($path === '') {

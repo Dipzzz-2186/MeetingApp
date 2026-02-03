@@ -356,14 +356,13 @@
                 <div class="admin-badge">MeetFlow</div>
             </div>
             
-            <?php if (!empty($plan_message)): ?>
-                <div class="alert error">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <?php echo htmlspecialchars($plan_message); ?>
-                </div>
-            <?php endif; ?>
-            
             <?php if (!empty($blocked)): ?>
+                <?php if (!empty($plan_message)): ?>
+                    <div class="alert error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <?php echo htmlspecialchars($plan_message); ?>
+                    </div>
+                <?php endif; ?>
                 <div class="alert warning">
                     <i class="fas fa-ban"></i>
                     Akses scheduling diblokir karena masa trial/pembayaran habis.
@@ -386,32 +385,34 @@
             </div>
         </div>
         
-        <div class="card admin-card">
-            <div class="admin-head">
-                <div>
-                    <p class="admin-kicker">Subscription</p>
-                    <h2>Kelola Paket</h2>
+        <?php if (!empty($blocked)): ?>
+            <div class="card admin-card">
+                <div class="admin-head">
+                    <div>
+                        <p class="admin-kicker">Subscription</p>
+                        <h2>Kelola Paket</h2>
+                    </div>
                 </div>
+                
+                <form method="post" class="admin-form" data-allow-plan>
+                    <input type="hidden" name="action" value="mark_paid">
+                    <button class="secondary" type="submit">
+                        <i class="fas fa-credit-card"></i>
+                        Bayar / Aktifkan 30 Hari
+                    </button>
+                </form>
+                
+                <form method="post" class="admin-form" data-allow-plan>
+                    <input type="hidden" name="action" value="extend_paid">
+                    <label>Atur Tanggal Paid Until</label>
+                    <input type="datetime-local" name="paid_until">
+                    <button type="submit">
+                        <i class="fas fa-save"></i>
+                        Simpan
+                    </button>
+                </form>
             </div>
-            
-            <form method="post" class="admin-form" data-allow-plan>
-                <input type="hidden" name="action" value="mark_paid">
-                <button class="secondary" type="submit">
-                    <i class="fas fa-credit-card"></i>
-                    Bayar / Aktifkan 30 Hari
-                </button>
-            </form>
-            
-            <form method="post" class="admin-form" data-allow-plan>
-                <input type="hidden" name="action" value="extend_paid">
-                <label>Atur Tanggal Paid Until</label>
-                <input type="datetime-local" name="paid_until">
-                <button type="submit">
-                    <i class="fas fa-save"></i>
-                    Simpan
-                </button>
-            </form>
-        </div>
+        <?php endif; ?>
     </div>
 
     <div class="card admin-card admin-table">
