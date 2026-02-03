@@ -47,4 +47,25 @@ class Booking {
         $stmt->execute([':uid' => $userId, ':admin_id' => $adminId]);
         return $stmt->fetchAll();
     }
+    
+    public static function getAllByAdmin(PDO $pdo, int $adminId): array
+    {
+        $stmt = $pdo->prepare("
+            SELECT 
+                b.id,
+                b.start_time,
+                b.end_time,
+                u.name AS booked_by,
+                r.name AS room_name
+            FROM bookings b
+            JOIN users u ON u.id = b.user_id
+            JOIN rooms r ON r.id = b.room_id
+            WHERE b.admin_id = :admin_id
+            ORDER BY b.start_time ASC
+        ");
+        $stmt->execute([
+            ':admin_id' => $adminId
+        ]);
+        return $stmt->fetchAll();
+    }
 }

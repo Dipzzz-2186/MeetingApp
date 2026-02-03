@@ -38,8 +38,10 @@ function render_header(string $title, string $body_class = ''): void {
             echo '<a href="/rooms">Add Room</a>';
             echo '<a href="/bookings">Scheduling</a>';
         } else {
-            echo '<a href="/booking_user">Booking</a>';
+            echo '<a href="/booking_user"' . ($is_active('/booking_user') ? ' class="active"' : '') . '>Booking</a>';
+            echo '<a href="/user/schedules"' . ($is_active('/user/schedules') ? ' class="active"' : '') . '>Schedule</a>';
         }
+
         echo '<a href="/logout" class="ghost">Logout</a>';
         echo '</nav>';
     } else {
@@ -56,6 +58,11 @@ function render_header(string $title, string $body_class = ''): void {
         $icon_users = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19a5 5 0 0 1 9 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M13.5 19a4 4 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
         $icon_room = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 20v-6h10v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="15.5" cy="11" r="0.8" fill="currentColor"/></svg>';
         $icon_book = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4v4M16 4v4M4 10h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        $icon_schedule = '<svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M8 2v4M16 2v4M3 9h18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M7 13h4M7 17h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>';
         $icon_logout = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7v-2a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 12h9M16 8l3.5 4L16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
         echo '<nav class="tabbar" aria-label="Primary">';
@@ -69,8 +76,13 @@ function render_header(string $title, string $body_class = ''): void {
             echo '<a class="tab' . ($is_active('/rooms') ? ' active' : '') . '" href="/rooms">' . $icon_room . '<span>Rooms</span></a>';
             echo '<a class="tab' . ($is_active('/bookings') ? ' active' : '') . '" href="/bookings">' . $icon_book . '<span>Schedule</span></a>';
         } else {
-            echo '<a class="tab' . ($is_active('/booking_user') ? ' active' : '') . '" href="/booking_user">' . $icon_book . '<span>Booking</span></a>';
+            echo '<a class="tab' . ($is_active('/booking_user') ? ' active' : '') . '" href="/booking_user">'
+                . $icon_book . '<span>Booking</span></a>';
+
+            echo '<a class="tab' . ($is_active('/user/schedules') ? ' active' : '') . '" href="/user/schedules">'
+                . $icon_schedule . '<span>Schedule</span></a>';
         }
+
         echo '<a class="tab" href="/logout">' . $icon_logout . '<span>Logout</span></a>';
         echo '</nav>';
     }

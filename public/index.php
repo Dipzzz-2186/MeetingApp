@@ -28,6 +28,7 @@ $routes = [
     '/rooms' => ['AdminController', 'rooms'],
     '/bookings' => ['AdminController', 'bookings'],
     '/booking_user' => ['UserController', 'booking'],
+    '/user/schedules' => ['UserController', 'schedules'],
 ];
 
 if (!isset($routes[$path])) {
