@@ -491,6 +491,100 @@
             color: var(--ink);
         }
 
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px 0;
+            border-top: 1px solid var(--stroke);
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.7);
+            color: var(--ink);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(247, 200, 66, 0.1);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #1a1a1a;
+        }
+
+        .page-numbers {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-number {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.7);
+            color: var(--ink);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .page-number:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(247, 200, 66, 0.1);
+        }
+
+        .page-number.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #1a1a1a;
+        }
+
+        .page-number.dots {
+            border: none;
+            background: transparent;
+            cursor: default;
+            pointer-events: none;
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -610,6 +704,26 @@
                 flex-direction: row;
                 justify-content: flex-end;
             }
+
+            .pagination-container {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .pagination-info {
+                text-align: center;
+            }
+
+            .pagination-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .page-numbers {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -656,7 +770,6 @@
             cursor: pointer;
         }
 
-        /* Optional: hover biar konsisten */
         input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
             opacity: 1;
         }
@@ -666,7 +779,7 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> Scheduling & Booking</h1>
-            <a href="/dashboard" class="back-btn">
+            <a href="/dashboard_admin" class="back-btn">
                 <i class="fas fa-arrow-left"></i>
                 Kembali ke Dashboard
             </a>
@@ -798,7 +911,7 @@
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="bookingTableBody">
                                 <?php foreach ($bookings as $row): 
                                     // Hitung durasi dan status dengan error handling
                                     try {
@@ -835,7 +948,8 @@
                                                 ($status == 'ongoing' ? 'Berlangsung' : 'Selesai');
                                 ?>
                                     <tr data-status="<?php echo $status; ?>" 
-                                        data-date="<?php echo $start->format('Y-m-d'); ?>">
+                                        data-date="<?php echo $start->format('Y-m-d'); ?>"
+                                        class="booking-row">
                                         <td data-label="User & Room">
                                             <div style="display: flex; align-items: center; gap: 12px;">
                                                 <div class="user-avatar">
@@ -905,12 +1019,31 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            Menampilkan <span id="currentStart">1</span> - <span id="currentEnd">5</span> 
+                            dari <span id="totalItems">0</span> booking
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">
+                                <i class="fas fa-chevron-left"></i>
+                                Sebelumnya
+                            </button>
+                            <div class="page-numbers" id="pageNumbers"></div>
+                            <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">
+                                Selanjutnya
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
                     
                     <!-- Stats Summary -->
                     <div class="stats-grid">
                         <div class="stat-card" style="background: rgba(87, 255, 117, 0.1); border-color: rgba(87, 255, 117, 0.3);">
                             <div class="stat-label" style="color: var(--success);">AKAN DATANG</div>
-                            <div class="stat-value">
+                            <div class="stat-value" id="stat-upcoming">
                                 <?php 
                                 $upcomingCount = 0;
                                 foreach ($bookings as $row) {
@@ -925,7 +1058,7 @@
                         
                         <div class="stat-card" style="background: rgba(87, 184, 255, 0.1); border-color: rgba(87, 184, 255, 0.3);">
                             <div class="stat-label" style="color: var(--info);">BERLANGSUNG</div>
-                            <div class="stat-value">
+                            <div class="stat-value" id="stat-ongoing">
                                 <?php 
                                 $ongoingCount = 0;
                                 foreach ($bookings as $row) {
@@ -941,7 +1074,7 @@
                         
                         <div class="stat-card" style="background: rgba(154, 160, 170, 0.1); border-color: rgba(154, 160, 170, 0.3);">
                             <div class="stat-label" style="color: var(--muted);">SELESAI</div>
-                            <div class="stat-value">
+                            <div class="stat-value" id="stat-completed">
                                 <?php 
                                 $completedCount = 0;
                                 foreach ($bookings as $row) {
@@ -956,7 +1089,7 @@
                         
                         <div class="stat-card" style="background: rgba(247, 200, 66, 0.1); border-color: rgba(247, 200, 66, 0.3);">
                             <div class="stat-label" style="color: var(--accent);">TOTAL</div>
-                            <div class="stat-value">
+                            <div class="stat-value" id="stat-total">
                                 <?php echo count($bookings); ?>
                             </div>
                         </div>
@@ -967,12 +1100,20 @@
     </div>
     
 <script>
+    // Pagination variables
+    let currentPage = 1;
+    const itemsPerPage = 5;
+    let currentFilter = 'all';
+
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const startInput = document.getElementById('start_time');
         const endInput = document.getElementById('end_time');
         const startDisplay = document.getElementById('start_time_display');
         const endDisplay = document.getElementById('end_time_display');
+        
+        // Initialize pagination
+        initializePagination();
         
         // Format tanggal untuk display
         function formatDateTimeDisplay(dateString) {
@@ -1092,14 +1233,6 @@
                 return false;
             }
             
-            // Validasi minimal 30 menit dari sekarang
-            // const minStartTime = new Date(now.getTime() + 30 * 60 * 1000);
-            // if (start < minStartTime) {
-            //     e.preventDefault();
-            //     showAlert('Booking harus minimal 30 menit dari sekarang.', 'error');
-            //     return false;
-            // }
-            
             // Add loading state
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
@@ -1109,117 +1242,252 @@
             return true;
         });
         
-        // Filter functionality
-        window.filterBookings = function(filter) {
-            const rows = document.querySelectorAll('.table tbody tr');
-            const filterBtns = document.querySelectorAll('.filter-btn');
-            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-            
-            // Update active button
-            filterBtns.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            rows.forEach(row => {
-                const status = row.getAttribute('data-status');
-                const date = row.getAttribute('data-date');
-                
-                let show = true;
-                
-                switch(filter) {
-                    case 'upcoming':
-                        show = status === 'upcoming';
-                        break;
-                    case 'ongoing':
-                        show = status === 'ongoing';
-                        break;
-                    case 'completed':
-                        show = status === 'completed';
-                        break;
-                    case 'today':
-                        show = date === today;
-                        break;
-                    case 'all':
-                    default:
-                        show = true;
-                }
-                
-                row.style.display = show ? '' : 'none';
-            });
-            
-            // Update stat counts after filtering
-            updateFilteredStats(filter);
-        };
-        
-        // Fungsi untuk update stats berdasarkan filter
-        function updateFilteredStats(filter) {
-            const rows = document.querySelectorAll('.table tbody tr');
-            let upcomingCount = 0;
-            let ongoingCount = 0;
-            let completedCount = 0;
-            let totalCount = 0;
-            
-            rows.forEach(row => {
-                if (row.style.display !== 'none') {
-                    const status = row.getAttribute('data-status');
-                    totalCount++;
-                    
-                    if (status === 'upcoming') upcomingCount++;
-                    if (status === 'ongoing') ongoingCount++;
-                    if (status === 'completed') completedCount++;
-                }
-            });
-            
-            // Update stats display
-            const upcomingStat = document.getElementById('stat-upcoming');
-            const ongoingStat = document.getElementById('stat-ongoing');
-            const completedStat = document.getElementById('stat-completed');
-            const totalStat = document.getElementById('stat-total');
-            
-            if (upcomingStat) upcomingStat.textContent = upcomingCount;
-            if (ongoingStat) ongoingStat.textContent = ongoingCount;
-            if (completedStat) completedStat.textContent = completedCount;
-            if (totalStat) totalStat.textContent = totalCount;
-        }
-        
-        // Booking actions
-        window.viewBooking = function(bookingId) {
-            alert(`Melihat detail booking ID: ${bookingId}\n\nDalam implementasi nyata, ini akan membuka modal detail.`);
-        };
-        
-        window.editBooking = function(bookingId) {
-            alert(`Edit booking ID: ${bookingId}\n\nDalam implementasi nyata, ini akan membuka form edit.`);
-        };
-        
-        window.deleteBooking = function(bookingId) {
-            if (confirm('Apakah Anda yakin ingin membatalkan booking ini?\n\nData booking akan dihapus permanen.')) {
-                // Kirim AJAX request (contoh implementasi)
-                fetch(`/booking/${bookingId}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Booking berhasil dibatalkan!', 'success');
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        showAlert(data.error || 'Gagal membatalkan booking.', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('Terjadi kesalahan.', 'error');
-                });
-            }
-        };
-        
         // Cegah form resubmission warning
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.pathname + window.location.search);
         }
     });
+
+    // Pagination functions
+    function initializePagination() {
+        updatePagination();
+    }
+
+    function updatePagination() {
+        // Get ALL rows first
+        const allRows = document.querySelectorAll('.booking-row');
+        
+        // First, show all rows temporarily to check filter
+        allRows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const date = row.getAttribute('data-date');
+            const today = new Date().toISOString().slice(0, 10);
+            
+            let show = true;
+            
+            switch(currentFilter) {
+                case 'upcoming':
+                    show = status === 'upcoming';
+                    break;
+                case 'ongoing':
+                    show = status === 'ongoing';
+                    break;
+                case 'completed':
+                    show = status === 'completed';
+                    break;
+                case 'today':
+                    show = date === today;
+                    break;
+                case 'all':
+                default:
+                    show = true;
+            }
+            
+            // Mark rows based on filter (using data attribute)
+            row.setAttribute('data-filtered', show ? 'true' : 'false');
+        });
+        
+        // Get visible rows after filter
+        const visibleRows = Array.from(allRows).filter(row => row.getAttribute('data-filtered') === 'true');
+        const totalItems = visibleRows.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        // Update info text
+        const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+        const end = Math.min(currentPage * itemsPerPage, totalItems);
+        
+        document.getElementById('currentStart').textContent = start;
+        document.getElementById('currentEnd').textContent = end;
+        document.getElementById('totalItems').textContent = totalItems;
+        
+        // Show/hide rows for current page
+        allRows.forEach(row => {
+            if (row.getAttribute('data-filtered') === 'false') {
+                row.style.display = 'none';
+            } else {
+                // This row passes the filter, now check pagination
+                const indexInVisible = visibleRows.indexOf(row);
+                const rowPage = Math.floor(indexInVisible / itemsPerPage) + 1;
+                
+                if (rowPage === currentPage) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+        
+        // Update page numbers
+        renderPageNumbers(totalPages);
+        
+        // Update prev/next buttons
+        document.getElementById('prevBtn').disabled = currentPage === 1;
+        document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+        
+        // Show/hide pagination container - hanya tampilkan jika data lebih dari itemsPerPage
+        const paginationContainer = document.querySelector('.pagination-container');
+        if (totalItems <= itemsPerPage) {
+            paginationContainer.style.display = 'none';
+        } else {
+            paginationContainer.style.display = 'flex';
+        }
+    }
+
+    function renderPageNumbers(totalPages) {
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        pageNumbersContainer.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        // Show max 5 page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        // Adjust if we're near the end
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        // First page
+        if (startPage > 1) {
+            addPageNumber(1);
+            if (startPage > 2) {
+                addPageDots();
+            }
+        }
+        
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            addPageNumber(i);
+        }
+        
+        // Last page
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                addPageDots();
+            }
+            addPageNumber(totalPages);
+        }
+    }
+
+    function addPageNumber(pageNum) {
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        const pageBtn = document.createElement('button');
+        pageBtn.className = 'page-number' + (pageNum === currentPage ? ' active' : '');
+        pageBtn.textContent = pageNum;
+        pageBtn.onclick = () => goToPage(pageNum);
+        pageNumbersContainer.appendChild(pageBtn);
+    }
+
+    function addPageDots() {
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        const dots = document.createElement('span');
+        dots.className = 'page-number dots';
+        dots.textContent = '...';
+        pageNumbersContainer.appendChild(dots);
+    }
+
+    function goToPage(pageNum) {
+        currentPage = pageNum;
+        updatePagination();
+    }
+
+    function changePage(direction) {
+        const allRows = document.querySelectorAll('.booking-row');
+        const visibleRows = Array.from(allRows).filter(row => row.getAttribute('data-filtered') === 'true');
+        const totalPages = Math.ceil(visibleRows.length / itemsPerPage);
+        
+        currentPage += direction;
+        currentPage = Math.max(1, Math.min(currentPage, totalPages));
+        updatePagination();
+    }
+
+    // Filter functionality
+    window.filterBookings = function(filter) {
+        const rows = document.querySelectorAll('.booking-row');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        
+        // Update active button
+        filterBtns.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Update current filter
+        currentFilter = filter;
+        
+        // Reset to page 1 when filtering
+        currentPage = 1;
+        
+        // Update pagination after filtering (this will handle the display logic)
+        updatePagination();
+        
+        // Update stat counts after filtering
+        updateFilteredStats(filter);
+    };
+    
+    // Fungsi untuk update stats berdasarkan filter
+    function updateFilteredStats(filter) {
+        const rows = document.querySelectorAll('.booking-row');
+        let upcomingCount = 0;
+        let ongoingCount = 0;
+        let completedCount = 0;
+        let totalCount = 0;
+        
+        rows.forEach(row => {
+            if (row.getAttribute('data-filtered') === 'true') {
+                const status = row.getAttribute('data-status');
+                totalCount++;
+                
+                if (status === 'upcoming') upcomingCount++;
+                if (status === 'ongoing') ongoingCount++;
+                if (status === 'completed') completedCount++;
+            }
+        });
+        
+        // Update stats display
+        const upcomingStat = document.getElementById('stat-upcoming');
+        const ongoingStat = document.getElementById('stat-ongoing');
+        const completedStat = document.getElementById('stat-completed');
+        const totalStat = document.getElementById('stat-total');
+        
+        if (upcomingStat) upcomingStat.textContent = upcomingCount;
+        if (ongoingStat) ongoingStat.textContent = ongoingCount;
+        if (completedStat) completedStat.textContent = completedCount;
+        if (totalStat) totalStat.textContent = totalCount;
+    }
+    
+    // Booking actions
+    window.viewBooking = function(bookingId) {
+        alert(`Melihat detail booking ID: ${bookingId}\n\nDalam implementasi nyata, ini akan membuka modal detail.`);
+    };
+    
+    window.editBooking = function(bookingId) {
+        alert(`Edit booking ID: ${bookingId}\n\nDalam implementasi nyata, ini akan membuka form edit.`);
+    };
+    
+    window.deleteBooking = function(bookingId) {
+        if (confirm('Apakah Anda yakin ingin membatalkan booking ini?\n\nData booking akan dihapus permanen.')) {
+            // Kirim AJAX request (contoh implementasi)
+            fetch(`/booking/${bookingId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Booking berhasil dibatalkan!', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert(data.error || 'Gagal membatalkan booking.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Terjadi kesalahan.', 'error');
+            });
+        }
+    };
     
     // Helper function untuk menampilkan alert
     function showAlert(message, type) {
