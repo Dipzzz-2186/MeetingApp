@@ -387,6 +387,58 @@
             background: rgba(255, 87, 87, 0.1);
         }
 
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--stroke);
+        }
+
+        .pagination-btn {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.7);
+            color: var(--muted);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 500;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(247, 200, 66, 0.1);
+        }
+
+        .pagination-btn.active {
+            background: var(--accent);
+            color: #1a1a1a;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0 15px;
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -416,6 +468,17 @@
             .table th, .table td {
                 padding: 12px 10px;
             }
+            
+            .pagination {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .pagination-info {
+                margin: 10px 0;
+                width: 100%;
+                text-align: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -433,6 +496,12 @@
             
             input, select, button[type="submit"] {
                 padding: 12px 14px;
+            }
+            
+            .pagination-btn {
+                min-width: 32px;
+                height: 32px;
+                font-size: 13px;
             }
         }
     </style>
@@ -505,6 +574,22 @@
             <div class="card">
                 <h2><i class="fas fa-list"></i> Daftar User</h2>
                 
+                <?php 
+                // Konfigurasi pagination
+                $itemsPerPage = 5;
+                $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                $totalUsers = count($users);
+                $totalPages = ceil($totalUsers / $itemsPerPage);
+                
+                // Validasi page number
+                if ($currentPage < 1) $currentPage = 1;
+                if ($currentPage > $totalPages) $currentPage = $totalPages;
+                
+                // Potong data untuk halaman saat ini
+                $startIndex = ($currentPage - 1) * $itemsPerPage;
+                $paginatedUsers = array_slice($users, $startIndex, $itemsPerPage);
+                ?>
+                
                 <?php if (!$users): ?>
                     <div class="empty-state">
                         <i class="fas fa-users-slash"></i>
@@ -522,7 +607,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($users as $row): ?>
+                                <?php foreach ($paginatedUsers as $row): ?>
                                     <tr>
                                         <td>
                                             <div class="user-info">
@@ -558,15 +643,79 @@
                         </table>
                     </div>
                     
+                    <!-- Pagination -->
+                    <?php if ($totalPages > 1): ?>
+                    <div class="pagination">
+                        <!-- Previous Button -->
+                        <button class="pagination-btn" 
+                                onclick="goToPage(<?php echo $currentPage - 1; ?>)" 
+                                <?php echo $currentPage <= 1 ? 'disabled' : ''; ?>>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        
+                        <!-- Page Numbers -->
+                        <?php 
+                        // Tampilkan maksimal 5 halaman di sekitar current page
+                        $startPage = max(1, $currentPage - 2);
+                        $endPage = min($totalPages, $currentPage + 2);
+                        
+                        // Jika di awal, pastikan tampil 5 halaman
+                        if ($currentPage <= 3) {
+                            $startPage = 1;
+                            $endPage = min(5, $totalPages);
+                        }
+                        
+                        // Jika di akhir, pastikan tampil 5 halaman
+                        if ($currentPage >= $totalPages - 2) {
+                            $startPage = max(1, $totalPages - 4);
+                            $endPage = $totalPages;
+                        }
+                        
+                        // Tampilkan tombol pertama jika tidak termasuk
+                        if ($startPage > 1): ?>
+                            <button class="pagination-btn" onclick="goToPage(1)">1</button>
+                            <?php if ($startPage > 2): ?>
+                                <span class="pagination-btn" style="border: none; background: transparent; cursor: default;">...</span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
+                            <button class="pagination-btn <?php echo $page == $currentPage ? 'active' : ''; ?>" 
+                                    onclick="goToPage(<?php echo $page; ?>)">
+                                <?php echo $page; ?>
+                            </button>
+                        <?php endfor; ?>
+                        
+                        <!-- Tampilkan tombol terakhir jika tidak termasuk -->
+                        <?php if ($endPage < $totalPages): ?>
+                            <?php if ($endPage < $totalPages - 1): ?>
+                                <span class="pagination-btn" style="border: none; background: transparent; cursor: default;">...</span>
+                            <?php endif; ?>
+                            <button class="pagination-btn" onclick="goToPage(<?php echo $totalPages; ?>)">
+                                <?php echo $totalPages; ?>
+                            </button>
+                        <?php endif; ?>
+                        
+                        <!-- Next Button -->
+                        <button class="pagination-btn" 
+                                onclick="goToPage(<?php echo $currentPage + 1; ?>)" 
+                                <?php echo $currentPage >= $totalPages ? 'disabled' : ''; ?>>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- Info Pagination -->
                     <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px;">
                         <div>
                             <i class="fas fa-users"></i>
-                            Total: <?php echo count($users); ?> user
+                            Menampilkan <?php echo min($itemsPerPage, count($paginatedUsers)); ?> dari <?php echo $totalUsers; ?> user
+                            (Halaman <?php echo $currentPage; ?> dari <?php echo $totalPages; ?>)
                         </div>
                         <div style="display: flex; gap: 15px;">
-                            <button class="action-btn">
-                                <i class="fas fa-filter"></i>
-                                Filter
+                            <button class="action-btn" onclick="window.location.href='?page=1'">
+                                <i class="fas fa-redo"></i>
+                                Refresh
                             </button>
                         </div>
                     </div>
@@ -650,7 +799,26 @@
                     alertDiv.remove();
                 }, 5000);
             }
+            
+            // Cegah form resubmission warning
+            if (window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.pathname + window.location.search);
+            }
         });
+        
+        // Fungsi untuk navigasi pagination
+        function goToPage(page) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', page);
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
+        }
+        
+        // Fungsi untuk refresh tanpa parameter page
+        function refreshPage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('page');
+            window.location.href = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        }
     </script>
 </body>
 </html>

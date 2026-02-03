@@ -38,7 +38,7 @@ class AdminController {
         ], 'Dashboard Admin');
     }
 
-public static function users(): void {
+    public static function users(): void {
         require_admin();
         global $pdo;
         refresh_user($pdo);
@@ -59,7 +59,6 @@ public static function users(): void {
             $password = $_POST['password'] ?? '';
 
             if ($name === '' || $email === '' || $password === '') {
-                // Simpan error di session untuk ditampilkan setelah redirect
                 $_SESSION['error'] = 'Semua field wajib diisi.';
             } else {
                 try {
@@ -70,7 +69,6 @@ public static function users(): void {
                         'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                         'created_at' => now_iso(),
                     ]);
-                    // Simpan notice di session untuk ditampilkan setelah redirect
                     $_SESSION['notice'] = 'User berhasil ditambahkan.';
                 } catch (PDOException $e) {
                     $_SESSION['error'] = 'Email sudah digunakan.';
@@ -78,7 +76,7 @@ public static function users(): void {
             }
             
             // Redirect ke halaman yang sama dengan metode GET
-            header('Location: /users');
+            header('Location: ' . $_SERVER['REQUEST_URI']);
             exit;
         }
         
