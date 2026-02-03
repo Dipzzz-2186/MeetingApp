@@ -297,12 +297,6 @@
             border: 1px solid rgba(154, 160, 170, 0.3);
         }
 
-        .role-badge.editor {
-            background: rgba(87, 255, 117, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(87, 255, 117, 0.3);
-        }
-
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -600,7 +594,6 @@
                             <select name="role" required>
                                 <option value="user">User</option>
                                 <option value="admin">Admin</option>
-                                <option value="editor">Editor</option>
                             </select>
                         </div>
                     </div>
