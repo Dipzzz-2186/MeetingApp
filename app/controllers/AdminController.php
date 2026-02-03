@@ -207,25 +207,96 @@ class AdminController {
         
         // Tangani form submission dengan POST
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name'] ?? '');
-            $capacity = (int)($_POST['capacity'] ?? 0);
+            // Handle room creation
+            if (!isset($_POST['action']) || $_POST['action'] === 'create') {
+                $name = trim($_POST['name'] ?? '');
+                $capacity = (int)($_POST['capacity'] ?? 0);
 
-            if ($name === '' || $capacity <= 0) {
-                // Simpan error di session
-                $_SESSION['error'] = 'Nama room dan kapasitas wajib diisi.';
-            } elseif ($capacity > 100) {
-                $_SESSION['error'] = 'Kapasitas maksimal 100 orang.';
-            } else {
-                try {
-                    Room::create($pdo, [
-                        'owner_admin_id' => $user['id'],
-                        'name' => $name,
-                        'capacity' => $capacity,
-                        'created_at' => now_iso(),
-                    ]);
-                    $_SESSION['notice'] = 'Room berhasil ditambahkan.';
-                } catch (PDOException $e) {
-                    $_SESSION['error'] = 'Nama room sudah digunakan.';
+                if ($name === '' || $capacity <= 0) {
+                    $_SESSION['error'] = 'Nama room dan kapasitas wajib diisi.';
+                } elseif ($capacity > 100) {
+                    $_SESSION['error'] = 'Kapasitas maksimal 100 orang.';
+                } else {
+                    try {
+                        Room::create($pdo, [
+                            'owner_admin_id' => $user['id'],
+                            'name' => $name,
+                            'capacity' => $capacity,
+                            'created_at' => now_iso(),
+                        ]);
+                        $_SESSION['notice'] = 'Room berhasil ditambahkan.';
+                    } catch (PDOException $e) {
+                        $_SESSION['error'] = 'Nama room sudah digunakan.';
+                    }
+                }
+            }
+            
+            // Handle room update
+            elseif ($_POST['action'] === 'update') {
+                $id = (int)($_POST['id'] ?? 0);
+                $name = trim($_POST['name'] ?? '');
+                $capacity = (int)($_POST['capacity'] ?? 0);
+                
+                if ($id <= 0 || $name === '' || $capacity <= 0) {
+                    $_SESSION['error'] = 'Data tidak valid.';
+                } elseif ($capacity > 100) {
+                    $_SESSION['error'] = 'Kapasitas maksimal 100 orang.';
+                } else {
+                    try {
+                        // Cek apakah room milik admin ini
+                        $stmt = $pdo->prepare("SELECT id FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                        $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
+                        
+                        if ($stmt->fetch()) {
+                            // Update room
+                            $stmt = $pdo->prepare("UPDATE rooms SET name = :name, capacity = :capacity WHERE id = :id");
+                            $stmt->execute([
+                                ':name' => $name,
+                                ':capacity' => $capacity,
+                                ':id' => $id
+                            ]);
+                            
+                            $_SESSION['notice'] = 'Room berhasil diperbarui.';
+                        } else {
+                            $_SESSION['error'] = 'Room tidak ditemukan.';
+                        }
+                    } catch (PDOException $e) {
+                        $_SESSION['error'] = 'Nama room sudah digunakan.';
+                    }
+                }
+            }
+            
+            // Handle room deletion
+            elseif ($_POST['action'] === 'delete') {
+                $id = (int)($_POST['id'] ?? 0);
+                
+                if ($id > 0) {
+                    try {
+                        // Cek apakah room milik admin ini
+                        $stmt = $pdo->prepare("SELECT id FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                        $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
+                        
+                        if ($stmt->fetch()) {
+                            // Cek apakah ada booking aktif untuk room ini
+                            $stmt = $pdo->prepare("SELECT COUNT(*) as booking_count FROM bookings WHERE room_id = :room_id AND end_time > NOW()");
+                            $stmt->execute([':room_id' => $id]);
+                            $result = $stmt->fetch();
+                            
+                            if ($result['booking_count'] > 0) {
+                                $_SESSION['error'] = 'Tidak dapat menghapus room karena masih ada booking aktif.';
+                            } else {
+                                // Hapus room
+                                $stmt = $pdo->prepare("DELETE FROM rooms WHERE id = :id");
+                                $stmt->execute([':id' => $id]);
+                                
+                                $_SESSION['notice'] = 'Room berhasil dihapus.';
+                            }
+                        } else {
+                            $_SESSION['error'] = 'Room tidak ditemukan.';
+                        }
+                    } catch (PDOException $e) {
+                        $_SESSION['error'] = 'Gagal menghapus room.';
+                    }
                 }
             }
             
@@ -234,7 +305,28 @@ class AdminController {
             exit;
         }
         
-        // Ambil pesan dari session (jika ada)
+        // Handle GET requests for AJAX data
+        if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_room') {
+            $id = (int)($_GET['id'] ?? 0);
+            
+            if ($id > 0) {
+                $stmt = $pdo->prepare("SELECT id, name, capacity FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
+                $roomData = $stmt->fetch();
+                
+                if ($roomData) {
+                    header('Content-Type: application/json');
+                    echo json_encode($roomData);
+                    exit;
+                }
+            }
+            
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Room tidak ditemukan']);
+            exit;
+        }
+        
+        // Ambil pesan dari session
         if (isset($_SESSION['notice'])) {
             $notice = $_SESSION['notice'];
             unset($_SESSION['notice']);
@@ -253,7 +345,7 @@ class AdminController {
         // Hitung offset
         $offset = ($currentPage - 1) * $itemsPerPage;
         
-        // Query dengan LIMIT untuk pagination (sesuai schema)
+        // Query dengan LIMIT untuk pagination
         $stmt = $pdo->prepare("
             SELECT id, name, capacity, created_at 
             FROM rooms 
@@ -277,22 +369,6 @@ class AdminController {
         // Validasi page number
         if ($currentPage > $totalPages && $totalPages > 0) {
             $currentPage = $totalPages;
-        }
-
-        // Tambahkan status dummy untuk tampilan (opsional)
-        foreach ($rooms as &$room) {
-            $statuses = ['available', 'booked', 'maintenance'];
-            $room['status'] = $statuses[array_rand($statuses)];
-            // Tambahkan dummy equipment untuk demo
-            $equipmentOptions = [
-                'Proyektor, Whiteboard, AC',
-                'TV, Sound System',
-                'Papan Tulis, AC',
-                'Proyektor, Microphone',
-                'Whiteboard, Speaker'
-            ];
-            $room['equipment'] = $equipmentOptions[array_rand($equipmentOptions)];
-            $room['description'] = 'Ruangan meeting standar';
         }
 
         render_view('admin/rooms', [

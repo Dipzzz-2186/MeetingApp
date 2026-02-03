@@ -455,12 +455,96 @@
             margin: 0 15px;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--stroke);
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            z-index: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--accent);
+        }
+
+        .modal-title {
+            font-family: "Fraunces", serif;
+            font-size: 24px;
+            margin-bottom: 25px;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-title i {
+            color: var(--accent);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
             }
             to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
                 opacity: 1;
                 transform: translateY(0);
             }
@@ -537,6 +621,22 @@
                 color: var(--muted);
                 font-weight: 700;
             }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-width: 90%;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -561,16 +661,6 @@
                 height: 32px;
                 font-size: 13px;
             }
-            
-            .actions {
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .action-btn {
-                width: 100%;
-                justify-content: center;
-            }
         }
     </style>
 </head>
@@ -578,7 +668,7 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-door-closed"></i> Manajemen Ruangan</h1>
-            <a href="/dashboard" class="back-btn">
+            <a href="/dashboard_admin" class="back-btn">
                 <i class="fas fa-arrow-left"></i>
                 Kembali ke Dashboard
             </a>
@@ -604,6 +694,7 @@
                 <?php endif; ?>
                 
                 <form method="post" class="grid">
+                    <input type="hidden" name="action" value="create">
                     <div class="form-row">
                         <div>
                             <label><i class="fas fa-door-open"></i> Nama Ruangan</label>
@@ -657,7 +748,7 @@
                                     $capacityBadge = getCapacityBadge($row['capacity']);
                                     $createdDate = date('d/m/Y', strtotime($row['created_at']));
                                 ?>
-                                    <tr>
+                                    <tr data-room-id="<?php echo $row['id']; ?>">
                                         <td data-label="Ruangan">
                                             <div class="room-info">
                                                 <div class="room-icon">
@@ -681,11 +772,16 @@
                                         </td>
                                         <td data-label="Aksi">
                                             <div class="actions">
-                                                <button class="action-btn edit" onclick="editRoom(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['name']); ?>', <?php echo $row['capacity']; ?>)">
+                                                <button class="action-btn edit" 
+                                                        data-room-id="<?php echo $row['id']; ?>"
+                                                        data-room-name="<?php echo htmlspecialchars($row['name']); ?>"
+                                                        data-room-capacity="<?php echo $row['capacity']; ?>">
                                                     <i class="fas fa-edit"></i>
                                                     Edit
                                                 </button>
-                                                <button class="action-btn delete" onclick="deleteRoom(<?php echo $row['id']; ?>)">
+                                                <button class="action-btn delete" 
+                                                        data-room-id="<?php echo $row['id']; ?>"
+                                                        data-room-name="<?php echo htmlspecialchars($row['name']); ?>">
                                                     <i class="fas fa-trash"></i>
                                                     Hapus
                                                 </button>
@@ -697,11 +793,74 @@
                         </table>
                     </div>
                     
+                    <!-- Pagination -->
+                    <?php if ($totalPages > 1): ?>
+                    <div class="pagination">
+                        <!-- Previous Button -->
+                        <button class="pagination-btn" 
+                                onclick="goToPage(<?php echo $currentPage - 1; ?>)" 
+                                <?php echo $currentPage <= 1 ? 'disabled' : ''; ?>>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        
+                        <!-- Page Numbers -->
+                        <?php 
+                        // Tampilkan maksimal 5 halaman di sekitar current page
+                        $startPage = max(1, $currentPage - 2);
+                        $endPage = min($totalPages, $currentPage + 2);
+                        
+                        // Jika di awal, pastikan tampil 5 halaman
+                        if ($currentPage <= 3) {
+                            $startPage = 1;
+                            $endPage = min(5, $totalPages);
+                        }
+                        
+                        // Jika di akhir, pastikan tampil 5 halaman
+                        if ($currentPage >= $totalPages - 2) {
+                            $startPage = max(1, $totalPages - 4);
+                            $endPage = $totalPages;
+                        }
+                        
+                        // Tampilkan tombol pertama jika tidak termasuk
+                        if ($startPage > 1): ?>
+                            <button class="pagination-btn" onclick="goToPage(1)">1</button>
+                            <?php if ($startPage > 2): ?>
+                                <span class="pagination-btn" style="border: none; background: transparent; cursor: default;">...</span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
+                            <button class="pagination-btn <?php echo $page == $currentPage ? 'active' : ''; ?>" 
+                                    onclick="goToPage(<?php echo $page; ?>)">
+                                <?php echo $page; ?>
+                            </button>
+                        <?php endfor; ?>
+                        
+                        <!-- Tampilkan tombol terakhir jika tidak termasuk -->
+                        <?php if ($endPage < $totalPages): ?>
+                            <?php if ($endPage < $totalPages - 1): ?>
+                                <span class="pagination-btn" style="border: none; background: transparent; cursor: default;">...</span>
+                            <?php endif; ?>
+                            <button class="pagination-btn" onclick="goToPage(<?php echo $totalPages; ?>)">
+                                <?php echo $totalPages; ?>
+                            </button>
+                        <?php endif; ?>
+                        
+                        <!-- Next Button -->
+                        <button class="pagination-btn" 
+                                onclick="goToPage(<?php echo $currentPage + 1; ?>)" 
+                                <?php echo $currentPage >= $totalPages ? 'disabled' : ''; ?>>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                    
                     <!-- Info Summary -->
                     <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px;">
                         <div>
                             <i class="fas fa-door-open"></i>
-                            Total: <?php echo count($rooms); ?> ruangan
+                            Halaman <?php echo $currentPage; ?> dari <?php echo $totalPages; ?>
+                            (Total: <?php echo $totalRooms; ?> ruangan)
                             <?php 
                             $totalCapacity = array_sum(array_column($rooms, 'capacity'));
                             if ($totalCapacity > 0): ?>
@@ -709,7 +868,7 @@
                             <?php endif; ?>
                         </div>
                         <div style="display: flex; gap: 15px;">
-                            <button class="action-btn" onclick="window.location.reload()">
+                            <button class="action-btn" onclick="refreshPage()">
                                 <i class="fas fa-redo"></i>
                                 Refresh
                             </button>
@@ -720,131 +879,435 @@
         </div>
     </div>
     
+    <!-- Modal Edit Room -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeEditModal">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <h2 class="modal-title">
+                <i class="fas fa-edit"></i> Edit Ruangan
+            </h2>
+            
+            <form id="editForm" method="post">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="id" id="editRoomId">
+                
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <label><i class="fas fa-door-open"></i> Nama Ruangan</label>
+                        <input type="text" name="name" id="editRoomName" placeholder="Contoh: Ruang Rapat Utama" required>
+                    </div>
+                    
+                    <div>
+                        <label><i class="fas fa-users"></i> Kapasitas</label>
+                        <input type="number" name="capacity" id="editRoomCapacity" min="1" max="100" placeholder="Jumlah orang" required>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" id="editSubmitBtn" style="flex: 1; background: var(--accent); color: #1a1a1a; border: none; padding: 15px; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <i class="fas fa-save"></i>
+                            Simpan Perubahan
+                        </button>
+                        <button type="button" id="cancelEdit" style="flex: 0 0 auto; padding: 15px 20px; border-radius: 10px; border: 1px solid var(--stroke); background: rgba(17, 21, 28, 0.7); color: var(--muted); font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s ease;">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal Delete Confirmation -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeDeleteModal">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 87, 87, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 2px solid rgba(255, 87, 87, 0.3);">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: var(--error);"></i>
+                </div>
+                <h3 style="font-family: 'Fraunces', serif; font-size: 20px; color: var(--ink); margin-bottom: 10px;">
+                    Hapus Ruangan
+                </h3>
+                <p style="color: var(--muted); font-size: 14px; line-height: 1.5;">
+                    Apakah Anda yakin ingin menghapus ruangan <span id="deleteRoomName" style="color: var(--ink); font-weight: 600;"></span>?
+                </p>
+                <p style="color: var(--error); font-size: 13px; margin-top: 10px; background: rgba(255, 87, 87, 0.1); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 87, 87, 0.2);">
+                    <i class="fas fa-info-circle"></i> Semua booking yang terkait juga akan dihapus.
+                </p>
+            </div>
+            
+            <form id="deleteForm" method="post">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" id="deleteRoomId">
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" id="deleteSubmitBtn" style="flex: 1; background: var(--error); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-trash"></i>
+                        Ya, Hapus
+                    </button>
+                    <button type="button" id="cancelDelete" style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--stroke); background: rgba(17, 21, 28, 0.7); color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
+            // Elements
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+            const editForm = document.getElementById('editForm');
+            const deleteForm = document.getElementById('deleteForm');
+            const closeEditModalBtn = document.getElementById('closeEditModal');
+            const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+            const cancelEditBtn = document.getElementById('cancelEdit');
+            const cancelDeleteBtn = document.getElementById('cancelDelete');
+            const editSubmitBtn = document.getElementById('editSubmitBtn');
+            const deleteSubmitBtn = document.getElementById('deleteSubmitBtn');
+            const editRoomNameInput = document.getElementById('editRoomName');
+            const editRoomCapacityInput = document.getElementById('editRoomCapacity');
             
-            // Form validation
-            form.addEventListener('submit', function(e) {
-                const capacityInput = document.querySelector('input[name="capacity"]');
-                const capacity = parseInt(capacityInput.value);
-                
-                if (capacity < 1 || capacity > 100) {
+            // State
+            let isLoading = false;
+            
+            // Edit button functionality
+            const editButtons = document.querySelectorAll('.action-btn.edit');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
                     e.preventDefault();
-                    showAlert('Kapasitas harus antara 1-100 orang.', 'error');
-                    return false;
-                }
-                
-                // Add loading state to submit button
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menambahkan...';
-                submitBtn.disabled = true;
-                
-                return true;
+                    if (isLoading) return;
+                    
+                    const roomId = this.getAttribute('data-room-id');
+                    const roomName = this.getAttribute('data-room-name');
+                    const roomCapacity = this.getAttribute('data-room-capacity');
+                    
+                    // Load room data via AJAX for more accurate data
+                    loadRoomData(roomId, roomName, roomCapacity);
+                });
             });
             
-            // Cegah form resubmission warning
+            // Function to load room data
+            async function loadRoomData(roomId, roomName, roomCapacity) {
+                // Show loading in modal
+                editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Memuat...';
+                editSubmitBtn.disabled = true;
+                
+                // Show modal first
+                editModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                try {
+                    // Try to load fresh data via AJAX
+                    const response = await fetch(`?ajax=get_room&id=${roomId}&_=${Date.now()}`);
+                    
+                    if (response.ok) {
+                        const roomData = await response.json();
+                        
+                        if (roomData.error) {
+                            // Fallback to data attributes
+                            document.getElementById('editRoomId').value = roomId;
+                            editRoomNameInput.value = roomName;
+                            editRoomCapacityInput.value = roomCapacity;
+                        } else {
+                            // Use fresh data from server
+                            document.getElementById('editRoomId').value = roomData.id;
+                            editRoomNameInput.value = roomData.name;
+                            editRoomCapacityInput.value = roomData.capacity;
+                        }
+                    } else {
+                        // Fallback to data attributes
+                        document.getElementById('editRoomId').value = roomId;
+                        editRoomNameInput.value = roomName;
+                        editRoomCapacityInput.value = roomCapacity;
+                    }
+                } catch (error) {
+                    console.error('Error loading room data:', error);
+                    // Fallback to data attributes
+                    document.getElementById('editRoomId').value = roomId;
+                    editRoomNameInput.value = roomName;
+                    editRoomCapacityInput.value = roomCapacity;
+                } finally {
+                    // Reset button
+                    editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+                    editSubmitBtn.disabled = false;
+                    isLoading = false;
+                }
+            }
+            
+            // Delete button functionality
+            const deleteButtons = document.querySelectorAll('.action-btn.delete');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const roomId = this.getAttribute('data-room-id');
+                    const roomName = this.getAttribute('data-room-name');
+                    
+                    // Populate delete modal
+                    document.getElementById('deleteRoomName').textContent = roomName;
+                    document.getElementById('deleteRoomId').value = roomId;
+                    
+                    // Show modal
+                    deleteModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+            
+            // Close modal functions
+            function closeEditModal() {
+                editModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+                editSubmitBtn.disabled = false;
+                editForm.reset();
+            }
+            
+            function closeDeleteModal() {
+                deleteModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                deleteSubmitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
+                deleteSubmitBtn.disabled = false;
+            }
+            
+            // Event listeners for modal close buttons
+            closeEditModalBtn.addEventListener('click', closeEditModal);
+            closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+            cancelEditBtn.addEventListener('click', closeEditModal);
+            cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+            
+            // Close modal when clicking outside
+            editModal.addEventListener('click', function(e) {
+                if (e.target === editModal) {
+                    closeEditModal();
+                }
+            });
+            
+            deleteModal.addEventListener('click', function(e) {
+                if (e.target === deleteModal) {
+                    closeDeleteModal();
+                }
+            });
+            
+            // Close modal with ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (editModal.style.display === 'flex') {
+                        closeEditModal();
+                    }
+                    if (deleteModal.style.display === 'flex') {
+                        closeDeleteModal();
+                    }
+                }
+            });
+            
+            // Edit form validation
+            editForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (isLoading) return;
+                
+                const capacity = parseInt(editRoomCapacityInput.value);
+                
+                if (capacity < 1 || capacity > 100) {
+                    showAlert('Kapasitas harus antara 1-100 orang.', 'error');
+                    return;
+                }
+                
+                if (editRoomNameInput.value.trim() === '') {
+                    showAlert('Nama ruangan tidak boleh kosong.', 'error');
+                    return;
+                }
+                
+                submitEditForm();
+            });
+            
+            // Function to submit edit form
+            function submitEditForm() {
+                isLoading = true;
+                
+                // Show loading state
+                editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menyimpan...';
+                editSubmitBtn.disabled = true;
+                
+                const formData = new FormData(editForm);
+                
+                // Submit form via AJAX
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data, 'text/html');
+                        const alert = doc.querySelector('.alert');
+                        
+                        if (alert) {
+                            showAlert(alert.textContent.trim(), alert.classList.contains('error') ? 'error' : 'success');
+                            closeEditModal();
+                            
+                            if (alert.classList.contains('success')) {
+                                setTimeout(() => {
+                                    refreshPage();
+                                }, 1500);
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Terjadi kesalahan saat menyimpan data.', 'error');
+                })
+                .finally(() => {
+                    isLoading = false;
+                });
+            }
+            
+            // Delete form submission
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (isLoading) return;
+                isLoading = true;
+                
+                // Show loading state
+                deleteSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menghapus...';
+                deleteSubmitBtn.disabled = true;
+                
+                const formData = new FormData(this);
+                
+                // Submit form via AJAX
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data, 'text/html');
+                        const alert = doc.querySelector('.alert');
+                        
+                        if (alert) {
+                            showAlert(alert.textContent.trim(), alert.classList.contains('error') ? 'error' : 'success');
+                            closeDeleteModal();
+                            
+                            if (alert.classList.contains('success')) {
+                                setTimeout(() => {
+                                    refreshPage();
+                                }, 1500);
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Terjadi kesalahan saat menghapus ruangan.', 'error');
+                })
+                .finally(() => {
+                    isLoading = false;
+                });
+            });
+            
+            // Main form submission (create room)
+            const mainForm = document.querySelector('form.grid');
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    const capacityInput = this.querySelector('input[name="capacity"]');
+                    const capacity = parseInt(capacityInput.value);
+                    
+                    if (capacity < 1 || capacity > 100) {
+                        e.preventDefault();
+                        showAlert('Kapasitas harus antara 1-100 orang.', 'error');
+                        return false;
+                    }
+                    
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menambahkan...';
+                    submitBtn.disabled = true;
+                    
+                    return true;
+                });
+            }
+            
+            // Helper function to show alerts
+            function showAlert(message, type) {
+                // Remove existing alerts
+                const existingAlerts = document.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                });
+                
+                // Create new alert
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert ${type}`;
+                alertDiv.innerHTML = `
+                    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
+                    ${message}
+                `;
+                
+                // Insert after the h1 in the first card
+                const card = document.querySelector('.card');
+                const h1 = card.querySelector('h1');
+                if (h1 && h1.parentNode) {
+                    h1.parentNode.insertBefore(alertDiv, h1.nextSibling);
+                }
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+            
+            // Prevent form resubmission warning
             if (window.history.replaceState) {
                 window.history.replaceState(null, null, window.location.pathname + window.location.search);
             }
         });
         
-        // Fungsi untuk edit ruangan
-        function editRoom(roomId, currentName, currentCapacity) {
-            const newName = prompt('Nama ruangan baru:', currentName);
-            if (newName === null) return;
-            
-            const newCapacity = prompt('Kapasitas baru:', currentCapacity);
-            if (newCapacity === null) return;
-            
-            if (newName.trim() === '') {
-                alert('Nama ruangan tidak boleh kosong!');
-                return;
-            }
-            
-            const capacityNum = parseInt(newCapacity);
-            if (isNaN(capacityNum) || capacityNum < 1 || capacityNum > 100) {
-                alert('Kapasitas harus angka antara 1-100!');
-                return;
-            }
-            
-            if (confirm(`Konfirmasi perubahan:\nNama: ${currentName} → ${newName}\nKapasitas: ${currentCapacity} → ${newCapacity}\n\nApakah Anda yakin?`)) {
-                // Kirim AJAX request untuk edit
-                fetch(`/room/${roomId}/edit`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: newName,
-                        capacity: capacityNum
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Ruangan berhasil diperbarui!', 'success');
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        showAlert(data.error || 'Gagal memperbarui ruangan.', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('Terjadi kesalahan.', 'error');
-                });
-            }
+        // Function for pagination navigation
+        function goToPage(page) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', page);
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
         }
         
-        function deleteRoom(roomId) {
-            if (confirm('Apakah Anda yakin ingin menghapus ruangan ini?\n\nSemua booking yang terkait juga akan dihapus.')) {
-                // Kirim AJAX request untuk delete
-                fetch(`/room/${roomId}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Ruangan berhasil dihapus!', 'success');
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        showAlert(data.error || 'Gagal menghapus ruangan.', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('Terjadi kesalahan.', 'error');
-                });
-            }
-        }
-        
-        // Helper function untuk menampilkan alert
-        function showAlert(message, type) {
-            // Remove existing alerts
-            const existingAlerts = document.querySelectorAll('.alert');
-            existingAlerts.forEach(alert => alert.remove());
-            
-            // Create new alert
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert ${type}`;
-            alertDiv.innerHTML = `
-                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
-                ${message}
-            `;
-            
-            // Insert after the h1
-            const card = document.querySelector('.card');
-            const h1 = card.querySelector('h1');
-            h1.insertAdjacentElement('afterend', alertDiv);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
+        // Function to refresh without page parameter
+        function refreshPage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('page');
+            window.location.href = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
         }
     </script>
 </body>
