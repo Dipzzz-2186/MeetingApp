@@ -498,6 +498,10 @@ label { font-weight: 600; font-size: 13px; }
   margin-top: 12px;
 }
 
+.modal-actions .secondary {
+  border-radius: 999px;
+}
+
 .auth-layout {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(320px, 380px) minmax(200px, 1fr);

@@ -72,4 +72,49 @@ document.addEventListener('DOMContentLoaded', () => {
       ro.observe(tabbar);
     }
   }
+
+  const planBlocked = document.body.dataset.planBlocked === '1';
+  const blockedModal = document.querySelector('[data-plan-blocked-modal]');
+  const closeBlockedBtns = document.querySelectorAll('[data-close-plan-blocked]');
+  const openBlocked = () => {
+    if (blockedModal) {
+      blockedModal.classList.add('open');
+    }
+  };
+  if (planBlocked) {
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (!link) {
+        return;
+      }
+      const href = link.getAttribute('href') || '';
+      if (link.hasAttribute('data-allow-plan') || href === '/logout' || href === '/dashboard_admin') {
+        return;
+      }
+      if (href.startsWith('mailto:') || href.startsWith('tel:') || link.target === '_blank') {
+        return;
+      }
+      e.preventDefault();
+      openBlocked();
+    });
+
+    document.addEventListener('submit', (e) => {
+      if (e.target && e.target.closest('[data-allow-plan]')) {
+        return;
+      }
+      e.preventDefault();
+      openBlocked();
+    });
+  }
+
+  if (closeBlockedBtns.length && blockedModal) {
+    closeBlockedBtns.forEach((btn) => {
+      btn.addEventListener('click', () => blockedModal.classList.remove('open'));
+    });
+    blockedModal.addEventListener('click', (e) => {
+      if (e.target === blockedModal) {
+        blockedModal.classList.remove('open');
+      }
+    });
+  }
 });

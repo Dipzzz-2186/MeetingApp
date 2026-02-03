@@ -28,6 +28,11 @@ function render_header(string $title, string $body_class = ''): void {
         $body_classes[] = 'has-tabbar';
     }
     $body_class_attr = $body_classes ? ' class="' . htmlspecialchars(implode(' ', $body_classes)) . '"' : '';
+    $body_data_attr = '';
+    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user)) {
+        $plan_message = admin_plan_message($user) ?? 'Akses terkunci karena masa trial/pembayaran habis.';
+        $body_data_attr = ' data-plan-blocked="1" data-plan-message="' . htmlspecialchars($plan_message) . '"';
+    }
     $main_class = 'container' . ($body_class !== '' ? ' container-' . $body_class : '');
     
     echo '<!doctype html><html lang="id"><head><meta charset="utf-8">';
@@ -37,7 +42,7 @@ function render_header(string $title, string $body_class = ''): void {
     echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
     echo '<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">';
     echo '<link rel="stylesheet" href="/assets/style.css">';
-    echo '</head><body' . $body_class_attr . '>'; 
+    echo '</head><body' . $body_class_attr . $body_data_attr . '>'; 
     echo '<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>';
     echo '<header class="topbar">';
     
@@ -147,5 +152,24 @@ function render_header(string $title, string $body_class = ''): void {
 }
 
 function render_footer(): void {
+    $user = current_user();
+    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user)) {
+        $plan_message = admin_plan_message($user) ?? 'Akses terkunci karena masa trial/pembayaran habis.';
+        echo '<div class="modal" data-plan-blocked-modal>';
+        echo '<div class="modal-content">';
+        echo '<div class="modal-head"><div>';
+        echo '<p class="admin-kicker">Langganan</p>';
+        echo '<h2>Akses Terkunci</h2>';
+        echo '</div>';
+        echo '<button class="modal-close" type="button" data-close-plan-blocked>&times;</button>';
+        echo '</div>';
+        echo '<p class="muted" style="margin-top:10px;">' . htmlspecialchars($plan_message) . '</p>';
+        echo '<p class="muted">Silakan lakukan pembayaran untuk membuka semua fitur.</p>';
+        echo '<div class="modal-actions">';
+        echo '<button class="secondary" type="button" data-close-plan-blocked>Tutup</button>';
+        echo '</div>';
+        echo '</div></div>';
+    }
+
     echo '</main><script src="/assets/app.js"></script></body></html>';
 }

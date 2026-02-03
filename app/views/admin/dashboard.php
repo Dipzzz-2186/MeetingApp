@@ -109,6 +109,51 @@
             color: var(--accent);
         }
 
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 22, 45, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 50;
+        }
+
+        .modal.open { display: flex; }
+
+        .modal-content {
+            width: 100%;
+            max-width: 520px;
+            background: var(--card);
+            border-radius: 18px;
+            padding: 22px;
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+            border-radius: 999px;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
         .admin-actions {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -300,7 +345,7 @@
         }
     </style>
 </head>
-<body>
+<body data-plan-blocked="<?php echo !empty($blocked) ? '1' : '0'; ?>">
     <div class="grid two admin-dashboard">
         <div class="card admin-card">
             <div class="admin-head">
@@ -349,7 +394,7 @@
                 </div>
             </div>
             
-            <form method="post" class="admin-form">
+            <form method="post" class="admin-form" data-allow-plan>
                 <input type="hidden" name="action" value="mark_paid">
                 <button class="secondary" type="submit">
                     <i class="fas fa-credit-card"></i>
@@ -357,7 +402,7 @@
                 </button>
             </form>
             
-            <form method="post" class="admin-form">
+            <form method="post" class="admin-form" data-allow-plan>
                 <input type="hidden" name="action" value="extend_paid">
                 <label>Atur Tanggal Paid Until</label>
                 <input type="datetime-local" name="paid_until">
@@ -407,5 +452,64 @@
             </tbody>
         </table>
     </div>
+
+    <?php if (!empty($blocked)): ?>
+        <div class="modal" data-plan-blocked-modal>
+            <div class="modal-content">
+                <div class="modal-head">
+                    <div>
+                        <p class="admin-kicker">Langganan</p>
+                        <h2>Akses Terkunci</h2>
+                    </div>
+                    <button class="modal-close" type="button" data-close-plan-blocked>&times;</button>
+                </div>
+                <?php if (!empty($plan_message)): ?>
+                    <p class="muted" style="margin-top:10px;"><?php echo htmlspecialchars($plan_message); ?></p>
+                <?php endif; ?>
+                <p class="muted">Silakan lakukan pembayaran untuk membuka semua fitur.</p>
+                <div class="modal-actions">
+                    <button class="secondary" type="button" data-close-plan-blocked>Tutup</button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <script>
+        (function() {
+            const blocked = document.body.dataset.planBlocked === '1';
+            const modal = document.querySelector('[data-plan-blocked-modal]');
+            if (!blocked || !modal) {
+                return;
+            }
+            const openModal = () => modal.classList.add('open');
+            document.querySelectorAll('[data-close-plan-blocked]').forEach((btn) => {
+                btn.addEventListener('click', () => modal.classList.remove('open'));
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('open');
+                }
+            });
+            document.querySelectorAll('a').forEach((link) => {
+                link.addEventListener('click', (e) => {
+                    const href = link.getAttribute('href') || '';
+                    if (href === '/logout' || href === '/dashboard_admin') {
+                        return;
+                    }
+                    e.preventDefault();
+                    openModal();
+                });
+            });
+            document.querySelectorAll('form').forEach((form) => {
+                form.addEventListener('submit', (e) => {
+                    if (form.closest('[data-allow-plan]')) {
+                        return;
+                    }
+                    e.preventDefault();
+                    openModal();
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
