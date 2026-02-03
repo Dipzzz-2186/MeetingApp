@@ -32,8 +32,6 @@ function render_header(string $title, string $body_class = ''): void {
     } else {
         echo '<nav class="nav">';
         echo '<a href="index">Home</a>';
-        echo '<a href="login">Login</a>';
-        echo '<a href="register" class="ghost">Register Admin</a>';
         echo '</nav>';
     }
     echo '</header><main class="' . $main_class . '">';
