@@ -2,4 +2,4 @@
 $DB_HOST = '127.0.0.1';
 $DB_NAME = 'meeting_app';
 $DB_USER = 'root';
-$DB_PASS = 'Kholis-67';
+$DB_PASS = 'Edi6769';
