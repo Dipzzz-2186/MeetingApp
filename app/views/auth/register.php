@@ -381,6 +381,7 @@
             .auth-layout {
                 flex-direction: column;
                 max-width: 450px;
+                min-height: auto;
             }
             
             .auth-side {
@@ -402,10 +403,23 @@
             body {
                 padding: 16px;
             }
+
+            .auth-layout {
+                border-radius: 16px;
+            }
             
             .auth-side,
             .auth-card {
                 padding: 30px 24px;
+            }
+
+            .auth-mini,
+            .auth-features {
+                text-align: center;
+            }
+
+            .auth-features li {
+                justify-content: center;
             }
             
             .auth-mini h2 {
@@ -423,6 +437,19 @@
             
             .plan-toggle {
                 flex-direction: column;
+            }
+
+            .plan-option {
+                padding: 10px;
+            }
+
+            .plan-price {
+                font-size: 20px;
+            }
+
+            .auth-back {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>

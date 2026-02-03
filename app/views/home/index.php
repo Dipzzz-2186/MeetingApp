@@ -724,16 +724,26 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
   .booking-cards {
     grid-template-columns: 1fr;
   }
+
+  .room-select {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
   .home-hero {
     padding: 2rem 1rem;
+    min-height: auto;
   }
   
   .hero-features {
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .feature-link {
+    justify-content: center;
+    width: 100%;
   }
   
   .window-header {
@@ -744,10 +754,21 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
   .window-url {
     margin: 0;
     width: 100%;
+    overflow: hidden;
+  }
+
+  .window-url span {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   
   .demo-main {
     padding: 1.5rem;
+  }
+
+  .demo-content {
+    min-height: auto;
   }
   
   .cta-buttons {
@@ -785,6 +806,24 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
   
   .welcome-card {
     padding: 1.5rem;
+  }
+
+  .cta-section {
+    padding: 2rem 1rem;
+  }
+
+  .trust-badges {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .user-info {
+    flex-direction: column;
+  }
+
+  .booking-card {
+    padding: 1.25rem;
   }
 }
 </style>
