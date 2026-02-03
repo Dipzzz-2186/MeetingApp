@@ -479,6 +479,48 @@
                 width: 100%;
                 text-align: center;
             }
+
+            .table thead {
+                display: none;
+            }
+
+            .table,
+            .table tbody,
+            .table tr,
+            .table td {
+                display: block;
+                width: 100%;
+            }
+
+            .table tbody tr {
+                border: 1px solid rgba(42, 49, 61, 0.7);
+                border-radius: 14px;
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .table td {
+                padding: 10px 6px;
+                border-bottom: 1px dashed rgba(42, 49, 61, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .table td:last-child {
+                border-bottom: 0;
+                justify-content: flex-end;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                font-size: 11px;
+                color: var(--muted);
+                font-weight: 700;
+            }
         }
 
         @media (max-width: 480px) {
@@ -609,7 +651,7 @@
                             <tbody>
                                 <?php foreach ($paginatedUsers as $row): ?>
                                     <tr>
-                                        <td>
+                                        <td data-label="User">
                                             <div class="user-info">
                                                 <div class="user-avatar">
                                                     <?php echo strtoupper(substr($row['name'], 0, 1)); ?>
@@ -620,12 +662,12 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td data-label="Role">
                                             <span class="role-badge <?php echo htmlspecialchars($row['role']); ?>">
                                                 <?php echo htmlspecialchars($row['role']); ?>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Aksi">
                                             <div class="actions">
                                                 <button class="action-btn edit">
                                                     <i class="fas fa-edit"></i>

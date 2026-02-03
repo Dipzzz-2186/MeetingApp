@@ -495,6 +495,48 @@
                 width: 100%;
                 text-align: center;
             }
+
+            .table thead {
+                display: none;
+            }
+
+            .table,
+            .table tbody,
+            .table tr,
+            .table td {
+                display: block;
+                width: 100%;
+            }
+
+            .table tbody tr {
+                border: 1px solid rgba(42, 49, 61, 0.7);
+                border-radius: 14px;
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .table td {
+                padding: 10px 6px;
+                border-bottom: 1px dashed rgba(42, 49, 61, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .table td:last-child {
+                border-bottom: 0;
+                justify-content: flex-end;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                font-size: 11px;
+                color: var(--muted);
+                font-weight: 700;
+            }
         }
 
         @media (max-width: 480px) {
@@ -616,7 +658,7 @@
                                     $createdDate = date('d/m/Y', strtotime($row['created_at']));
                                 ?>
                                     <tr>
-                                        <td>
+                                        <td data-label="Ruangan">
                                             <div class="room-info">
                                                 <div class="room-icon">
                                                     <i class="fas fa-door-open"></i>
@@ -626,18 +668,18 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td data-label="Kapasitas">
                                             <span class="capacity-badge <?php echo $capacityBadge; ?>">
                                                 <i class="fas fa-users"></i>
                                                 <?php echo (int)$row['capacity']; ?> orang
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Tanggal Dibuat">
                                             <span style="color: var(--muted); font-size: 13px;">
                                                 <?php echo $createdDate; ?>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Aksi">
                                             <div class="actions">
                                                 <button class="action-btn edit" onclick="editRoom(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['name']); ?>', <?php echo $row['capacity']; ?>)">
                                                     <i class="fas fa-edit"></i>
