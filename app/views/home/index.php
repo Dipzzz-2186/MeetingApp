@@ -3,7 +3,6 @@ $user = current_user();
 ?>
 <section class="home-hero">
   <div class="home-hero-text">
-    <div class="home-kicker">FCOM Inti Teknologi</div>
     <h1>Solusi Booking Meeting yang Rapi dan Terukur</h1>
     <p class="muted">FCOM Inti Teknologi membantu perusahaan mengelola ruang meeting, jadwal, dan pengguna secara terpusat agar kolaborasi makin cepat dan tertib.</p>
     <?php if (!$user): ?>
