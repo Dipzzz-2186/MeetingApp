@@ -39,4 +39,21 @@ document.addEventListener('DOMContentLoaded', () => {
     planRadios.forEach((r) => r.addEventListener('change', sync));
     sync();
   }
+
+  const tabbar = document.querySelector('.tabbar');
+  if (tabbar) {
+    const indicator = tabbar.querySelector('.tab-indicator');
+    const updateIndicator = () => {
+      const active = tabbar.querySelector('.tab.active') || tabbar.querySelector('.tab');
+      if (!indicator || !active) {
+        return;
+      }
+      indicator.style.width = `${active.offsetWidth}px`;
+      indicator.style.height = `${active.offsetHeight}px`;
+      indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+    };
+    updateIndicator();
+    window.addEventListener('resize', updateIndicator);
+    setTimeout(updateIndicator, 60);
+  }
 });

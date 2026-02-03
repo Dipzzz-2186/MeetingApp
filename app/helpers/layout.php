@@ -26,7 +26,9 @@ function render_header(string $title, string $body_class = ''): void {
     echo '</head><body' . $body_class_attr . '>'; 
     echo '<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>';
     echo '<header class="topbar">';
-    echo '<a class="brand" href="/">MeetFlow</a>';
+    echo '<a class="brand" href="/"><span class="brand-mark" aria-hidden="true">';
+    echo '<svg viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="#1f67d2"/><path d="M10 21V11h4.6c2.3 0 3.7 1.3 3.7 3.2 0 1.9-1.4 3.2-3.7 3.2H13.1V21H10zm3.1-5.2h1.4c1.1 0 1.7-.6 1.7-1.6 0-1-.6-1.6-1.7-1.6h-1.4v3.2zm7.1 5.2V11h6v2.4h-3.2v1.7h2.9v2.3h-2.9V21h-2.8z" fill="#fff"/></svg>';
+    echo '</span><span class="brand-text">MeetFlow</span></a>';
     if ($user) {
         echo '<nav class="nav nav-desktop">';
         echo '<a href="/">Home</a>';
@@ -57,6 +59,7 @@ function render_header(string $title, string $body_class = ''): void {
         $icon_logout = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7v-2a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 12h9M16 8l3.5 4L16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
         echo '<nav class="tabbar" aria-label="Primary">';
+        echo '<span class="tab-indicator" aria-hidden="true"></span>';
         if ($user['role'] !== 'admin') {
             echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
         }
