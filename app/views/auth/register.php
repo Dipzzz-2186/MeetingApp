@@ -4,9 +4,6 @@
       <div class="auth-label">MeetFlow</div>
       <div class="muted">mulai dengan trial gratis</div>
     </div>
-    <div class="doodle note"></div>
-    <div class="doodle dots"></div>
-    <div class="doodle card"></div>
   </div>
 
   <div class="auth-card">
@@ -81,11 +78,5 @@
         <a href="/login">Login</a>
       </div>
     </form>
-  </div>
-
-  <div class="auth-side right">
-    <div class="doodle woman"></div>
-    <div class="doodle dots"></div>
-    <div class="doodle stack"></div>
   </div>
 </div>
