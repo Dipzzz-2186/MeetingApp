@@ -3,30 +3,32 @@
 <h1>Daftar User</h1>
 
 <div class="card">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>Admin Pemilik</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($users as $u): ?>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td><?= htmlspecialchars($u['name']) ?></td>
-                    <td><?= htmlspecialchars($u['email']) ?></td>
-                    <td><?= htmlspecialchars($u['admin_name'] ?? '-') ?></td>
-                    <td>
-                        <button class="btn small" onclick="openUserDetail(<?= (int)$u['id'] ?>)">
-                            Detail
-                        </button>
-                    </td>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Admin Pemilik</th>
+                    <th>Aksi</th>
                 </tr>
-            <?php endforeach ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php foreach ($users as $u): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($u['name']) ?></td>
+                        <td><?= htmlspecialchars($u['email']) ?></td>
+                        <td><?= htmlspecialchars($u['admin_name'] ?? '-') ?></td>
+                        <td>
+                            <button class="btn small" onclick="openUserDetail(<?= (int)$u['id'] ?>)">
+                                Detail
+                            </button>
+                        </td>
+                    </tr>
+                <?php endforeach ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- MODAL -->
@@ -75,25 +77,38 @@ function closeUserModal() {
 </script>
 
 <style>
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal.hidden { display: none; }
+    .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal.hidden { 
+        display: none; 
+    }
 
-.modal-card {
-  background: #0b1220;
-  padding: 20px;
-  width: 420px;
-  border-radius: 14px;
-}
+    .modal-card {
+        background: #0b1220;
+        padding: 20px;
+        width: 420px;
+        border-radius: 14px;
+    }
 
-.muted {
-  color: #8b93a7;
-  font-style: italic;
-}
+    .muted {
+        color: #8b93a7;
+        font-style: italic;
+    }
+
+    .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        min-width: 640px;
+    }
+
 </style>
