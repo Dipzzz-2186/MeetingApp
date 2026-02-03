@@ -11,6 +11,7 @@ function login_user(array $user): void {
     $_SESSION['user'] = [
         'id' => $user['id'],
         'owner_admin_id' => $user['owner_admin_id'] ?? null,
+        'owner_admin_name' => $user['owner_admin_name'] ?? null,
         'name' => $user['name'],
         'email' => $user['email'],
         'role' => $user['role'],
@@ -24,13 +25,26 @@ function refresh_user(PDO $pdo): void {
     if (!isset($_SESSION['user']['id'])) {
         return;
     }
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = :id');
-    $stmt->execute([':id' => $_SESSION['user']['id']]);
-    $user = $stmt->fetch();
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            u.*,
+            admin.name AS owner_admin_name
+        FROM users u
+        LEFT JOIN users admin ON admin.id = u.owner_admin_id
+        WHERE u.id = :id
+        LIMIT 1
+    ");
+    $stmt->execute([
+        ':id' => $_SESSION['user']['id']
+    ]);
+
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($user) {
         login_user($user);
     }
 }
+
 
 function require_login(): void {
     if (!current_user()) {

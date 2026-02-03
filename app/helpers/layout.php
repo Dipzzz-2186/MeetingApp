@@ -7,7 +7,7 @@ function render_header(string $title, string $body_class = ''): void {
     if ($body_class !== '') {
         $body_classes[] = $body_class;
     }
-    if ($user || $body_class === '') {
+    if ($user) {
         $body_classes[] = 'has-tabbar';
     }
     $body_class_attr = $body_classes ? ' class="' . htmlspecialchars(implode(' ', $body_classes)) . '"' : '';
@@ -40,9 +40,17 @@ function render_header(string $title, string $body_class = ''): void {
     echo '</span><span class="brand-text">MeetFlow</span></a>';
     if (!$is_auth) {
         if ($user) {
-            echo '<nav class="nav nav-desktop">';
-            echo '<a href="/">Home</a>';
-            echo '<a href="/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user') . '">Dashboard</a>';
+                echo '<nav class="nav nav-desktop">';
+
+                echo '<a href="/"'
+                    . ($is_active('/') ? ' class="active"' : '')
+                    . '>Home</a>';
+
+                $dashPath = '/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user');
+
+                echo '<a href="' . $dashPath . '"'
+                    . ($is_active($dashPath) ? ' class="active"' : '')
+                    . '>Dashboard</a>';
             if ($user['role'] === 'admin') {
                 echo '<a href="/users">Add User</a>';
                 echo '<a href="/rooms">Add Room</a>';
@@ -74,10 +82,8 @@ function render_header(string $title, string $body_class = ''): void {
 
         echo '<nav class="tabbar" aria-label="Primary">';
         echo '<span class="tab-indicator" aria-hidden="true"></span>';
-        if ($user['role'] !== 'admin') {
-            echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
-        }
-        echo '<a class="tab tab-primary' . ($is_active($dash_path) ? ' active' : '') . '" href="' . $dash_path . '">' . $icon_dash . '<span>Dashboard</span></a>';
+        echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
+        echo '<a class="tab' . ($is_active($dash_path) ? ' active' : '') . '" href="' . $dash_path . '">' . $icon_dash . '<span>Dashboard</span></a>';
         if ($user['role'] === 'admin') {
             echo '<a class="tab' . ($is_active('/users') ? ' active' : '') . '" href="/users">' . $icon_users . '<span>Users</span></a>';
             echo '<a class="tab' . ($is_active('/rooms') ? ' active' : '') . '" href="/rooms">' . $icon_room . '<span>Rooms</span></a>';

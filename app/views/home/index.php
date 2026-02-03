@@ -1,17 +1,39 @@
+<?php
+$user = current_user();
+?>
 <section class="home-hero">
   <div class="home-hero-text">
     <div class="home-kicker">FCOM Inti Teknologi</div>
     <h1>Solusi Booking Meeting yang Rapi dan Terukur</h1>
     <p class="muted">FCOM Inti Teknologi membantu perusahaan mengelola ruang meeting, jadwal, dan pengguna secara terpusat agar kolaborasi makin cepat dan tertib.</p>
-    <div class="home-cta">
-      <a class="btn" href="/register">Mulai Sekarang</a>
-      <a class="btn ghost" href="/login">Login</a>
-    </div>
-    <div class="home-badges">
-      <span class="badge">Multi Admin</span>
-      <span class="badge">Anti Bentrok</span>
-      <span class="badge">Trial 10 Hari</span>
-    </div>
+    <?php if (!$user): ?>
+      <div class="home-cta">
+        <a class="btn" href="/register">Mulai Sekarang</a>
+        <a class="btn ghost" href="/login">Login</a>
+      </div>
+      
+      <div class="home-badges">
+        <span class="badge">Multi Admin</span>
+        <span class="badge">Anti Bentrok</span>
+        <span class="badge">Trial 10 Hari</span>
+      </div>
+    <?php else: ?>
+      <div class="home-user">
+        <div class="home-user-name">
+          <?= htmlspecialchars($user['name']) ?>
+        </div>
+        <div class="home-user-meta">
+          <span class="role"><?= ucfirst($user['role']) ?></span>
+          <?php if ($user['role'] !== 'admin'): ?>
+            <span class="sep">•</span>
+            <span class="admin">
+              Admin: <?= htmlspecialchars($user['owner_admin_name'] ?? '-') ?>
+            </span>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endif; ?>
+
   </div>
   <div class="home-hero-card">
     <div class="home-card">
