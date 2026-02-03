@@ -249,6 +249,7 @@
             border-radius: 10px;
             border: 1px solid var(--stroke);
             background: rgba(17, 21, 28, 0.5);
+            -webkit-overflow-scrolling: touch;
         }
 
         .table {
@@ -511,6 +512,11 @@
                 align-items: flex-start;
                 gap: 15px;
             }
+
+            .back-btn {
+                width: 100%;
+                justify-content: center;
+            }
             
             .card {
                 padding: 20px;
@@ -529,6 +535,81 @@
             .filter-controls {
                 justify-content: center;
             }
+
+            .table th {
+                padding: 12px 10px;
+                font-size: 11px;
+                letter-spacing: 0.3px;
+            }
+
+            .table td {
+                padding: 12px 10px;
+                font-size: 12px;
+            }
+
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+
+            .booking-status,
+            .room-badge,
+            .duration-indicator {
+                font-size: 10px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table,
+            .table tbody,
+            .table tr,
+            .table td {
+                display: block;
+                width: 100%;
+            }
+
+            .table tr {
+                border: 1px solid rgba(42, 49, 61, 0.6);
+                border-radius: 12px;
+                padding: 12px;
+                margin: 0 0 12px;
+                background: rgba(17, 21, 28, 0.55);
+            }
+
+            .table td {
+                padding: 10px 0;
+                border: none;
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                font-size: 11px;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                flex: 0 0 38%;
+            }
+
+            .table td > div,
+            .table td > span {
+                flex: 1;
+            }
+
+            .actions {
+                flex-direction: row;
+                justify-content: flex-end;
+            }
         }
 
         @media (max-width: 480px) {
@@ -546,6 +627,26 @@
             
             input, select, button[type="submit"] {
                 padding: 12px 14px;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .table-container {
+                margin-left: -10px;
+                margin-right: -10px;
+                border-radius: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -735,7 +836,7 @@
                                 ?>
                                     <tr data-status="<?php echo $status; ?>" 
                                         data-date="<?php echo $start->format('Y-m-d'); ?>">
-                                        <td>
+                                        <td data-label="User & Room">
                                             <div style="display: flex; align-items: center; gap: 12px;">
                                                 <div class="user-avatar">
                                                     <?php echo strtoupper(substr($row['user_name'], 0, 1)); ?>
@@ -758,7 +859,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td data-label="Waktu">
                                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                                 <div style="font-size: 13px; color: var(--muted);">
                                                     <?php echo $startDate; ?>
@@ -768,7 +869,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td data-label="Durasi">
                                             <span class="duration-indicator">
                                                 <?php 
                                                 if ($hours > 0) echo $hours . ' jam ';
@@ -777,7 +878,7 @@
                                                 ?>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Status">
                                             <span class="booking-status <?php echo $statusClass; ?>">
                                                 <i class="fas <?php 
                                                     echo $status == 'upcoming' ? 'fa-clock' : 
@@ -786,7 +887,7 @@
                                                 <?php echo $statusText; ?>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Aksi">
                                             <div class="actions">
                                                 <button class="action-btn view" onclick="viewBooking(<?php echo $row['id']; ?>)">
                                                     <i class="fas fa-eye"></i>
