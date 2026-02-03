@@ -336,8 +336,9 @@
             <h1>Login</h1>
             <p class="muted">Masuk untuk mengelola meeting room dan jadwal.</p>
             
-            <!-- PHP error message akan muncul di sini -->
-            <!-- <div class="alert"><?php echo htmlspecialchars($error); ?></div> -->
+            <?php if (!empty($error)): ?>
+                <div class="alert"><?php echo htmlspecialchars($error); ?></div>
+            <?php endif; ?>
             
             <form method="post" class="grid">
                 <div>

@@ -10,7 +10,7 @@
     <div class="alert"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
 
-  <form method="post" class="grid three">
+  <form method="post" class="grid three" enctype="multipart/form-data">
     <input type="hidden" name="action" value="create">
     <div class="span-two">
       <label>Judul</label>
@@ -29,6 +29,11 @@
       <input type="text" name="cover_url" placeholder="https://...">
     </div>
     <div class="span-two">
+      <label>Upload Foto (optional)</label>
+      <input type="file" name="cover_file" accept="image/jpeg,image/png,image/webp">
+      <small class="muted">Maks 5MB. JPG/PNG/WEBP.</small>
+    </div>
+    <div class="span-two">
       <label>Excerpt</label>
       <textarea name="excerpt" rows="3" placeholder="Ringkasan singkat"></textarea>
     </div>
@@ -38,7 +43,7 @@
     </div>
     <div>
       <label>Publish At</label>
-      <input type="datetime-local" name="published_at">
+      <input type="datetime-local" name="published_at" required>
     </div>
     <div class="inline">
       <button type="submit">Simpan Artikel</button>

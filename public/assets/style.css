@@ -292,11 +292,13 @@ body.auth .topbar::before {
   grid-template-columns: minmax(280px, 1.4fr) minmax(240px, 1fr);
   gap: 18px;
   margin-bottom: 18px;
+  align-items: start;
 }
 
 .featured-card {
   display: grid;
   gap: 16px;
+  align-content: start;
 }
 
 .featured-media img,

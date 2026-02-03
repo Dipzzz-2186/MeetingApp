@@ -80,7 +80,53 @@ class SuperAdminController
 
                 if ($title === '') {
                     $error = 'Judul wajib diisi.';
+                } elseif ($published_at === '') {
+                    $error = 'Publish At wajib diisi.';
                 } else {
+                    if (!empty($_FILES['cover_file']) && $_FILES['cover_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                        $upload_error = $_FILES['cover_file']['error'];
+                        if ($upload_error === UPLOAD_ERR_OK) {
+                            $tmp = $_FILES['cover_file']['tmp_name'];
+                            $size = (int)$_FILES['cover_file']['size'];
+                            $max = 5 * 1024 * 1024;
+                            $ext = strtolower(pathinfo($_FILES['cover_file']['name'], PATHINFO_EXTENSION));
+                            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+                            if ($size > $max) {
+                                $error = 'Ukuran foto maksimal 5MB.';
+                            } elseif (!in_array($ext, $allowed, true)) {
+                                $error = 'Format foto harus JPG, PNG, atau WEBP.';
+                            } elseif (!@getimagesize($tmp)) {
+                                $error = 'File yang diunggah bukan gambar yang valid.';
+                            } else {
+                                $upload_dir = __DIR__ . '/../../public/uploads/articles';
+                                if (!is_dir($upload_dir)) {
+                                    @mkdir($upload_dir, 0755, true);
+                                }
+                                $basename = bin2hex(random_bytes(8)) . '-' . time() . '.' . $ext;
+                                $dest = $upload_dir . '/' . $basename;
+                                if (move_uploaded_file($tmp, $dest)) {
+                                    $cover_url = '/uploads/articles/' . $basename;
+                                } else {
+                                    $error = 'Gagal menyimpan foto.';
+                                }
+                            }
+                        } else {
+                            $error = 'Upload foto gagal.';
+                        }
+                    }
+
+                    if ($error !== '') {
+                        // skip insert if upload error
+                        $articles = $pdo->query("
+                            SELECT id, title, slug, category, author, published_at, created_at
+                            FROM articles
+                            ORDER BY created_at DESC, id DESC
+                        ")->fetchAll();
+                        render_view('super/articles', compact('articles', 'error'), 'Manage Articles');
+                        return;
+                    }
+
                     $slug = self::slugify($title);
                     $base = $slug;
                     $i = 1;
