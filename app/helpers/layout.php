@@ -3,8 +3,19 @@ require_once __DIR__ . '/auth.php';
 
 function render_header(string $title, string $body_class = ''): void {
     $user = current_user();
-    $body_class_attr = $body_class !== '' ? ' class="' . htmlspecialchars($body_class) . '"' : '';
+    $body_classes = [];
+    if ($body_class !== '') {
+        $body_classes[] = $body_class;
+    }
+    if ($user) {
+        $body_classes[] = 'has-tabbar';
+    }
+    $body_class_attr = $body_classes ? ' class="' . htmlspecialchars(implode(' ', $body_classes)) . '"' : '';
     $main_class = 'container' . ($body_class !== '' ? ' container-' . $body_class : '');
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $is_active = function (string $target) use ($path): bool {
+        return $path === $target;
+    };
     echo '<!doctype html><html lang="id"><head><meta charset="utf-8">';
     echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
     echo '<title>' . htmlspecialchars($title) . '</title>';
@@ -15,9 +26,9 @@ function render_header(string $title, string $body_class = ''): void {
     echo '</head><body' . $body_class_attr . '>'; 
     echo '<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>';
     echo '<header class="topbar">';
-    echo '<div class="brand">MeetFlow</div>';
+    echo '<a class="brand" href="/">MeetFlow</a>';
     if ($user) {
-        echo '<nav class="nav">';
+        echo '<nav class="nav nav-desktop">';
         echo '<a href="/">Home</a>';
         echo '<a href="/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user') . '">Dashboard</a>';
         if ($user['role'] === 'admin') {
@@ -34,7 +45,34 @@ function render_header(string $title, string $body_class = ''): void {
         echo '<a href="/">Home</a>';
         echo '</nav>';
     }
-    echo '</header><main class="' . $main_class . '">';
+    echo '</header>';
+
+    if ($user) {
+        $dash_path = '/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user');
+        $icon_home = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+        $icon_dash = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+        $icon_users = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19a5 5 0 0 1 9 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M13.5 19a4 4 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        $icon_room = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 20v-6h10v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="15.5" cy="11" r="0.8" fill="currentColor"/></svg>';
+        $icon_book = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4v4M16 4v4M4 10h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        $icon_logout = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7v-2a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 12h9M16 8l3.5 4L16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        echo '<nav class="tabbar" aria-label="Primary">';
+        if ($user['role'] !== 'admin') {
+            echo '<a class="tab' . ($is_active('/') ? ' active' : '') . '" href="/">' . $icon_home . '<span>Home</span></a>';
+        }
+        echo '<a class="tab tab-primary' . ($is_active($dash_path) ? ' active' : '') . '" href="' . $dash_path . '">' . $icon_dash . '<span>Dashboard</span></a>';
+        if ($user['role'] === 'admin') {
+            echo '<a class="tab' . ($is_active('/users') ? ' active' : '') . '" href="/users">' . $icon_users . '<span>Users</span></a>';
+            echo '<a class="tab' . ($is_active('/rooms') ? ' active' : '') . '" href="/rooms">' . $icon_room . '<span>Rooms</span></a>';
+            echo '<a class="tab' . ($is_active('/bookings') ? ' active' : '') . '" href="/bookings">' . $icon_book . '<span>Schedule</span></a>';
+        } else {
+            echo '<a class="tab' . ($is_active('/booking_user') ? ' active' : '') . '" href="/booking_user">' . $icon_book . '<span>Booking</span></a>';
+        }
+        echo '<a class="tab" href="/logout">' . $icon_logout . '<span>Logout</span></a>';
+        echo '</nav>';
+    }
+
+    echo '<main class="' . $main_class . '">';
 }
 
 function render_footer(): void {

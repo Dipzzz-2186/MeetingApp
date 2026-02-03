@@ -34,7 +34,7 @@ if (!isset($routes[$path])) {
     http_response_code(404);
     render_view('shared/404', [], 'Not Found');
     exit;
-}
+}   
 
 [$controller, $method] = $routes[$path];
 $controller::$method();

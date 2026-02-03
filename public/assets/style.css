@@ -71,6 +71,8 @@ body.auth .topbar {
   font-family: "Fraunces", serif;
   font-size: 24px;
   letter-spacing: 0.4px;
+  text-decoration: none;
+  color: var(--ink);
 }
 
 .nav a {
@@ -541,6 +543,86 @@ button.secondary {
 @media (max-width: 720px) {
   .topbar { flex-direction: column; gap: 12px; }
   .nav a { margin-left: 8px; }
+}
+
+.nav-desktop {
+  display: flex;
+}
+
+.tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--stroke);
+  box-shadow: 0 16px 30px rgba(10, 24, 45, 0.18);
+  border-radius: 22px;
+  padding: 10px 14px;
+  display: none;
+  gap: 12px;
+  align-items: center;
+  z-index: 10;
+  backdrop-filter: blur(14px);
+}
+
+.tabbar .tab {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  text-decoration: none;
+  position: relative;
+  transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.tabbar .tab span {
+  position: absolute;
+  bottom: -18px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.tabbar .tab svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tabbar .tab:hover {
+  color: var(--accent);
+}
+
+.tabbar .tab.active {
+  color: var(--accent-2);
+}
+
+.tabbar .tab-primary {
+  background: linear-gradient(135deg, #1f67d2 0%, #2f7ce8 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(31, 103, 210, 0.35);
+  transform: translateY(-8px);
+}
+
+.tabbar .tab-primary span {
+  color: var(--accent);
+  bottom: -20px;
+}
+
+@media (max-width: 900px) {
+  .nav-desktop {
+    display: none;
+  }
+  .tabbar {
+    display: flex;
+  }
+  .has-tabbar .container {
+    padding-bottom: 120px;
+  }
 }
 
 
