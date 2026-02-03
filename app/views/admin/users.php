@@ -433,12 +433,81 @@
             margin: 0 15px;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--stroke);
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--accent);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
             }
             to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
                 opacity: 1;
                 transform: translateY(0);
             }
@@ -515,6 +584,11 @@
                 color: var(--muted);
                 font-weight: 700;
             }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -538,6 +612,15 @@
                 min-width: 32px;
                 height: 32px;
                 font-size: 13px;
+            }
+
+            .actions {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .action-btn {
+                justify-content: center;
             }
         }
     </style>
@@ -572,6 +655,7 @@
                 <?php endif; ?>
                 
                 <form method="post" class="grid">
+                    <input type="hidden" name="action" value="create">
                     <div class="form-row">
                         <div>
                             <label><i class="fas fa-user"></i> Nama Lengkap</label>
@@ -643,7 +727,7 @@
                             </thead>
                             <tbody>
                                 <?php foreach ($paginatedUsers as $row): ?>
-                                    <tr>
+                                    <tr data-user-id="<?php echo $row['id']; ?>">
                                         <td data-label="User">
                                             <div class="user-info">
                                                 <div class="user-avatar">
@@ -662,11 +746,11 @@
                                         </td>
                                         <td data-label="Aksi">
                                             <div class="actions">
-                                                <button class="action-btn edit">
+                                                <button class="action-btn edit" data-user-id="<?php echo $row['id']; ?>">
                                                     <i class="fas fa-edit"></i>
                                                     Edit
                                                 </button>
-                                                <button class="action-btn delete">
+                                                <button class="action-btn delete" data-user-id="<?php echo $row['id']; ?>" data-user-name="<?php echo htmlspecialchars($row['name']); ?>" data-user-email="<?php echo htmlspecialchars($row['email']); ?>">
                                                     <i class="fas fa-trash"></i>
                                                     Hapus
                                                 </button>
@@ -748,7 +832,7 @@
                             (Halaman <?php echo $currentPage; ?> dari <?php echo $totalPages; ?>)
                         </div>
                         <div style="display: flex; gap: 15px;">
-                            <button class="action-btn" onclick="window.location.href='?page=1'">
+                            <button class="action-btn" onclick="refreshPage()">
                                 <i class="fas fa-redo"></i>
                                 Refresh
                             </button>
@@ -759,62 +843,384 @@
         </div>
     </div>
     
+    <!-- Modal Edit User -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeEditModal">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <h2 style="font-family: 'Fraunces', serif; font-size: 24px; margin-bottom: 25px; color: var(--ink);">
+                <i class="fas fa-user-edit"></i> Edit User
+            </h2>
+            
+            <form id="editForm" method="post">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="id" id="editUserId">
+                
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <label><i class="fas fa-user"></i> Nama Lengkap</label>
+                        <input type="text" name="name" id="editName" placeholder="Masukkan nama user" required>
+                    </div>
+                    
+                    <div>
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" name="email" id="editEmail" placeholder="user@example.com" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div>
+                            <label><i class="fas fa-lock"></i> Password (Opsional)</label>
+                            <input type="password" name="password" id="editPassword" placeholder="Biarkan kosong jika tidak diubah">
+                            <small style="color: var(--muted); font-size: 12px; margin-top: 5px;">Isi hanya jika ingin mengganti password</small>
+                        </div>
+                        
+                        <div>
+                            <label><i class="fas fa-user-tag"></i> Role</label>
+                            <select name="role" id="editRole" required>
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" id="editSubmitBtn" style="flex: 1; background: var(--accent); color: #1a1a1a; border: none; padding: 15px; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <i class="fas fa-save"></i>
+                            Simpan Perubahan
+                        </button>
+                        <button type="button" id="cancelEdit" style="flex: 0 0 auto; padding: 15px 20px; border-radius: 10px; border: 1px solid var(--stroke); background: rgba(17, 21, 28, 0.7); color: var(--muted); font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s ease;">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal Delete Confirmation -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeDeleteModal">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 87, 87, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 2px solid rgba(255, 87, 87, 0.3);">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: var(--error);"></i>
+                </div>
+                <h3 style="font-family: 'Fraunces', serif; font-size: 20px; color: var(--ink); margin-bottom: 10px;">
+                    Hapus User
+                </h3>
+                <p style="color: var(--muted); font-size: 14px; line-height: 1.5;">
+                    Apakah Anda yakin ingin menghapus user <span id="deleteUserName" style="color: var(--ink); font-weight: 600;"></span>?
+                </p>
+                <p style="color: var(--error); font-size: 13px; margin-top: 10px; background: rgba(255, 87, 87, 0.1); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 87, 87, 0.2);">
+                    <i class="fas fa-info-circle"></i> Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            
+            <form id="deleteForm" method="post">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" id="deleteUserId">
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" id="deleteSubmitBtn" style="flex: 1; background: var(--error); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-trash"></i>
+                        Ya, Hapus
+                    </button>
+                    <button type="button" id="cancelDelete" style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--stroke); background: rgba(17, 21, 28, 0.7); color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Password strength indicator (contoh)
-            const passwordInput = document.querySelector('input[name="password"]');
-            const form = document.querySelector('form');
+            // Elements
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+            const editForm = document.getElementById('editForm');
+            const deleteForm = document.getElementById('deleteForm');
+            const closeEditModalBtn = document.getElementById('closeEditModal');
+            const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+            const cancelEditBtn = document.getElementById('cancelEdit');
+            const cancelDeleteBtn = document.getElementById('cancelDelete');
+            const editSubmitBtn = document.getElementById('editSubmitBtn');
+            const deleteSubmitBtn = document.getElementById('deleteSubmitBtn');
             
-            // Form validation
-            form.addEventListener('submit', function(e) {
-                const password = passwordInput.value;
-                
-                // if (password.length < 8) {
-                //     e.preventDefault();
-                //     showAlert('Password harus minimal 8 karakter.', 'error');
-                //     return false;
-                // }
-                
-                // Add loading state to submit button
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menambahkan...';
-                submitBtn.disabled = true;
-                
-                return true;
-            });
-            
-            // Delete button confirmation
-            const deleteButtons = document.querySelectorAll('.action-btn.delete');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (confirm('Apakah Anda yakin ingin menghapus user ini?')) {
-                        // Here you would typically make an AJAX request or submit a form
-                        console.log('User deletion confirmed');
-                    }
-                });
-            });
+            // State
+            let isLoading = false;
             
             // Edit button functionality
             const editButtons = document.querySelectorAll('.action-btn.edit');
             editButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
+                button.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    const row = this.closest('tr');
-                    const userName = row.querySelector('.user-name').textContent;
-                    const userEmail = row.querySelector('.user-email').textContent;
+                    if (isLoading) return;
                     
-                    alert(`Edit user: ${userName}\nEmail: ${userEmail}`);
-                    // Here you would typically open a modal or redirect to edit page
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.closest('tr').querySelector('.user-name').textContent;
+                    const userEmail = this.closest('tr').querySelector('.user-email').textContent;
+                    
+                    // Show loading in modal
+                    editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Memuat...';
+                    editSubmitBtn.disabled = true;
+                    
+                    // Show modal first
+                    editModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    try {
+                        // Load user data via AJAX
+                        const response = await fetch(`?ajax=get_user&id=${userId}&_=${Date.now()}`);
+                        
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        
+                        const userData = await response.json();
+                        
+                        if (userData.error) {
+                            showAlert(userData.error, 'error');
+                            closeEditModal();
+                            return;
+                        }
+                        
+                        // Populate edit form
+                        document.getElementById('editUserId').value = userData.id;
+                        document.getElementById('editName').value = userData.name;
+                        document.getElementById('editEmail').value = userData.email;
+                        document.getElementById('editRole').value = userData.role;
+                        document.getElementById('editPassword').value = '';
+                        
+                        // Reset button
+                        editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+                        editSubmitBtn.disabled = false;
+                        
+                    } catch (error) {
+                        console.error('Error loading user data:', error);
+                        showAlert('Gagal memuat data user. Silakan coba lagi.', 'error');
+                        closeEditModal();
+                    } finally {
+                        isLoading = false;
+                    }
                 });
             });
+            
+            // Delete button functionality
+            const deleteButtons = document.querySelectorAll('.action-btn.delete');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    const userEmail = this.getAttribute('data-user-email');
+                    
+                    // Populate delete modal
+                    document.getElementById('deleteUserName').textContent = `${userName} (${userEmail})`;
+                    document.getElementById('deleteUserId').value = userId;
+                    
+                    // Show modal
+                    deleteModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+            
+            // Close modal functions
+            function closeEditModal() {
+                editModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+                editSubmitBtn.disabled = false;
+            }
+            
+            function closeDeleteModal() {
+                deleteModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                deleteSubmitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
+                deleteSubmitBtn.disabled = false;
+            }
+            
+            // Event listeners for modal close buttons
+            closeEditModalBtn.addEventListener('click', closeEditModal);
+            closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+            cancelEditBtn.addEventListener('click', closeEditModal);
+            cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+            
+            // Close modal when clicking outside
+            editModal.addEventListener('click', function(e) {
+                if (e.target === editModal) {
+                    closeEditModal();
+                }
+            });
+            
+            deleteModal.addEventListener('click', function(e) {
+                if (e.target === deleteModal) {
+                    closeDeleteModal();
+                }
+            });
+            
+            // Close modal with ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (editModal.style.display === 'flex') {
+                        closeEditModal();
+                    }
+                    if (deleteModal.style.display === 'flex') {
+                        closeDeleteModal();
+                    }
+                }
+            });
+            
+            // Edit form submission
+            editForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (isLoading) return;
+                isLoading = true;
+                
+                const formData = new FormData(this);
+                const password = formData.get('password');
+                
+                // Validate password if provided
+                // if (password && password.length < 8) {
+                //     showAlert('Password harus minimal 8 karakter jika diisi.', 'error');
+                //     isLoading = false;
+                //     return;
+                // }
+                
+                // Show loading state
+                editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menyimpan...';
+                editSubmitBtn.disabled = true;
+                
+                // Submit form via AJAX
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        // If redirected, reload the page
+                        window.location.href = response.url;
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        // Parse HTML response to check for alerts
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data, 'text/html');
+                        const alert = doc.querySelector('.alert');
+                        
+                        if (alert) {
+                            showAlert(alert.textContent.trim(), alert.classList.contains('error') ? 'error' : 'success');
+                            closeEditModal();
+                            
+                            // Refresh the page after a short delay if successful
+                            if (alert.classList.contains('success')) {
+                                setTimeout(() => {
+                                    refreshPage();
+                                }, 1500);
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Terjadi kesalahan saat menyimpan data.', 'error');
+                })
+                .finally(() => {
+                    isLoading = false;
+                });
+            });
+            
+            // Delete form submission
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (isLoading) return;
+                isLoading = true;
+                
+                // Show loading state
+                deleteSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menghapus...';
+                deleteSubmitBtn.disabled = true;
+                
+                const formData = new FormData(this);
+                
+                // Submit form via AJAX
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data, 'text/html');
+                        const alert = doc.querySelector('.alert');
+                        
+                        if (alert) {
+                            showAlert(alert.textContent.trim(), alert.classList.contains('error') ? 'error' : 'success');
+                            closeDeleteModal();
+                            
+                            if (alert.classList.contains('success')) {
+                                setTimeout(() => {
+                                    refreshPage();
+                                }, 1500);
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Terjadi kesalahan saat menghapus user.', 'error');
+                })
+                .finally(() => {
+                    isLoading = false;
+                });
+            });
+            
+            // Main form submission (create user)
+            const mainForm = document.querySelector('form.grid');
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menambahkan...';
+                    submitBtn.disabled = true;
+                    
+                    // Allow form to submit normally
+                    return true;
+                });
+            }
             
             // Helper function to show alerts
             function showAlert(message, type) {
                 // Remove existing alerts
                 const existingAlerts = document.querySelectorAll('.alert');
-                existingAlerts.forEach(alert => alert.remove());
+                existingAlerts.forEach(alert => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                });
                 
                 // Create new alert
                 const alertDiv = document.createElement('div');
@@ -824,31 +1230,35 @@
                     ${message}
                 `;
                 
-                // Insert after the h1
+                // Insert after the h1 in the first card
                 const card = document.querySelector('.card');
                 const h1 = card.querySelector('h1');
-                h1.insertAdjacentElement('afterend', alertDiv);
+                if (h1 && h1.parentNode) {
+                    h1.parentNode.insertBefore(alertDiv, h1.nextSibling);
+                }
                 
                 // Auto remove after 5 seconds
                 setTimeout(() => {
-                    alertDiv.remove();
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
                 }, 5000);
             }
             
-            // Cegah form resubmission warning
+            // Prevent form resubmission warning
             if (window.history.replaceState) {
                 window.history.replaceState(null, null, window.location.pathname + window.location.search);
             }
         });
         
-        // Fungsi untuk navigasi pagination
+        // Function for pagination navigation
         function goToPage(page) {
             const urlParams = new URLSearchParams(window.location.search);
             urlParams.set('page', page);
             window.location.href = window.location.pathname + '?' + urlParams.toString();
         }
         
-        // Fungsi untuk refresh tanpa parameter page
+        // Function to refresh without page parameter
         function refreshPage() {
             const urlParams = new URLSearchParams(window.location.search);
             urlParams.delete('page');

@@ -52,35 +52,126 @@ class AdminController {
         $notice = null;
         $error = null;
         
-        // Tangani form submission dengan POST
+        // Handle POST requests
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
+            // Handle user creation
+            if (isset($_POST['action']) && $_POST['action'] === 'create') {
+                $name = trim($_POST['name'] ?? '');
+                $email = trim($_POST['email'] ?? '');
+                $password = $_POST['password'] ?? '';
 
-            if ($name === '' || $email === '' || $password === '') {
-                $_SESSION['error'] = 'Semua field wajib diisi.';
-            } else {
-                try {
-                    User::createUser($pdo, [
-                        'owner_admin_id' => $user['id'],
-                        'name' => $name,
-                        'email' => $email,
-                        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                        'created_at' => now_iso(),
-                    ]);
-                    $_SESSION['notice'] = 'User berhasil ditambahkan.';
-                } catch (PDOException $e) {
-                    $_SESSION['error'] = 'Email sudah digunakan.';
+                if ($name === '' || $email === '' || $password === '') {
+                    $_SESSION['error'] = 'Semua field wajib diisi.';
+                } else {
+                    try {
+                        User::createUser($pdo, [
+                            'owner_admin_id' => $user['id'],
+                            'name' => $name,
+                            'email' => $email,
+                            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                            'created_at' => now_iso(),
+                        ]);
+                        $_SESSION['notice'] = 'User berhasil ditambahkan.';
+                    } catch (PDOException $e) {
+                        $_SESSION['error'] = 'Email sudah digunakan.';
+                    }
                 }
             }
             
-            // Redirect ke halaman yang sama dengan metode GET
+            // Handle user update
+            elseif (isset($_POST['action']) && $_POST['action'] === 'update') {
+                $id = (int)($_POST['id'] ?? 0);
+                $name = trim($_POST['name'] ?? '');
+                $email = trim($_POST['email'] ?? '');
+                $role = trim($_POST['role'] ?? 'user');
+                
+                if ($id <= 0 || $name === '' || $email === '') {
+                    $_SESSION['error'] = 'Data tidak valid.';
+                } else {
+                    try {
+                        // Cek apakah user milik admin ini
+                        $stmt = $pdo->prepare("SELECT id FROM users WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                        $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
+                        
+                        if ($stmt->fetch()) {
+                            // Update user
+                            $stmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, role = :role WHERE id = :id");
+                            $stmt->execute([
+                                ':name' => $name,
+                                ':email' => $email,
+                                ':role' => $role,
+                                ':id' => $id
+                            ]);
+                            
+                            // Update password jika diberikan
+                            if (!empty($_POST['password'])) {
+                                $password_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                                $stmt = $pdo->prepare("UPDATE users SET password_hash = :password_hash WHERE id = :id");
+                                $stmt->execute([':password_hash' => $password_hash, ':id' => $id]);
+                            }
+                            
+                            $_SESSION['notice'] = 'User berhasil diperbarui.';
+                        } else {
+                            $_SESSION['error'] = 'User tidak ditemukan.';
+                        }
+                    } catch (PDOException $e) {
+                        $_SESSION['error'] = 'Email sudah digunakan.';
+                    }
+                }
+            }
+            
+            // Handle user deletion
+            elseif (isset($_POST['action']) && $_POST['action'] === 'delete') {
+                $id = (int)($_POST['id'] ?? 0);
+                
+                if ($id > 0) {
+                    try {
+                        // Cek apakah user milik admin ini
+                        $stmt = $pdo->prepare("SELECT id FROM users WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                        $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
+                        
+                        if ($stmt->fetch()) {
+                            // Hapus user (soft delete atau hard delete sesuai kebutuhan)
+                            $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id");
+                            $stmt->execute([':id' => $id]);
+                            
+                            $_SESSION['notice'] = 'User berhasil dihapus.';
+                        } else {
+                            $_SESSION['error'] = 'User tidak ditemukan.';
+                        }
+                    } catch (PDOException $e) {
+                        $_SESSION['error'] = 'Gagal menghapus user.';
+                    }
+                }
+            }
+            
+            // Redirect untuk menghindari form resubmission
             header('Location: ' . $_SERVER['REQUEST_URI']);
             exit;
         }
         
-        // Ambil pesan dari session (jika ada) setelah redirect
+        // Handle GET requests for AJAX data
+        if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_user') {
+            $id = (int)($_GET['id'] ?? 0);
+            
+            if ($id > 0) {
+                $stmt = $pdo->prepare("SELECT id, name, email, role FROM users WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
+                $userData = $stmt->fetch();
+                
+                if ($userData) {
+                    header('Content-Type: application/json');
+                    echo json_encode($userData);
+                    exit;
+                }
+            }
+            
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'User tidak ditemukan']);
+            exit;
+        }
+        
+        // Ambil pesan dari session
         if (isset($_SESSION['notice'])) {
             $notice = $_SESSION['notice'];
             unset($_SESSION['notice']);
