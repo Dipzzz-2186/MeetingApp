@@ -36,8 +36,8 @@ function render_header(string $title, string $body_class = ''): void {
     $is_auth = strpos(' ' . $body_class . ' ', ' auth ') !== false;
     echo '<header class="topbar">';
     echo '<a class="brand" href="/"><span class="brand-mark" aria-hidden="true">';
-    echo '<svg viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="currentColor"/><path d="M10 21V11h4.6c2.3 0 3.7 1.3 3.7 3.2 0 1.9-1.4 3.2-3.7 3.2H13.1V21H10zm3.1-5.2h1.4c1.1 0 1.7-.6 1.7-1.6 0-1-.6-1.6-1.7-1.6h-1.4v3.2zm7.1 5.2V11h6v2.4h-3.2v1.7h2.9v2.3h-2.9V21h-2.8z" fill="#0b1220"/></svg>';
-    echo '</span><span class="brand-text">MeetFlow</span></a>';
+    echo '<img src="/assets/Ogol.png" alt="" width="34" height="34">';
+    echo '</span><span class="brand-text">RuangMeet</span></a>';
     if (!$is_auth) {
         if ($user) {
                 echo '<nav class="nav nav-desktop">';
