@@ -7,13 +7,21 @@ function render_header(string $title, string $body_class = ''): void {
     if ($body_class !== '') {
         $body_classes[] = $body_class;
     }
-    if ($user) {
+    if ($user || $body_class === '') {
         $body_classes[] = 'has-tabbar';
     }
     $body_class_attr = $body_classes ? ' class="' . htmlspecialchars(implode(' ', $body_classes)) . '"' : '';
     $main_class = 'container' . ($body_class !== '' ? ' container-' . $body_class : '');
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $path = rtrim($path, '/');
+    if ($path === '') {
+        $path = '/';
+    }
     $is_active = function (string $target) use ($path): bool {
+        $target = rtrim($target, '/');
+        if ($target === '') {
+            $target = '/';
+        }
         return $path === $target;
     };
     echo '<!doctype html><html lang="id"><head><meta charset="utf-8">';
@@ -45,10 +53,6 @@ function render_header(string $title, string $body_class = ''): void {
             }
 
             echo '<a href="/logout" class="ghost">Logout</a>';
-            echo '</nav>';
-        } else {
-            echo '<nav class="nav">';
-            echo '<a href="/">Home</a>';
             echo '</nav>';
         }
     }
@@ -87,6 +91,11 @@ function render_header(string $title, string $body_class = ''): void {
         }
 
         echo '<a class="tab" href="/logout">' . $icon_logout . '<span>Logout</span></a>';
+        echo '</nav>';
+    } elseif (!$is_auth) {
+        $icon_home = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+        echo '<nav class="tabbar" aria-label="Primary">';
+        echo '<a class="tab tab-primary active" href="/">' . $icon_home . '<span>Home</span></a>';
         echo '</nav>';
     }
 

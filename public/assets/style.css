@@ -61,7 +61,7 @@ body.auth {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 14px 32px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(10, 35, 85, 0.03);
@@ -759,7 +759,7 @@ button.secondary {
    =========================== */
 
 .nav-desktop {
-  display: flex;
+  display: none;
 }
 
 .tabbar {
@@ -767,7 +767,9 @@ button.secondary {
   left: 50%;
   bottom: 20px;
   transform: translateX(-50%);
-  --tab-size: 52px;
+  --tab-size: 64px;
+  --tab-indicator-size: 40px;
+  --tab-indicator-offset: 0px;
   --tab-radius: 16px;
   --tab-pad-x: 16px;
   --tab-pad-y: 12px;
@@ -777,7 +779,7 @@ button.secondary {
               0 4px 12px rgba(6, 7, 10, 0.4);
   border-radius: 24px;
   padding: var(--tab-pad-y) var(--tab-pad-x);
-  display: none;
+  display: flex;
   gap: 8px;
   align-items: center;
   z-index: 100;
@@ -814,18 +816,7 @@ button.secondary {
 }
 
 .tabbar .tab-indicator {
-  position: absolute;
-  top: var(--tab-pad-y);
-  left: var(--tab-pad-x);
-  width: var(--tab-size);
-  height: var(--tab-size);
-  border-radius: var(--tab-radius);
-  background: linear-gradient(135deg, #f7c842 0%, #ffd86b 100%);
-  box-shadow: 0 10px 22px rgba(247, 200, 66, 0.32),
-              0 2px 8px rgba(247, 200, 66, 0.18);
-  transform: translateX(0);
-  transition: transform 0.28s ease, width 0.28s ease, height 0.28s ease;
-  z-index: 0;
+  display: none;
 }
 
 .tabbar .tab {
@@ -842,23 +833,30 @@ button.secondary {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: transparent;
   z-index: 1;
-  gap: 3px;
-  padding-top: 6px;
+  gap: 4px;
+  padding-top: 8px;
 }
 
 .tabbar .tab::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: var(--tab-radius);
-  background: rgba(30, 75, 156, 0.05);
+  top: 6px;
+  left: 50%;
+  width: var(--tab-indicator-size);
+  height: var(--tab-indicator-size);
+  border-radius: 14px;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f7c842 0%, #ffd86b 100%);
+  box-shadow: 0 10px 22px rgba(247, 200, 66, 0.32),
+              0 2px 8px rgba(247, 200, 66, 0.18);
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .tabbar .tab span {
   position: static;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--muted);
   opacity: 1;
@@ -876,10 +874,6 @@ button.secondary {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.tabbar .tab:hover::before {
-  opacity: 1;
-}
-
 .tabbar .tab:hover {
   color: var(--accent);
 }
@@ -894,6 +888,10 @@ button.secondary {
 
 .tabbar .tab.active {
   color: #fff;
+}
+
+.tabbar .tab.active::before {
+  opacity: 1;
 }
 
 .tabbar .tab.active span {
@@ -924,14 +922,6 @@ button.secondary {
 }
 
 @media (max-width: 900px) {
-  .nav-desktop {
-    display: none;
-  }
-  
-  .tabbar {
-    display: flex;
-  }
-  
   .has-tabbar .container {
     padding-bottom: 140px;
   }
@@ -957,7 +947,8 @@ button.secondary {
   
   .tabbar {
     bottom: 16px;
-    --tab-size: 48px;
+    --tab-size: 52px;
+    --tab-indicator-size: 38px;
     --tab-pad-x: 12px;
     --tab-pad-y: 10px;
     gap: 4px;
@@ -969,7 +960,8 @@ button.secondary {
   .tabbar {
     bottom: 12px;
     border-radius: 20px;
-    --tab-size: 44px;
+    --tab-size: 48px;
+    --tab-indicator-size: 34px;
     --tab-pad-x: 10px;
     --tab-pad-y: 10px;
   }

@@ -48,12 +48,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!indicator || !active) {
         return;
       }
-      indicator.style.width = `${active.offsetWidth}px`;
-      indicator.style.height = `${active.offsetHeight}px`;
-      indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+      const styles = getComputedStyle(tabbar);
+      const size = parseFloat(styles.getPropertyValue('--tab-indicator-size')) || 40;
+      const offsetVar = parseFloat(styles.getPropertyValue('--tab-indicator-offset')) || 0;
+      const tabRect = active.getBoundingClientRect();
+      const barRect = tabbar.getBoundingClientRect();
+      const offsetX = tabRect.left - barRect.left + (tabRect.width - size) / 2 + offsetVar;
+      indicator.style.width = `${size}px`;
+      indicator.style.height = `${size}px`;
+      indicator.style.transform = `translateX(${offsetX}px)`;
     };
-    updateIndicator();
-    window.addEventListener('resize', updateIndicator);
-    setTimeout(updateIndicator, 60);
+    const rafUpdate = () => requestAnimationFrame(updateIndicator);
+    rafUpdate();
+    window.addEventListener('resize', rafUpdate);
+    window.addEventListener('load', rafUpdate);
+    setTimeout(rafUpdate, 120);
+    setTimeout(rafUpdate, 300);
+    if ('fonts' in document) {
+      document.fonts.ready.then(rafUpdate);
+    }
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(rafUpdate);
+      ro.observe(tabbar);
+    }
   }
 });
