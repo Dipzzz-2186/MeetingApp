@@ -20,10 +20,17 @@
             --shadow: 0 22px 55px rgba(5, 6, 9, 0.65);
         }
 
-        * { 
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
         body {
@@ -43,13 +50,13 @@
 
         .auth-layout {
             display: flex;
-            width: 100%;
-            max-width: 900px;
+            width: min(100%, 900px);
             background: var(--card);
             border-radius: 20px;
             overflow: hidden;
             box-shadow: var(--shadow);
             min-height: 500px;
+            margin: 0 auto;
         }
 
         .auth-side {
@@ -299,6 +306,8 @@
 
             .auth-layout {
                 border-radius: 16px;
+                width: 100%;
+                max-width: 100%;
             }
             
             .auth-side,
