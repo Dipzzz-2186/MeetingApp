@@ -1561,17 +1561,6 @@
                     
                     <div class="form-row">
                         <div>
-                            <label><i class="fas fa-user"></i> User</label>
-                            <select name="edit_user_id" id="edit_user_id" required>
-                                <option value="">Pilih user</option>
-                                <?php foreach ($users as $row): ?>
-                                    <option value="<?php echo (int)$row['id']; ?>">
-                                        <?php echo htmlspecialchars($row['name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div>
                             <label><i class="fas fa-door-open"></i> Room</label>
                             <select name="edit_room_id" id="edit_room_id" required>
                                 <option value="">Pilih room</option>
@@ -1796,7 +1785,6 @@
                 
                 // Isi form edit
                 document.getElementById('edit_booking_id').value = bookingId;
-                document.getElementById('edit_user_id').value = data.user_id;
                 document.getElementById('edit_room_id').value = data.room_id;
                 document.getElementById('edit_start_time').value = data.start_time_formatted;
                 document.getElementById('edit_end_time').value = data.end_time_formatted;
