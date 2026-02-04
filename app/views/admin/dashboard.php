@@ -594,6 +594,12 @@
             .header-left {
                 width: 100%;
                 justify-content: space-between;
+                flex-wrap: wrap;
+            }
+
+            .admin-badge {
+                width: 100%;
+                justify-content: center;
             }
             
             .stats-grid {
@@ -628,9 +634,106 @@
             }
         }
 
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 16px;
+                border-radius: 16px;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .stat-content h3 {
+                font-size: 11px;
+                letter-spacing: 0.4px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .header-left {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .card-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .table {
+                min-width: 0;
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table,
+            .table tbody,
+            .table tr,
+            .table td {
+                display: block;
+                width: 100%;
+            }
+
+            .table tr {
+                border: 1px solid var(--stroke);
+                border-radius: 12px;
+                margin-bottom: 12px;
+                background: rgba(17, 21, 28, 0.5);
+            }
+
+            .table td {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                color: var(--muted);
+                font-weight: 600;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .table tr.empty-row {
+                border: none;
+                background: transparent;
+                margin: 0;
+            }
+
+            .table tr.empty-row td {
+                padding: 0;
+                display: block;
+            }
+
+            .table tr.empty-row td::before {
+                content: none;
+            }
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 15px 10px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
             }
             
             .header-text h1 {
@@ -638,11 +741,11 @@
             }
             
             .stat-card {
-                padding: 20px;
+                padding: 16px;
             }
             
             .stat-value {
-                font-size: 28px;
+                font-size: 24px;
             }
             
             .card-title {
@@ -874,7 +977,7 @@
                                         }
                                     ?>
                                     <tr>
-                                        <td>
+                                        <td data-label="User">
                                             <div style="display: flex; align-items: center; gap: 10px;">
                                                 <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(87, 184, 255, 0.2); display: flex; align-items: center; justify-content: center; color: var(--info);">
                                                     <?php echo strtoupper(substr($row['user_name'], 0, 1)); ?>
@@ -882,15 +985,15 @@
                                                 <span><?php echo htmlspecialchars($row['user_name']); ?></span>
                                             </div>
                                         </td>
-                                        <td><?php echo htmlspecialchars($row['room_name']); ?></td>
-                                        <td>
+                                        <td data-label="Ruangan"><?php echo htmlspecialchars($row['room_name']); ?></td>
+                                        <td data-label="Waktu">
                                             <?php 
                                                 $startTime = date('H:i', strtotime($row['start_time']));
                                                 $endTime = date('H:i', strtotime($row['end_time']));
                                                 echo $startTime . ' - ' . $endTime;
                                             ?>
                                         </td>
-                                        <td>
+                                        <td data-label="Status">
                                             <span class="booking-status <?php echo $statusClass; ?>">
                                                 <?php echo $statusText; ?>
                                             </span>
@@ -898,7 +1001,7 @@
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr>
+                                    <tr class="empty-row">
                                         <td colspan="4" style="padding: 40px 20px;">
                                             <div class="empty-state">
                                                 <i class="fas fa-calendar-times"></i>
