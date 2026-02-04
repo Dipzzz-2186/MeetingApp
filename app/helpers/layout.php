@@ -82,7 +82,6 @@ function render_header(string $title, string $body_class = ''): void {
                 echo '<a href="/bookings">Scheduling</a>';
             } else {
                 echo '<a href="/booking_user"' . ($is_active('/booking_user') ? ' class="active"' : '') . '>Booking</a>';
-                echo '<a href="/user/schedules"' . ($is_active('/user/schedules') ? ' class="active"' : '') . '>Schedule</a>';
             }
 
             echo '<a href="/logout" class="ghost">Logout</a>';
@@ -155,9 +154,7 @@ function render_header(string $title, string $body_class = ''): void {
         } else {
             echo '<a class="tab' . ($is_active('/booking_user') ? ' active' : '') . '" href="/booking_user">'
                 . $icon_book . '<span>Booking</span></a>';
-
-            echo '<a class="tab' . ($is_active('/user/schedules') ? ' active' : '') . '" href="/user/schedules">'
-                . $icon_schedule . '<span>Schedule</span></a>';
+                
             echo '<a class="tab' . ($is_active('/articles') ? ' active' : '') . '" href="/articles">' . $icon_article . '<span>Articles</span></a>';
         }
 

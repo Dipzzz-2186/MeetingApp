@@ -16,7 +16,6 @@ class UserController {
             'rooms' => $rooms,
         ], 'Dashboard User');
     }
-    
 
     public static function booking(): void {
         require_login();
@@ -54,7 +53,7 @@ class UserController {
                 ]);
 
                 $_SESSION['notice'] = 'Booking berhasil dibuat.';
-                header('Location: /user/booking');
+                header('Location: /booking_user');
                 exit;
             }
         }
@@ -77,6 +76,7 @@ class UserController {
         );
 
         render_view('user/booking', [
+            'user'     => $user,
             'notice'   => $notice,
             'error'    => $error,
             'rooms'    => $rooms,
