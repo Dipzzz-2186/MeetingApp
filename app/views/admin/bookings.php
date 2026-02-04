@@ -114,6 +114,16 @@
             display: none;
         }
 
+        .fullscreen-mode .topbar,
+        .fullscreen-mode .tabbar,
+        .fullscreen-mode .mobile-brand {
+            display: none !important;
+        }
+
+        .fullscreen-mode main.container {
+            padding-top: 0;
+        }
+
         .grid-two {
             display: grid;
             grid-template-columns: 1fr 1.5fr;
