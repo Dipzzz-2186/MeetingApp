@@ -2101,12 +2101,31 @@
 
         // Monitor mode (fullscreen)
         if (monitorToggle) {
+            const setActiveFilterBtn = (filter) => {
+                const filterBtns = document.querySelectorAll('.filter-btn');
+                filterBtns.forEach(btn => btn.classList.remove('active'));
+                const target = Array.from(filterBtns).find(btn => btn.getAttribute('onclick')?.includes(`'${filter}'`));
+                if (target) target.classList.add('active');
+            };
+
             const updateMonitorState = () => {
                 const isFs = !!document.fullscreenElement;
                 document.body.classList.toggle('fullscreen-mode', isFs);
                 monitorToggle.innerHTML = isFs
                     ? '<i class="fas fa-compress"></i> Keluar Monitor'
                     : '<i class="fas fa-expand"></i> Mode Monitor';
+
+                if (isFs) {
+                    currentFilter = 'today';
+                    currentPage = 1;
+                    setActiveFilterBtn('today');
+                    updatePagination();
+                } else {
+                    currentFilter = 'all';
+                    currentPage = 1;
+                    setActiveFilterBtn('all');
+                    updatePagination();
+                }
             };
 
             monitorToggle.addEventListener('click', () => {
