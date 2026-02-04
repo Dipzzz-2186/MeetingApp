@@ -576,49 +576,204 @@ class AdminController {
         $notice = null;
         $error = null;
         
-        // AMBIL WAKTU SEKARANG DENGAN TIMEZONE YANG SESUAI
-        date_default_timezone_set('Asia/Jakarta'); // Sesuaikan dengan timezone Anda
+        // Set timezone
+        date_default_timezone_set('Asia/Jakarta');
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $user_id = (int)($_POST['user_id'] ?? 0);
-            $room_id = (int)($_POST['room_id'] ?? 0);
-            $start = normalize_datetime($_POST['start_time'] ?? '');
-            $end = normalize_datetime($_POST['end_time'] ?? '');
-            $purpose = trim($_POST['purpose'] ?? '');
-
-            if ($user_id <= 0 || $room_id <= 0 || $start === '' || $end === '') {
-                $error = 'Semua field wajib diisi.';
-            } elseif (strtotime($end) <= strtotime($start)) {
-                $error = 'Waktu selesai harus lebih besar dari waktu mulai.';
-            } elseif (!is_room_available($pdo, $room_id, $start, $end)) {
-                $error = 'Room sudah terbooking pada waktu tersebut.';
-            } else {
-                Booking::create($pdo, [
-                    'admin_id' => $user['id'],
-                    'user_id' => $user_id,
-                    'room_id' => $room_id,
-                    'start_time' => $start,
-                    'end_time' => $end,
-                    'purpose' => $purpose,
-                    'created_at' => now_iso(),
-                ]);
-                $notice = 'Booking berhasil dibuat.';
+        // Handle AJAX requests for getting booking data
+        if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_booking') {
+            $booking_id = (int)($_GET['booking_id'] ?? 0);
+            
+            if ($booking_id > 0) {
+                $stmt = $pdo->prepare("
+                    SELECT 
+                        b.*,
+                        u.name as user_name,
+                        u.email as user_email,
+                        r.name as room_name,
+                        r.capacity as room_capacity
+                    FROM bookings b
+                    JOIN users u ON b.user_id = u.id
+                    JOIN rooms r ON b.room_id = r.id
+                    WHERE b.id = :id AND b.admin_id = :admin_id
+                ");
+                $stmt->execute([':id' => $booking_id, ':admin_id' => $user['id']]);
+                $bookingData = $stmt->fetch();
+                
+                if ($bookingData) {
+                    // Format tanggal untuk form
+                    $start = new DateTime($bookingData['start_time']);
+                    $end = new DateTime($bookingData['end_time']);
+                    $bookingData['start_time_formatted'] = $start->format('Y-m-d\TH:i');
+                    $bookingData['end_time_formatted'] = $end->format('Y-m-d\TH:i');
+                    
+                    header('Content-Type: application/json');
+                    echo json_encode($bookingData);
+                    exit;
+                }
             }
+            
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Booking tidak ditemukan']);
+            exit;
+        }
+        
+        // Handle POST requests
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            $isAjax = isset($_POST['ajax']) && $_POST['ajax'] === 'true';
+            
+            if ($action === 'create') {
+                $user_id = (int)($_POST['user_id'] ?? 0);
+                $room_id = (int)($_POST['room_id'] ?? 0);
+                $start = normalize_datetime($_POST['start_time'] ?? '');
+                $end = normalize_datetime($_POST['end_time'] ?? '');
+                $purpose = trim($_POST['purpose'] ?? '');
+
+                if ($user_id <= 0 || $room_id <= 0 || $start === '' || $end === '') {
+                    $error = 'Semua field wajib diisi.';
+                } elseif (strtotime($end) <= strtotime($start)) {
+                    $error = 'Waktu selesai harus lebih besar dari waktu mulai.';
+                } elseif (!is_room_available($pdo, $room_id, $start, $end)) {
+                    $error = 'Room sudah terbooking pada waktu tersebut.';
+                } else {
+                    try {
+                        Booking::create($pdo, [
+                            'admin_id' => $user['id'],
+                            'user_id' => $user_id,
+                            'room_id' => $room_id,
+                            'start_time' => $start,
+                            'end_time' => $end,
+                            'purpose' => $purpose,
+                            'created_at' => now_iso(),
+                        ]);
+                        $notice = 'Booking berhasil dibuat.';
+                    } catch (Exception $e) {
+                        $error = 'Gagal membuat booking: ' . $e->getMessage();
+                    }
+                }
+            } 
+            elseif ($action === 'edit') {
+                // EDIT BOOKING - TANPA PENGE CEKAN KETERSEDIAAN ROOM
+                $booking_id = (int)($_POST['booking_id'] ?? 0);
+                $user_id = (int)($_POST['edit_user_id'] ?? 0);
+                $room_id = (int)($_POST['edit_room_id'] ?? 0);
+                $start = normalize_datetime($_POST['edit_start_time'] ?? '');
+                $end = normalize_datetime($_POST['edit_end_time'] ?? '');
+                $purpose = trim($_POST['edit_purpose'] ?? '');
+
+                if ($booking_id <= 0) {
+                    $error = 'ID booking tidak valid.';
+                } elseif ($user_id <= 0 || $room_id <= 0 || $start === '' || $end === '') {
+                    $error = 'Semua field wajib diisi.';
+                } elseif (strtotime($end) <= strtotime($start)) {
+                    $error = 'Waktu selesai harus lebih besar dari waktu mulai.';
+                } else {
+                    try {
+                        // Cek apakah booking milik admin ini
+                        $stmt = $pdo->prepare("SELECT id FROM bookings WHERE id = :id AND admin_id = :admin_id");
+                        $stmt->execute([':id' => $booking_id, ':admin_id' => $user['id']]);
+                        
+                        if ($stmt->fetch()) {
+                            // UPDATE tanpa kolom updated_at (karena tidak ada di tabel)
+                            $stmt = $pdo->prepare("
+                                UPDATE bookings 
+                                SET user_id = :user_id, 
+                                    room_id = :room_id, 
+                                    start_time = :start_time, 
+                                    end_time = :end_time, 
+                                    purpose = :purpose
+                                WHERE id = :id
+                            ");
+                            $stmt->execute([
+                                ':user_id' => $user_id,
+                                ':room_id' => $room_id,
+                                ':start_time' => $start,
+                                ':end_time' => $end,
+                                ':purpose' => $purpose,
+                                ':id' => $booking_id
+                            ]);
+                            
+                            $notice = 'Booking berhasil diperbarui.';
+                        } else {
+                            $error = 'Booking tidak ditemukan atau tidak memiliki akses.';
+                        }
+                    } catch (Exception $e) {
+                        $error = 'Gagal memperbarui booking: ' . $e->getMessage();
+                    }
+                }
+            }
+            elseif ($action === 'delete') {
+                $booking_id = (int)($_POST['booking_id'] ?? 0);
+                
+                if ($booking_id > 0) {
+                    try {
+                        // Cek apakah booking milik admin ini
+                        $stmt = $pdo->prepare("SELECT id FROM bookings WHERE id = :id AND admin_id = :admin_id");
+                        $stmt->execute([':id' => $booking_id, ':admin_id' => $user['id']]);
+                        
+                        if ($stmt->fetch()) {
+                            // Hapus booking
+                            $stmt = $pdo->prepare("DELETE FROM bookings WHERE id = :id");
+                            $stmt->execute([':id' => $booking_id]);
+                            $notice = 'Booking berhasil dihapus.';
+                        } else {
+                            $error = 'Booking tidak ditemukan atau tidak memiliki akses.';
+                        }
+                    } catch (Exception $e) {
+                        $error = 'Gagal menghapus booking: ' . $e->getMessage();
+                    }
+                }
+            }
+            
+            // Jika AJAX request, kembalikan JSON response
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => !$error,
+                    'notice' => $notice,
+                    'error' => $error
+                ]);
+                exit;
+            }
+            
+            // Simpan ke session untuk ditampilkan setelah redirect
+            if ($notice) {
+                $_SESSION['notice'] = $notice;
+            }
+            if ($error) {
+                $_SESSION['error'] = $error;
+            }
+            
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        }
+        
+        // Ambil pesan dari session
+        if (isset($_SESSION['notice'])) {
+            $notice = $_SESSION['notice'];
+            unset($_SESSION['notice']);
+        }
+        
+        if (isset($_SESSION['error'])) {
+            $error = $_SESSION['error'];
+            unset($_SESSION['error']);
         }
 
+        // Get users and rooms for dropdowns
         $stmt = $pdo->prepare("SELECT id, name FROM users WHERE role = 'user' AND owner_admin_id = :owner_admin_id ORDER BY name ASC");
         $stmt->execute([':owner_admin_id' => $user['id']]);
         $users = $stmt->fetchAll();
+        
         $rooms = Room::availableByOwner($pdo, (int)$user['id']);
 
+        // Get all bookings for this admin
         if ($user['role'] === 'superadmin') {
             $bookings = Booking::all($pdo);
         } else {
             $bookings = Booking::byAdmin($pdo, (int)$user['id']);
         }
 
-        // TAMBAHKAN LOGIKA UPDATE STATUS OTOMATIS DI CONTROLLER
-        // Update status booking yang sudah lewat
+        // Calculate status for each booking
         $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
         
         foreach ($bookings as &$booking) {
@@ -626,15 +781,11 @@ class AdminController {
                 $start = new DateTime($booking['start_time'], new DateTimeZone('Asia/Jakarta'));
                 $end = new DateTime($booking['end_time'], new DateTimeZone('Asia/Jakarta'));
                 
-                // Tambahkan margin 1 menit untuk menghindari perbedaan waktu kecil
                 if ($now > $end) {
-                    // Status sudah selesai
                     $booking['status_override'] = 'completed';
                 } elseif ($now >= $start && $now <= $end) {
-                    // Sedang berlangsung
                     $booking['status_override'] = 'ongoing';
                 } else {
-                    // Akan datang
                     $booking['status_override'] = 'upcoming';
                 }
             } catch (Exception $e) {

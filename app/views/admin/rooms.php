@@ -861,11 +861,6 @@
                             <i class="fas fa-door-open"></i>
                             Halaman <?php echo $currentPage; ?> dari <?php echo $totalPages; ?>
                             (Total: <?php echo $totalRooms; ?> ruangan)
-                            <?php 
-                            $totalCapacity = array_sum(array_column($rooms, 'capacity'));
-                            if ($totalCapacity > 0): ?>
-                                | Total kapasitas: <?php echo $totalCapacity; ?> orang
-                            <?php endif; ?>
                         </div>
                         <div style="display: flex; gap: 15px;">
                             <button class="action-btn" onclick="refreshPage()">

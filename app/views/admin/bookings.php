@@ -339,22 +339,22 @@
             background: rgba(247, 200, 66, 0.1);
         }
 
-        .action-btn.edit:hover {
+        .action-btn.view:hover {
             border-color: var(--info);
             color: var(--info);
             background: rgba(87, 184, 255, 0.1);
+        }
+
+        .action-btn.edit:hover {
+            border-color: var(--warning);
+            color: var(--warning);
+            background: rgba(255, 168, 87, 0.1);
         }
 
         .action-btn.delete:hover {
             border-color: var(--error);
             color: var(--error);
             background: rgba(255, 87, 87, 0.1);
-        }
-
-        .action-btn.view:hover {
-            border-color: var(--success);
-            color: var(--success);
-            background: rgba(87, 255, 117, 0.1);
         }
 
         /* Filter Controls */
@@ -596,6 +596,255 @@
             }
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 13, 18, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+            animation: slideUp 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                max-width: 95%;
+            }
+        }
+
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--stroke);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--card);
+            border-radius: 20px 20px 0 0;
+            z-index: 1;
+        }
+
+        .modal-header h2 {
+            font-family: "Fraunces", serif;
+            font-size: 22px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--ink);
+        }
+
+        .modal-close {
+            background: rgba(154, 160, 170, 0.1);
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--error);
+            border-color: var(--error);
+            color: var(--ink);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        /* Detail Grid */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .detail-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--ink);
+            padding: 12px;
+            background: rgba(17, 21, 28, 0.5);
+            border-radius: 10px;
+            border: 1px solid var(--stroke);
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Modal Actions */
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #1a1a1a;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-2);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(154, 160, 170, 0.1);
+            color: var(--muted);
+            border: 1px solid var(--stroke);
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(154, 160, 170, 0.2);
+            color: var(--ink);
+        }
+
+        .btn-danger {
+            background: rgba(255, 87, 87, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 87, 87, 0.3);
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .btn-danger:hover {
+            background: var(--error);
+            color: var(--ink);
+        }
+
+        /* Warning Message */
+        .warning-message {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .warning-message i {
+            font-size: 48px;
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+
+        .warning-message h3 {
+            font-size: 18px;
+            color: var(--ink);
+            margin-bottom: 10px;
+        }
+
+        .warning-message p {
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .warning-text {
+            color: var(--error) !important;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -805,6 +1054,7 @@
                 <?php endif; ?>
                 
                 <form method="post" class="grid">
+                    <input type="hidden" name="action" value="create">
                     <div class="form-row">
                         <div>
                             <label><i class="fas fa-user"></i> User</label>
@@ -929,7 +1179,7 @@
                                     
                                     // Tentukan status dengan lebih akurat
                                     $now = new DateTime();
-                                    $status = 'upcoming'; // default
+                                    $status = isset($row['status_override']) ? $row['status_override'] : 'upcoming'; // default
                                     
                                     if ($now >= $start && $now <= $end) {
                                         $status = 'ongoing';
@@ -1099,7 +1349,520 @@
         </div>
     </div>
     
+    <!-- Modal Detail Booking -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Detail Booking</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label><i class="fas fa-user"></i> User</label>
+                        <div id="detail-user" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-door-open"></i> Room</label>
+                        <div id="detail-room" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-calendar-day"></i> Tanggal</label>
+                        <div id="detail-date" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-clock"></i> Waktu</label>
+                        <div id="detail-time" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-hourglass-half"></i> Durasi</label>
+                        <div id="detail-duration" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-bullseye"></i> Tujuan</label>
+                        <div id="detail-purpose" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-calendar-plus"></i> Dibuat</label>
+                        <div id="detail-created" class="detail-value">-</div>
+                    </div>
+                    <div class="detail-item full-width">
+                        <label><i class="fas fa-tag"></i> Status</label>
+                        <div id="detail-status" class="detail-value">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Booking -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Edit Booking</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editBookingForm" method="post" class="grid">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="ajax" value="true">
+                    <input type="hidden" name="booking_id" id="edit_booking_id">
+                    
+                    <div class="form-row">
+                        <div>
+                            <label><i class="fas fa-user"></i> User</label>
+                            <select name="edit_user_id" id="edit_user_id" required>
+                                <option value="">Pilih user</option>
+                                <?php foreach ($users as $row): ?>
+                                    <option value="<?php echo (int)$row['id']; ?>">
+                                        <?php echo htmlspecialchars($row['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label><i class="fas fa-door-open"></i> Room</label>
+                            <select name="edit_room_id" id="edit_room_id" required>
+                                <option value="">Pilih room</option>
+                                <?php foreach ($rooms as $row): ?>
+                                    <option value="<?php echo (int)$row['id']; ?>" data-capacity="<?php echo $row['capacity']; ?>">
+                                        <?php echo htmlspecialchars($row['name']); ?> (<?php echo $row['capacity']; ?> orang)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div>
+                            <label><i class="fas fa-calendar-day"></i> Mulai</label>
+                            <input type="datetime-local" name="edit_start_time" id="edit_start_time" required>
+                        </div>
+                        <div>
+                            <label><i class="fas fa-calendar-check"></i> Selesai</label>
+                            <input type="datetime-local" name="edit_end_time" id="edit_end_time" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label><i class="fas fa-bullseye"></i> Tujuan Meeting</label>
+                        <input type="text" name="edit_purpose" id="edit_purpose" placeholder="Tujuan meeting">
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i>
+                            Simpan Perubahan
+                        </button>
+                        <button type="button" class="btn-secondary modal-close">
+                            <i class="fas fa-times"></i>
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Delete -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Hapus Booking</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Apakah Anda yakin?</h3>
+                    <p>Booking dengan ID <span id="delete-booking-id"></span> akan dihapus secara permanen.</p>
+                    <p class="warning-text">Tindakan ini tidak dapat dibatalkan.</p>
+                </div>
+                
+                <form id="deleteBookingForm" method="post" class="grid">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="ajax" value="true">
+                    <input type="hidden" name="booking_id" id="delete_booking_id">
+                    
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-danger">
+                            <i class="fas fa-trash"></i>
+                            Ya, Hapus
+                        </button>
+                        <button type="button" class="btn-secondary modal-close">
+                            <i class="fas fa-times"></i>
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
 <script>
+    // Modal Functions
+    const detailModal = document.getElementById('detailModal');
+    const editModal = document.getElementById('editModal');
+    const deleteModal = document.getElementById('deleteModal');
+    
+    // State
+    let isLoading = false;
+
+    // Show modal functions
+    window.viewBooking = function(bookingId) {
+        if (isLoading) return;
+        
+        // Show loading state
+        const detailValues = document.querySelectorAll('.detail-value');
+        detailValues.forEach(el => {
+            el.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+        });
+        
+        openModal('detail');
+        
+        // Fetch booking details
+        fetch(`?ajax=get_booking&booking_id=${bookingId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    showAlert(data.error, 'error');
+                    closeAllModals();
+                    return;
+                }
+                
+                // Format data untuk display
+                const start = new Date(data.start_time);
+                const end = new Date(data.end_time);
+                const created = new Date(data.created_at);
+                
+                // Hitung durasi
+                const durationMs = end - start;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                // Tentukan status
+                const now = new Date();
+                let status = 'Akan Datang';
+                let statusClass = 'status-upcoming';
+                
+                if (now > end) {
+                    status = 'Selesai';
+                    statusClass = 'status-completed';
+                } else if (now >= start && now <= end) {
+                    status = 'Berlangsung';
+                    statusClass = 'status-ongoing';
+                }
+                
+                // Isi detail
+                document.getElementById('detail-user').innerHTML = `
+                    <div>
+                        <strong>${data.user_name}</strong><br>
+                        <small style="color: var(--muted);">${data.user_email}</small>
+                    </div>
+                `;
+                document.getElementById('detail-room').innerHTML = `
+                    <div>
+                        <strong>${data.room_name}</strong><br>
+                        <small style="color: var(--muted);">Kapasitas: ${data.room_capacity} orang</small>
+                    </div>
+                `;
+                document.getElementById('detail-date').textContent = start.toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('detail-time').textContent = 
+                    `${start.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})} - ${end.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}`;
+                document.getElementById('detail-duration').textContent = 
+                    `${hours > 0 ? hours + ' jam ' : ''}${minutes} menit`;
+                document.getElementById('detail-purpose').textContent = data.purpose || 'Tidak ada keterangan';
+                document.getElementById('detail-created').textContent = created.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                document.getElementById('detail-status').innerHTML = `
+                    <span class="booking-status ${statusClass}">
+                        <i class="fas ${now > end ? 'fa-check-circle' : (now >= start && now <= end ? 'fa-play-circle' : 'fa-clock')}"></i>
+                        ${status}
+                    </span>
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Gagal mengambil data booking', 'error');
+                closeAllModals();
+            })
+            .finally(() => {
+                isLoading = false;
+            });
+    };
+
+    window.editBooking = function(bookingId) {
+        if (isLoading) return;
+        isLoading = true;
+        
+        // Show modal first
+        openModal('edit');
+        
+        // Show loading state in form
+        const editForm = document.getElementById('editBookingForm');
+        const inputs = editForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden') {
+                input.value = 'Memuat...';
+                input.disabled = true;
+            }
+        });
+        
+        const submitBtn = editForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat data...';
+        submitBtn.disabled = true;
+        
+        // Fetch booking details untuk form edit
+        fetch(`?ajax=get_booking&booking_id=${bookingId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    showAlert(data.error, 'error');
+                    closeAllModals();
+                    return;
+                }
+                
+                // Isi form edit
+                document.getElementById('edit_booking_id').value = bookingId;
+                document.getElementById('edit_user_id').value = data.user_id;
+                document.getElementById('edit_room_id').value = data.room_id;
+                document.getElementById('edit_start_time').value = data.start_time_formatted;
+                document.getElementById('edit_end_time').value = data.end_time_formatted;
+                document.getElementById('edit_purpose').value = data.purpose || '';
+                
+                // Enable inputs
+                inputs.forEach(input => {
+                    input.disabled = false;
+                });
+                
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                // Set minimum time untuk end time
+                const startInput = document.getElementById('edit_start_time');
+                const endInput = document.getElementById('edit_end_time');
+                
+                startInput.addEventListener('change', function() {
+                    if (this.value) {
+                        const start = new Date(this.value);
+                        const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+                        endInput.min = minEnd.toISOString().slice(0, 16);
+                    }
+                });
+                
+                // Trigger change untuk set min value
+                if (startInput.value) {
+                    startInput.dispatchEvent(new Event('change'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Gagal mengambil data booking', 'error');
+                closeAllModals();
+            })
+            .finally(() => {
+                isLoading = false;
+            });
+    };
+
+    window.deleteBooking = function(bookingId) {
+        document.getElementById('delete_booking_id').value = bookingId;
+        document.getElementById('delete-booking-id').textContent = bookingId;
+        openModal('delete');
+    };
+
+    // Modal utility functions
+    function openModal(type) {
+        // Close all modals first
+        closeAllModals();
+        
+        // Show selected modal
+        switch(type) {
+            case 'detail':
+                detailModal.classList.add('active');
+                break;
+            case 'edit':
+                editModal.classList.add('active');
+                break;
+            case 'delete':
+                deleteModal.classList.add('active');
+                break;
+        }
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAllModals() {
+        detailModal.classList.remove('active');
+        editModal.classList.remove('active');
+        deleteModal.classList.remove('active');
+        document.body.style.overflow = '';
+        isLoading = false;
+    }
+
+    // Close modal on click outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            closeAllModals();
+        }
+    };
+
+    // Close modal buttons
+    document.querySelectorAll('.modal-close').forEach(button => {
+        button.addEventListener('click', closeAllModals);
+    });
+
+    // Handle form submissions via AJAX
+    document.getElementById('editBookingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (isLoading) return;
+        isLoading = true;
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        submitBtn.disabled = true;
+        
+        // Submit via AJAX
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showAlert(data.notice, 'success');
+                closeAllModals();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showAlert(data.error, 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Terjadi kesalahan saat menyimpan', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        })
+        .finally(() => {
+            isLoading = false;
+        });
+    });
+
+    document.getElementById('deleteBookingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (isLoading) return;
+        isLoading = true;
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+        submitBtn.disabled = true;
+        
+        // Submit via AJAX
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showAlert(data.notice, 'success');
+                closeAllModals();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showAlert(data.error, 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Terjadi kesalahan saat menghapus', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        })
+        .finally(() => {
+            isLoading = false;
+        });
+    });
+
+    // Helper function untuk show alert
+    function showAlert(message, type) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert ${type}`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
+            ${message}
+        `;
+        
+        // Insert after the header in container
+        const container = document.querySelector('.container');
+        const header = container.querySelector('.header');
+        if (header && container) {
+            header.insertAdjacentElement('afterend', alertDiv);
+        }
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
     // Pagination variables
     let currentPage = 1;
     const itemsPerPage = 5;
@@ -1331,6 +2094,9 @@
         } else {
             paginationContainer.style.display = 'flex';
         }
+        
+        // Update stats based on filter
+        updateFilteredStats();
     }
 
     function renderPageNumbers(totalPages) {
@@ -1419,13 +2185,10 @@
         
         // Update pagination after filtering (this will handle the display logic)
         updatePagination();
-        
-        // Update stat counts after filtering
-        updateFilteredStats(filter);
     };
     
     // Fungsi untuk update stats berdasarkan filter
-    function updateFilteredStats(filter) {
+    function updateFilteredStats() {
         const rows = document.querySelectorAll('.booking-row');
         let upcomingCount = 0;
         let ongoingCount = 0;
@@ -1453,69 +2216,6 @@
         if (ongoingStat) ongoingStat.textContent = ongoingCount;
         if (completedStat) completedStat.textContent = completedCount;
         if (totalStat) totalStat.textContent = totalCount;
-    }
-    
-    // Booking actions
-    window.viewBooking = function(bookingId) {
-        alert(`Melihat detail booking ID: ${bookingId}\n\nDalam implementasi nyata, ini akan membuka modal detail.`);
-    };
-    
-    window.editBooking = function(bookingId) {
-        alert(`Edit booking ID: ${bookingId}\n\nDalam implementasi nyata, ini akan membuka form edit.`);
-    };
-    
-    window.deleteBooking = function(bookingId) {
-        if (confirm('Apakah Anda yakin ingin membatalkan booking ini?\n\nData booking akan dihapus permanen.')) {
-            // Kirim AJAX request (contoh implementasi)
-            fetch(`/booking/${bookingId}/delete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('Booking berhasil dibatalkan!', 'success');
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showAlert(data.error || 'Gagal membatalkan booking.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('Terjadi kesalahan.', 'error');
-            });
-        }
-    };
-    
-    // Helper function untuk menampilkan alert
-    function showAlert(message, type) {
-        // Remove existing alerts
-        const existingAlerts = document.querySelectorAll('.alert');
-        existingAlerts.forEach(alert => alert.remove());
-        
-        // Create new alert
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert ${type}`;
-        alertDiv.innerHTML = `
-            <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
-            ${message}
-        `;
-        
-        // Insert after the h1
-        const card = document.querySelector('.card');
-        const h1 = card.querySelector('h1');
-        if (h1 && card) {
-            h1.insertAdjacentElement('afterend', alertDiv);
-        }
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
-            }
-        }, 5000);
     }
 </script>
 </body>
