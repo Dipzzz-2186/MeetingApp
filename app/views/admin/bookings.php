@@ -114,6 +114,29 @@
             display: none;
         }
 
+        .monitor-exit-btn {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(247, 200, 66, 0.5);
+            background: rgba(11, 13, 18, 0.85);
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .fullscreen-mode .monitor-exit-btn {
+            display: inline-flex;
+        }
+
         .fullscreen-mode .topbar,
         .fullscreen-mode .tabbar,
         .fullscreen-mode .mobile-brand {
@@ -122,6 +145,27 @@
 
         .fullscreen-mode main.container {
             padding-top: 0;
+        }
+
+        .fullscreen-mode .action-btn.edit,
+        .fullscreen-mode .action-btn.delete {
+            display: none;
+        }
+
+        .monitor-error {
+            color: var(--error);
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .monitor-confirm {
+            background: rgba(247, 200, 66, 0.12);
+            border-color: rgba(247, 200, 66, 0.5);
+            color: var(--accent);
+        }
+
+        .monitor-confirm:hover {
+            background: rgba(247, 200, 66, 0.2);
         }
 
         .grid-two {
@@ -1126,6 +1170,40 @@
                 </a>
             </div>
         </div>
+
+        <button type="button" class="monitor-exit-btn" id="monitorExitBtn">
+            <i class="fas fa-unlock"></i> Keluar Monitor
+        </button>
+
+        <!-- Modal: Exit Monitor -->
+        <div class="modal" id="monitorExitModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-lock"></i> Keluar Mode Monitor</h2>
+                    <button class="modal-close" type="button" id="monitorExitClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--muted); margin-bottom: 16px;">
+                        Masukkan password akun admin untuk keluar dari mode monitor.
+                    </p>
+                    <div class="detail-item">
+                        <label><i class="fas fa-key"></i> Password</label>
+                        <input type="password" id="monitor_password" placeholder="Password admin" autocomplete="current-password">
+                        <div class="monitor-error" id="monitor_password_error" style="display:none;"></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="action-btn" type="button" id="monitorExitCancel">
+                            <i class="fas fa-times"></i> Batal
+                        </button>
+                        <button class="action-btn monitor-confirm" type="button" id="monitorExitConfirm">
+                            <i class="fas fa-unlock"></i> Keluar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <div class="grid-two">
             <!-- Form Buat Booking -->
@@ -2108,6 +2186,95 @@
                 if (target) target.classList.add('active');
             };
 
+            const monitorExitModal = document.getElementById('monitorExitModal');
+            const monitorExitBtn = document.getElementById('monitorExitBtn');
+            const monitorExitClose = document.getElementById('monitorExitClose');
+            const monitorExitCancel = document.getElementById('monitorExitCancel');
+            const monitorExitConfirm = document.getElementById('monitorExitConfirm');
+            const monitorPassword = document.getElementById('monitor_password');
+            const monitorPasswordError = document.getElementById('monitor_password_error');
+
+            const openMonitorModal = () => {
+                if (!monitorExitModal) return;
+                monitorExitModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                if (monitorPassword) {
+                    monitorPassword.value = '';
+                    monitorPassword.focus();
+                }
+                if (monitorPasswordError) {
+                    monitorPasswordError.style.display = 'none';
+                    monitorPasswordError.textContent = '';
+                }
+            };
+
+            const closeMonitorModal = () => {
+                if (!monitorExitModal) return;
+                monitorExitModal.classList.remove('active');
+                document.body.style.overflow = '';
+            };
+
+            if (monitorExitClose) monitorExitClose.addEventListener('click', closeMonitorModal);
+            if (monitorExitCancel) monitorExitCancel.addEventListener('click', closeMonitorModal);
+            if (monitorExitModal) {
+                monitorExitModal.addEventListener('click', (e) => {
+                    if (e.target === monitorExitModal) closeMonitorModal();
+                });
+            }
+            if (monitorExitBtn) {
+                monitorExitBtn.addEventListener('click', openMonitorModal);
+            }
+
+            if (monitorExitConfirm) {
+                monitorExitConfirm.addEventListener('click', () => {
+                    const password = monitorPassword ? monitorPassword.value : '';
+                    if (!password) {
+                        if (monitorPasswordError) {
+                            monitorPasswordError.textContent = 'Password wajib diisi.';
+                            monitorPasswordError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('action', 'verify_password');
+                    formData.append('password', password);
+                    formData.append('ajax', 'true');
+
+                    monitorExitConfirm.disabled = true;
+                    const originalText = monitorExitConfirm.innerHTML;
+                    monitorExitConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa...';
+
+                    fetch('', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.success) {
+                            closeMonitorModal();
+                            document.exitFullscreen?.();
+                        } else {
+                            if (monitorPasswordError) {
+                                monitorPasswordError.textContent = data?.error || 'Password salah.';
+                                monitorPasswordError.style.display = 'block';
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        if (monitorPasswordError) {
+                            monitorPasswordError.textContent = 'Gagal memeriksa password.';
+                            monitorPasswordError.style.display = 'block';
+                        }
+                    })
+                    .finally(() => {
+                        monitorExitConfirm.disabled = false;
+                        monitorExitConfirm.innerHTML = originalText;
+                    });
+                });
+            }
+
             const updateMonitorState = () => {
                 const isFs = !!document.fullscreenElement;
                 document.body.classList.toggle('fullscreen-mode', isFs);
@@ -2130,7 +2297,7 @@
 
             monitorToggle.addEventListener('click', () => {
                 if (document.fullscreenElement) {
-                    document.exitFullscreen?.();
+                    openMonitorModal();
                 } else {
                     document.documentElement.requestFullscreen?.();
                 }

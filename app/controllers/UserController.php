@@ -16,6 +16,7 @@ class UserController {
             'rooms' => $rooms,
         ], 'Dashboard User');
     }
+    
 
     public static function booking(): void {
         require_login();

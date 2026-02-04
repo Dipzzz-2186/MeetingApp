@@ -625,7 +625,34 @@ class AdminController {
             $action = $_POST['action'] ?? '';
             $isAjax = isset($_POST['ajax']) && $_POST['ajax'] === 'true';
             
-            if ($action === 'create') {
+            if ($action === 'verify_password') {
+                $password = $_POST['password'] ?? '';
+
+                if ($password === '') {
+                    $error = 'Password wajib diisi.';
+                } else {
+                    $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+                    $stmt->execute([':id' => $user['id']]);
+                    $hash = $stmt->fetchColumn();
+
+                    if ($hash && password_verify($password, $hash)) {
+                        $notice = 'OK';
+                    } else {
+                        $error = 'Password salah.';
+                    }
+                }
+
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => !$error,
+                        'notice' => $notice,
+                        'error' => $error
+                    ]);
+                    exit;
+                }
+            }
+            elseif ($action === 'create') {
                 $user_id = (int)($_POST['user_id'] ?? 0);
                 $room_id = (int)($_POST['room_id'] ?? 0);
                 $start = normalize_datetime($_POST['start_time'] ?? '');
