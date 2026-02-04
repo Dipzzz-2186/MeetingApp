@@ -247,10 +247,11 @@ class AdminController {
                     try {
                         User::createUser($pdo, [
                             'owner_admin_id' => $user['id'],
-                            'name' => $name,
-                            'email' => $email,
-                            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                            'created_at' => now_iso(),
+                            'name'           => $name,
+                            'email'          => $email,
+                            'password_hash'  => password_hash($password, PASSWORD_DEFAULT),
+                            'role'           => 'user', // 🔒 KUNCI
+                            'created_at'     => now_iso(),
                         ]);
                         $_SESSION['notice'] = 'User berhasil ditambahkan.';
                     } catch (PDOException $e) {
@@ -264,7 +265,6 @@ class AdminController {
                 $id = (int)($_POST['id'] ?? 0);
                 $name = trim($_POST['name'] ?? '');
                 $email = trim($_POST['email'] ?? '');
-                $role = trim($_POST['role'] ?? 'user');
                 
                 if ($id <= 0 || $name === '' || $email === '') {
                     $_SESSION['error'] = 'Data tidak valid.';
@@ -276,14 +276,17 @@ class AdminController {
                         
                         if ($stmt->fetch()) {
                             // Update user
-                            $stmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, role = :role WHERE id = :id");
+                            $stmt = $pdo->prepare("
+                                UPDATE users 
+                                SET name = :name, email = :email
+                                WHERE id = :id
+                            ");
                             $stmt->execute([
                                 ':name' => $name,
                                 ':email' => $email,
-                                ':role' => $role,
                                 ':id' => $id
                             ]);
-                            
+                                                        
                             // Update password jika diberikan
                             if (!empty($_POST['password'])) {
                                 $password_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);

@@ -673,13 +673,6 @@
                             <input type="password" name="password" placeholder="Minimal 8 karakter" required>
                             <small style="color: var(--muted); font-size: 12px; margin-top: 5px;">Password akan dienkripsi</small>
                         </div>
-                        <div>
-                            <label><i class="fas fa-user-tag"></i> Role</label>
-                            <select name="role" required>
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
                     </div>
                     
                     <button type="submit">
@@ -875,14 +868,6 @@
                             <input type="password" name="password" id="editPassword" placeholder="Biarkan kosong jika tidak diubah">
                             <small style="color: var(--muted); font-size: 12px; margin-top: 5px;">Isi hanya jika ingin mengganti password</small>
                         </div>
-                        
-                        <div>
-                            <label><i class="fas fa-user-tag"></i> Role</label>
-                            <select name="role" id="editRole" required>
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -994,7 +979,6 @@
                         document.getElementById('editUserId').value = userData.id;
                         document.getElementById('editName').value = userData.name;
                         document.getElementById('editEmail').value = userData.email;
-                        document.getElementById('editRole').value = userData.role;
                         document.getElementById('editPassword').value = '';
                         
                         // Reset button
