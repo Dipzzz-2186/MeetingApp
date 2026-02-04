@@ -1214,11 +1214,6 @@
                                                             <i class="fas fa-door-open"></i>
                                                             <?php echo htmlspecialchars($row['room_name']); ?>
                                                         </span>
-                                                        <?php if (!empty($row['purpose'])): ?>
-                                                            <div style="margin-top: 4px; font-size: 11px; color: var(--muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-                                                                <?php echo htmlspecialchars($row['purpose']); ?>
-                                                            </div>
-                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1767,7 +1762,7 @@
             if (data.success) {
                 showAlert(data.notice, 'success');
                 closeAllModals();
-                setTimeout(() => window.location.reload(), 1500);
+                window.location.reload();
             } else {
                 showAlert(data.error, 'error');
                 submitBtn.innerHTML = originalText;
@@ -1816,7 +1811,7 @@
             if (data.success) {
                 showAlert(data.notice, 'success');
                 closeAllModals();
-                setTimeout(() => window.location.reload(), 1500);
+                window.location.reload();
             } else {
                 showAlert(data.error, 'error');
                 submitBtn.innerHTML = originalText;
