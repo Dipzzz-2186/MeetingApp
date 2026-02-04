@@ -222,22 +222,4 @@ class UserController {
             'bookings' => $bookings,
         ], 'Booking User');
     }
-
-    public static function schedules(): void
-    {
-        require_login();
-        global $pdo;
-
-        refresh_user($pdo);
-        $user = current_user();
-
-        $adminId = (int)$user['owner_admin_id'];
-
-        $schedules = Booking::getAllByAdmin($pdo, $adminId);
-
-        render_view('user/schedules', [
-            'schedules' => $schedules,
-            'user' => $user,
-        ], 'Jadwal Booking');
-    }
 }
