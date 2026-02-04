@@ -672,6 +672,10 @@
                 justify-content: flex-start;
             }
 
+            .action-cards {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+            }
+
             .table {
                 min-width: 0;
             }
@@ -753,7 +757,7 @@
             }
             
             .action-cards {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
             }
             
             .subscription-form {
