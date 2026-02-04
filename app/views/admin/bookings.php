@@ -205,15 +205,29 @@
             color: rgba(154, 160, 170, 0.6);
         }
 
-        .form-row {
+        form.grid > .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
 
         @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
+            form.grid > .form-row {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
+            label {
+                font-size: 12px;
+            }
+
+            input, select, textarea {
+                padding: 12px 12px;
+                font-size: 14px;
+            }
+
+            .time-helper {
+                font-size: 11px;
             }
         }
 
@@ -489,6 +503,26 @@
             font-size: 24px;
             font-weight: 600;
             color: var(--ink);
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 12px;
+                border-radius: 10px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
         }
 
         /* Pagination Styles */
@@ -846,8 +880,12 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 20px 12px;
+            }
+
             .container {
-                padding: 15px;
+                padding: 0;
             }
             
             .header {
@@ -1009,7 +1047,8 @@
             }
 
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+                gap: 12px;
             }
         }
         
