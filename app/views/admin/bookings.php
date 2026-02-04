@@ -60,6 +60,14 @@
             color: var(--ink);
         }
 
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -79,6 +87,31 @@
             border-color: rgba(247, 200, 66, 0.4);
             color: var(--accent);
             background: rgba(17, 21, 28, 0.9);
+        }
+
+        .monitor-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(242, 243, 245, 0.2);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .monitor-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(247, 200, 66, 0.2);
+        }
+
+        .fullscreen-mode .header {
+            display: none;
         }
 
         .grid-two {
@@ -898,6 +931,11 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .monitor-btn {
+                width: 100%;
+                justify-content: center;
+            }
             
             .card {
                 padding: 20px;
@@ -1067,10 +1105,16 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> Scheduling & Booking</h1>
-            <a href="/dashboard_admin" class="back-btn">
-                <i class="fas fa-arrow-left"></i>
-                Kembali ke Dashboard
-            </a>
+            <div class="header-actions">
+                <button type="button" class="monitor-btn" id="monitorToggle">
+                    <i class="fas fa-expand"></i>
+                    Mode Monitor
+                </button>
+                <a href="/dashboard_admin" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali ke Dashboard
+                </a>
+            </div>
         </div>
         
         <div class="grid-two">
@@ -1908,6 +1952,7 @@
         const endInput = document.getElementById('end_time');
         const startDisplay = document.getElementById('start_time_display');
         const endDisplay = document.getElementById('end_time_display');
+        const monitorToggle = document.getElementById('monitorToggle');
         
         // Initialize pagination
         initializePagination();
@@ -2042,6 +2087,27 @@
         // Cegah form resubmission warning
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.pathname + window.location.search);
+        }
+
+        // Monitor mode (fullscreen)
+        if (monitorToggle) {
+            const updateMonitorState = () => {
+                const isFs = !!document.fullscreenElement;
+                document.body.classList.toggle('fullscreen-mode', isFs);
+                monitorToggle.innerHTML = isFs
+                    ? '<i class="fas fa-compress"></i> Keluar Monitor'
+                    : '<i class="fas fa-expand"></i> Mode Monitor';
+            };
+
+            monitorToggle.addEventListener('click', () => {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen?.();
+                } else {
+                    document.documentElement.requestFullscreen?.();
+                }
+            });
+
+            document.addEventListener('fullscreenchange', updateMonitorState);
         }
     });
 
