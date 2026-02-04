@@ -1050,20 +1050,12 @@
                     <i class="fas fa-users"></i>
                     Manage Users
                 </h1>
-                <a href="/super/dashboard" class="back-btn">
+            </div>
+            <div class="header-actions">
+                <a href="/dashboard_superadmin" class="back-btn">
                     <i class="fas fa-arrow-left"></i>
                     Kembali ke Dashboard
                 </a>
-            </div>
-            <div class="header-actions">
-                <button class="primary-btn" onclick="addNewUser()">
-                    <i class="fas fa-user-plus"></i>
-                    Tambah User Baru
-                </button>
-                <button class="secondary-btn" onclick="exportUsers()">
-                    <i class="fas fa-download"></i>
-                    Export
-                </button>
             </div>
         </div>
 
