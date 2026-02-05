@@ -743,7 +743,7 @@
             display: block;
         }
 
-        /* Admin Info Compact */
+        /* Admin Info Compact - Updated Style */
         .admin-info-compact {
             background: rgba(17, 21, 28, 0.5);
             border-radius: 12px;
@@ -783,7 +783,12 @@
 
         .admin-role {
             font-size: 12px;
-            color: var(--muted);
+            color: var(--accent);
+            font-weight: 500;
+            background: rgba(247, 200, 66, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
         }
 
         /* Booking History - Compact */
@@ -1263,10 +1268,6 @@
                                 <span class="meta-value-compact" id="userId">-</span>
                             </div>
                             <div class="meta-item-compact">
-                                <span class="meta-label-compact">Bergabung</span>
-                                <span class="meta-value-compact" id="userJoined">-</span>
-                            </div>
-                            <div class="meta-item-compact">
                                 <span class="meta-label-compact">Status</span>
                                 <span class="meta-value-compact" id="userStatus">-</span>
                             </div>
@@ -1274,28 +1275,12 @@
                     </div>
                 </div>
 
-                <!-- Stats Grid Compact -->
-                <div class="stats-grid-compact">
-                    <div class="stat-item-compact">
-                        <span class="stat-value-compact" id="totalBookings">0</span>
-                        <span class="stat-label-compact">Total Bookings</span>
-                    </div>
-                    <div class="stat-item-compact">
-                        <span class="stat-value-compact" id="upcomingBookings">0</span>
-                        <span class="stat-label-compact">Upcoming</span>
-                    </div>
-                    <div class="stat-item-compact">
-                        <span class="stat-value-compact" id="completedBookings">0</span>
-                        <span class="stat-label-compact">Completed</span>
-                    </div>
-                </div>
-
-                <!-- Admin Info Compact -->
-                <div class="admin-info-compact" id="adminInfo">
+                <!-- Admin Info - Sesuai dengan gambar -->
+                <div class="admin-info-compact">
                     <div class="admin-avatar-small" id="adminAvatar">A</div>
                     <div class="admin-info-content">
-                        <div class="admin-name" id="adminName">Tidak ada admin</div>
-                        <div class="admin-role" id="adminEmail">-</div>
+                        <div class="admin-name" id="adminName">-</div>
+                        <div class="admin-role" id="adminRole">Admin</div>
                     </div>
                 </div>
 
@@ -1320,10 +1305,6 @@
             
             <!-- Modal Footer -->
             <div class="modal-footer">
-                <button class="action-btn delete" onclick="deleteUser()">
-                    <i class="fas fa-trash"></i>
-                    Hapus User
-                </button>
                 <button class="action-btn" onclick="closeUserModal()">
                     <i class="fas fa-times"></i>
                     Tutup
@@ -1511,31 +1492,20 @@
                 document.getElementById('userEmail').textContent = user.email;
                 document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
                 document.getElementById('userId').textContent = user.id;
-                document.getElementById('userJoined').textContent = new Date(user.created_at).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                });
                 document.getElementById('userStatus').textContent = 'Active';
                 
-                // Set admin info
-                const adminInfo = document.getElementById('adminInfo');
+                // Set admin info - sesuai dengan gambar
                 if (data.admin_name) {
                     document.getElementById('adminName').textContent = data.admin_name;
-                    document.getElementById('adminEmail').textContent = data.admin_email || 'Admin';
+                    document.getElementById('adminRole').textContent = 'Admin';
                     document.getElementById('adminAvatar').textContent = data.admin_name.charAt(0).toUpperCase();
-                    
-                    // Update admin info styling
-                    adminInfo.style.display = 'flex';
                 } else {
-                    adminInfo.style.display = 'none';
+                    document.getElementById('adminName').textContent = 'Tidak ada admin';
+                    document.getElementById('adminRole').textContent = '-';
                 }
                 
-                // Set booking stats
+                // Set booking stats and count
                 const totalBookings = data.total_bookings || 0;
-                document.getElementById('totalBookings').textContent = totalBookings;
-                document.getElementById('upcomingBookings').textContent = data.upcoming_bookings || 0;
-                document.getElementById('completedBookings').textContent = data.completed_bookings || 0;
                 document.getElementById('bookingCount').textContent = totalBookings + ' booking' + (totalBookings !== 1 ? 's' : '');
                 
                 // Set booking history

@@ -919,12 +919,6 @@
         <div class="table-container">
             <div class="table-header">
                 <h2><i class="fas fa-list"></i> Daftar Admin</h2>
-                <div class="table-actions">
-                    <button class="action-btn" onclick="exportAdmins()">
-                        <i class="fas fa-download"></i>
-                        Export
-                    </button>
-                </div>
             </div>
 
             <div class="table-wrap">
@@ -1363,11 +1357,6 @@
         function addNewAdmin() {
             alert('Fitur tambah admin baru akan segera hadir!');
             // Implement add admin functionality here
-        }
-
-        function exportAdmins() {
-            alert('Fitur export akan segera hadir!');
-            // Implement export functionality here
         }
 
         // Close modal when clicking outside
