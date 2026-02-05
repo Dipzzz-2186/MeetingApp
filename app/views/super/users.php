@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeetFlow | Manage Users</title>
+    <title>RuangMeet | Manage Users</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -41,6 +41,13 @@
             background: radial-gradient(circle at top left, #1a1f28 0%, #101319 55%, #0b0d12 100%);
             min-height: 100vh;
             padding: 30px 20px;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
         .container {
@@ -1570,6 +1577,9 @@
                 
                 // Show modal
                 document.getElementById('userModal').classList.add('active');
+
+                // Disable background scroll
+                document.body.style.overflow = 'hidden';
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -1580,6 +1590,7 @@
         function closeUserModal() {
             document.getElementById('userModal').classList.remove('active');
             currentUserId = null;
+            document.body.style.overflow = 'auto';
         }
 
         function deleteUser() {
