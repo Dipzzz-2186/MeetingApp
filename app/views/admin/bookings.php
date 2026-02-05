@@ -1671,6 +1671,8 @@
     const editModal = document.getElementById('editModal');
     const deleteModal = document.getElementById('deleteModal');
     
+    let roomSchedules = [];
+
     // State
     let isLoading = false;
 
@@ -1830,12 +1832,20 @@
                 const startInput = document.getElementById('edit_start_time');
                 const endInput = document.getElementById('edit_end_time');
                 
-                startInput.addEventListener('change', function() {
-                    if (this.value) {
-                        const start = new Date(this.value);
-                        const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
-                        endInput.min = minEnd.toISOString().slice(0, 16);
-                    }
+                startInput.addEventListener('change', function () {
+                    if (!this.value) return;
+
+                    const start = new Date(this.value);
+
+                    // 1️⃣ SET MIN DULU
+                    const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+                    endInput.min = minEnd.toISOString().slice(0, 16);
+
+                    // 2️⃣ BARU SET DEFAULT +2 JAM
+                    const defaultEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+                    endInput.value = defaultEnd.toISOString().slice(0, 16);
+
+                    updateTimeDisplays();
                 });
                 
                 // Trigger change untuk set min value
@@ -2034,6 +2044,43 @@
     const itemsPerPage = 5;
     let currentFilter = 'all';
 
+    function isOverlapping(start, end) {
+        return roomSchedules.some(slot =>
+            start < slot.end && end > slot.start
+        );
+    }
+
+    function getMaxAllowedEnd(start) {
+        let nearestEnd = null;
+
+        roomSchedules.forEach(slot => {
+            // CASE 1: start DI DALAM booking yang sudah ada
+            if (start >= slot.start && start < slot.end) {
+                if (!nearestEnd || slot.end < nearestEnd) {
+                    nearestEnd = slot.end;
+                }
+            }
+
+            // CASE 2: booking DIMULAI setelah start
+            if (slot.start > start) {
+                if (!nearestEnd || slot.start < nearestEnd) {
+                    nearestEnd = slot.start;
+                }
+            }
+        });
+
+        return nearestEnd;
+    }
+
+    function parseLocalDateTime(str) {
+        // "2026-02-05 10:30:00" atau "2026-02-05T10:30"
+        const clean = str.replace('T', ' ').split(' ')[0] + ' ' + str.split(/[ T]/)[1];
+        const [date, time] = clean.split(' ');
+        const [y, m, d] = date.split('-').map(Number);
+        const [hh, mm] = time.split(':').map(Number);
+        return new Date(y, m - 1, d, hh, mm);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const startInput = document.getElementById('start_time');
@@ -2042,6 +2089,22 @@
         const endDisplay = document.getElementById('end_time_display');
         const monitorToggle = document.getElementById('monitorToggle');
         
+        const roomSelect = document.querySelector('select[name="room_id"]');
+
+        roomSelect.addEventListener('change', function () {
+            const roomId = this.value;
+            if (!roomId) return;
+
+            fetch(`?ajax=room_schedule&room_id=${roomId}`)
+                .then(res => res.json())
+                .then(data => {
+                    roomSchedules = data.map(item => ({
+                        start: parseLocalDateTime(item.start_time),
+                        end: parseLocalDateTime(item.end_time)
+                    }));
+                });
+        });
+                
         // Initialize pagination
         initializePagination();
         
@@ -2087,25 +2150,34 @@
             }
         }
         
+        function toLocalInputValue(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+        
         // Update end time minimum saat start time berubah
-        startInput.addEventListener('change', function() {
-            if (this.value) {
-                const start = new Date(this.value);
-                const minEnd = new Date(start.getTime() + 30 * 60 * 1000); // Minimal 30 menit setelah mulai
-                endInput.min = minEnd.toISOString().slice(0, 16);
-                
-                // Jika end time sudah dipilih dan kurang dari minimal, reset
-                if (endInput.value) {
-                    const currentEnd = new Date(endInput.value);
-                    if (currentEnd < minEnd) {
-                        endInput.value = '';
-                        showAlert('Waktu selesai harus minimal 30 menit setelah waktu mulai. Silahkan pilih ulang.', 'warning');
-                    }
-                }
-            }
+        startInput.addEventListener('input', function () {
+            if (!this.value) return;
+            
+            endInput.removeAttribute('max');
+
+            // ⚠️ parse manual supaya LOCAL TIME, bukan UTC
+            const [date, time] = this.value.split('T');
+            const [y, m, d] = date.split('-').map(Number);
+            const [hh, mm] = time.split(':').map(Number);
+            const start = new Date(y, m - 1, d, hh, mm);
+
+            // 1️⃣ SET MIN DULU
+            const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+            endInput.min = toLocalInputValue(minEnd);
+
+            // 2️⃣ SET DEFAULT +2 JAM
+            const defaultEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+            endInput.value = toLocalInputValue(defaultEnd);
+
             updateTimeDisplays();
         });
-        
+          
         endInput.addEventListener('change', updateTimeDisplays);
         
         // Initial display
@@ -2113,9 +2185,11 @@
         
         // Form validation
         form.addEventListener('submit', function(e) {
-            const start = startInput.value ? new Date(startInput.value) : null;
-            const end = endInput.value ? new Date(endInput.value) : null;
+            const start = parseLocalDateTime(startInput.value);
+            const end = parseLocalDateTime(endInput.value);
+
             const now = new Date();
+            now.setSeconds(0, 0); 
             
             // Validasi waktu sudah dipilih
             if (!start) {
@@ -2155,7 +2229,40 @@
                 showAlert('Durasi booking maksimal 8 jam.', 'error');
                 return false;
             }
-            
+
+            // CEK BENTROK ROOM (REAL CHECK)
+            if (isOverlapping(start, end)) {
+                e.preventDefault();
+
+                const maxEnd = getMaxAllowedEnd(start);
+
+                if (maxEnd) {
+                    const safeValue = toLocalInputValue(maxEnd);
+
+                    // 🔥 HAPUS ATURAN SEBELUMNYA
+                    endInput.removeAttribute('min');
+
+                    // 🔥 KUNCI KE SLOT AMAN
+                    endInput.min = safeValue;
+                    endInput.max = safeValue;
+                    endInput.value = safeValue;
+
+                    showAlert(
+                        `Ruangan sudah terbooking. Maksimal sampai jam ${maxEnd.toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}.`,
+                        'error'
+                    );
+                } else {
+                    showAlert('Ruangan sudah terbooking di jam tersebut.', 'error');
+                }
+
+                updateTimeDisplays();
+                endInput.focus();
+                return false;
+            }
+
             // Validasi booking di masa lalu
             if (start < now) {
                 e.preventDefault();

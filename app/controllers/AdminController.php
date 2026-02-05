@@ -619,6 +619,21 @@ class AdminController {
             echo json_encode(['error' => 'Booking tidak ditemukan']);
             exit;
         }
+
+        if (isset($_GET['ajax']) && $_GET['ajax'] === 'room_schedule') {
+            $room_id = (int)($_GET['room_id'] ?? 0);
+
+            $stmt = $pdo->prepare("
+                SELECT start_time, end_time 
+                FROM bookings 
+                WHERE room_id = :room_id
+            ");
+            $stmt->execute([':room_id' => $room_id]);
+
+            header('Content-Type: application/json');
+            echo json_encode($stmt->fetchAll());
+            exit;
+        }
         
         // Handle POST requests
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
