@@ -1,4 +1,54 @@
-<?php /** @var array $users */ ?>
+<?php 
+/** @var array $users */ 
+
+// Set timezone Indonesia
+date_default_timezone_set('Asia/Jakarta');
+
+// Get current page from URL parameter
+$currentPage = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$itemsPerPage = 10;
+
+// Get filter from URL parameter
+$filterType = isset($_GET['filter']) ? $_GET['filter'] : 'all';
+
+// Filter users based on filter type
+$filteredUsers = $users;
+
+if ($filterType === 'active') {
+    // All users are active
+    $filteredUsers = array_filter($users, function($u) {
+        return true;
+    });
+} elseif ($filterType === 'with_bookings') {
+    // Filter users who have bookings TODAY
+    $filteredUsers = array_filter($users, function($u) {
+        return isset($u['has_bookings']) && $u['has_bookings'] > 0;
+    });
+}
+
+// Calculate total pages
+$totalUsers = count($filteredUsers);
+$totalPages = ceil($totalUsers / $itemsPerPage);
+
+// Ensure current page is within bounds
+if ($totalPages > 0) {
+    $currentPage = min($currentPage, max(1, $totalPages));
+} else {
+    $currentPage = 1;
+}
+
+// Calculate offset
+$offset = ($currentPage - 1) * $itemsPerPage;
+
+// Get users for current page
+$paginatedUsers = array_slice($filteredUsers, $offset, $itemsPerPage);
+
+// Calculate stats from ALL users
+$activeUsers = count($users);
+$usersWithBookings = count(array_filter($users, function($u) {
+    return isset($u['has_bookings']) && $u['has_bookings'] > 0;
+}));
+?>
 
 <!DOCTYPE html>
 <html lang="id">
@@ -284,6 +334,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            text-decoration: none;
         }
 
         .filter-btn:hover, .filter-btn.active {
@@ -512,17 +563,19 @@
             align-items: center;
             gap: 6px;
             font-weight: 500;
+            text-decoration: none;
         }
 
-        .pagination-btn:hover:not(:disabled) {
+        .pagination-btn:hover:not(.disabled) {
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(247, 200, 66, 0.1);
         }
 
-        .pagination-btn:disabled {
+        .pagination-btn.disabled {
             opacity: 0.4;
             cursor: not-allowed;
+            pointer-events: none;
         }
 
         .page-numbers {
@@ -545,9 +598,10 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-weight: 500;
+            text-decoration: none;
         }
 
-        .page-number:hover {
+        .page-number:hover:not(.dots):not(.active) {
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(247, 200, 66, 0.1);
@@ -557,6 +611,18 @@
             background: var(--accent);
             border-color: var(--accent);
             color: #1a1a1a;
+        }
+
+        .page-number.dots {
+            border: none;
+            background: transparent;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .page-number.dots:hover {
+            border: none;
+            background: transparent;
         }
 
         /* Modal Styles - IMPROVED */
@@ -917,6 +983,33 @@
             flex-shrink: 0;
         }
 
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: var(--muted);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-family: "Fraunces", serif;
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: var(--ink);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .header {
@@ -1073,17 +1166,12 @@
 
         <!-- Stats Bar -->
         <div class="stats-bar">
-            <?php
-            $totalUsers = count($users);
-            $activeUsers = $totalUsers; // Assuming all are active
-            $usersWithBookings = 0; // This would come from database
-            ?>
             <div class="stat-card">
                 <div class="stat-icon total">
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value"><?= number_format($totalUsers) ?></div>
+                    <div class="stat-value"><?= number_format(count($users)) ?></div>
                     <div class="stat-label">Total Users</div>
                 </div>
             </div>
@@ -1120,18 +1208,18 @@
             </div>
 
             <div class="filter-buttons">
-                <button class="filter-btn active" onclick="filterUsers('all')">
+                <a href="?filter=all&page=1" class="filter-btn <?= $filterType === 'all' ? 'active' : '' ?>">
                     <i class="fas fa-layer-group"></i>
                     Semua
-                </button>
-                <button class="filter-btn" onclick="filterUsers('active')">
+                </a>
+                <a href="?filter=active&page=1" class="filter-btn <?= $filterType === 'active' ? 'active' : '' ?>">
                     <i class="fas fa-check-circle"></i>
                     Aktif
-                </button>
-                <button class="filter-btn" onclick="filterUsers('with_bookings')">
+                </a>
+                <a href="?filter=with_bookings&page=1" class="filter-btn <?= $filterType === 'with_bookings' ? 'active' : '' ?>">
                     <i class="fas fa-calendar-check"></i>
                     Ada Booking
-                </button>
+                </a>
             </div>
         </div>
 
@@ -1148,104 +1236,148 @@
             </div>
 
             <div class="table-wrap">
-                <table class="table" id="userTable">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Admin Pemilik</th>
-                            <th>Status</th>
-                            <th>Bergabung</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $u): 
-                            $joinDate = date('d M Y', strtotime($u['created_at'] ?? 'now'));
-                            $initial = strtoupper(substr($u['name'], 0, 1));
-                            $adminName = $u['admin_name'] ?? '-';
-                        ?>
-                            <tr data-name="<?= htmlspecialchars(strtolower($u['name'])) ?>" 
-                                data-email="<?= htmlspecialchars(strtolower($u['email'])) ?>"
-                                data-admin="<?= htmlspecialchars(strtolower($adminName)) ?>"
-                                data-status="active">
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <div class="user-avatar">
-                                            <?= $initial ?>
-                                        </div>
-                                        <div>
-                                            <div style="font-weight: 600; color: var(--ink);">
-                                                <?= htmlspecialchars($u['name']) ?>
-                                            </div>
-                                            <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
-                                                ID: <?= (int)$u['id'] ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fas fa-envelope" style="color: var(--muted); font-size: 12px;"></i>
-                                        <?= htmlspecialchars($u['email']) ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <?php if ($adminName !== '-'): ?>
-                                        <span class="admin-badge">
-                                            <i class="fas fa-user-shield"></i>
-                                            <?= htmlspecialchars($adminName) ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span style="color: var(--muted); font-style: italic;">
-                                            Tidak ada
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-active">
-                                        <i class="fas fa-check-circle"></i>
-                                        Active
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style="font-size: 13px; color: var(--ink);">
-                                        <?= $joinDate ?>
-                                    </div>
-                                    <div style="font-size: 11px; color: var(--muted);">
-                                        <?= date('H:i', strtotime($u['created_at'] ?? 'now')) ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="actions">
-                                        <button class="action-btn view" onclick="openUserDetail(<?= (int)$u['id'] ?>)">
-                                            <i class="fas fa-eye"></i>
-                                            Detail
-                                        </button>
-                                    </div>
-                                </td>
+                <?php if (empty($paginatedUsers)): ?>
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>Tidak Ada User</h3>
+                        <p>Tidak ada user yang sesuai dengan filter yang dipilih.</p>
+                    </div>
+                <?php else: ?>
+                    <table class="table" id="userTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Admin Pemilik</th>
+                                <th>Status</th>
+                                <th>Bergabung</th>
+                                <th>Aksi</th>
                             </tr>
-                        <?php endforeach ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($paginatedUsers as $u): 
+                                $joinDate = date('d M Y', strtotime($u['created_at'] ?? 'now'));
+                                $initial = strtoupper(substr($u['name'], 0, 1));
+                                $adminName = $u['admin_name'] ?? '-';
+                            ?>
+                                <tr data-name="<?= htmlspecialchars(strtolower($u['name'])) ?>" 
+                                    data-email="<?= htmlspecialchars(strtolower($u['email'])) ?>"
+                                    data-admin="<?= htmlspecialchars(strtolower($adminName)) ?>"
+                                    data-status="active">
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <div class="user-avatar">
+                                                <?= $initial ?>
+                                            </div>
+                                            <div>
+                                                <div style="font-weight: 600; color: var(--ink);">
+                                                    <?= htmlspecialchars($u['name']) ?>
+                                                </div>
+                                                <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
+                                                    ID: <?= (int)$u['id'] ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-envelope" style="color: var(--muted); font-size: 12px;"></i>
+                                            <?= htmlspecialchars($u['email']) ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <?php if ($adminName !== '-'): ?>
+                                            <span class="admin-badge">
+                                                <i class="fas fa-user-shield"></i>
+                                                <?= htmlspecialchars($adminName) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span style="color: var(--muted); font-style: italic;">
+                                                Tidak ada
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-active">
+                                            <i class="fas fa-check-circle"></i>
+                                            Active
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 13px; color: var(--ink);">
+                                            <?= $joinDate ?>
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--muted);">
+                                            <?= date('H:i', strtotime($u['created_at'] ?? 'now')) ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="actions">
+                                            <button class="action-btn view" onclick="openUserDetail(<?= (int)$u['id'] ?>)">
+                                                <i class="fas fa-eye"></i>
+                                                Detail
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach ?>
+                        </tbody>
+                    </table>
+                <?php endif ?>
             </div>
 
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    Menampilkan <span id="currentStart">1</span> - <span id="currentEnd">10</span> 
-                    dari <span id="totalItems"><?= $totalUsers ?></span> user
+                    Menampilkan <?= $totalUsers > 0 ? $offset + 1 : 0 ?> - <?= min($offset + $itemsPerPage, $totalUsers) ?> 
+                    dari <?= $totalUsers ?> user
                 </div>
                 <div class="pagination-controls">
-                    <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">
+                    <a href="?filter=<?= $filterType ?>&page=<?= max(1, $currentPage - 1) ?>" 
+                       class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
                         <i class="fas fa-chevron-left"></i>
                         Sebelumnya
-                    </button>
-                    <div class="page-numbers" id="pageNumbers"></div>
-                    <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">
+                    </a>
+                    
+                    <div class="page-numbers">
+                        <?php
+                        // Determine page range to display
+                        $startPage = max(1, $currentPage - 2);
+                        $endPage = min($totalPages, $startPage + 4);
+                        
+                        if ($endPage - $startPage < 4) {
+                            $startPage = max(1, $endPage - 4);
+                        }
+                        
+                        // First page
+                        if ($startPage > 1) {
+                            echo '<a href="?filter=' . $filterType . '&page=1" class="page-number">1</a>';
+                            if ($startPage > 2) {
+                                echo '<span class="page-number dots">...</span>';
+                            }
+                        }
+                        
+                        // Page numbers
+                        for ($i = $startPage; $i <= $endPage; $i++) {
+                            $activeClass = $i === $currentPage ? 'active' : '';
+                            echo '<a href="?filter=' . $filterType . '&page=' . $i . '" class="page-number ' . $activeClass . '">' . $i . '</a>';
+                        }
+                        
+                        // Last page
+                        if ($endPage < $totalPages) {
+                            if ($endPage < $totalPages - 1) {
+                                echo '<span class="page-number dots">...</span>';
+                            }
+                            echo '<a href="?filter=' . $filterType . '&page=' . $totalPages . '" class="page-number">' . $totalPages . '</a>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <a href="?filter=<?= $filterType ?>&page=<?= min($totalPages, $currentPage + 1) ?>" 
+                       class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
                         Selanjutnya
                         <i class="fas fa-chevron-right"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -1320,168 +1452,25 @@
     </div>
 
     <script>
-        // State
-        let currentPage = 1;
-        const itemsPerPage = 10;
-        let currentFilter = 'all';
-        let currentSearch = '';
         let currentUserId = null;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializePagination();
-        });
-
-        // Search functionality
+        // Search functionality - hanya untuk data di halaman saat ini
         function searchUsers(query) {
-            currentSearch = query.toLowerCase();
-            currentPage = 1;
-            
+            const searchTerm = query.toLowerCase();
             const rows = document.querySelectorAll('#userTable tbody tr');
-            let visibleCount = 0;
             
             rows.forEach(row => {
                 const name = row.getAttribute('data-name');
                 const email = row.getAttribute('data-email');
                 const admin = row.getAttribute('data-admin');
-                const status = row.getAttribute('data-status');
                 
-                let show = true;
-                
-                if (currentSearch) {
-                    show = name.includes(currentSearch) || email.includes(currentSearch) || admin.includes(currentSearch);
-                }
-                
-                if (currentFilter !== 'all') {
-                    if (currentFilter === 'active') {
-                        show = show && status === 'active';
-                    } else if (currentFilter === 'with_bookings') {
-                        // This would need additional data attribute
-                        show = show && row.hasAttribute('data-has-bookings');
-                    }
-                }
+                const show = !searchTerm || 
+                             name.includes(searchTerm) || 
+                             email.includes(searchTerm) || 
+                             admin.includes(searchTerm);
                 
                 row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
             });
-            
-            updatePaginationInfo(visibleCount);
-            updatePagination();
-        }
-
-        // Filter functionality
-        function filterUsers(filter) {
-            currentFilter = filter;
-            currentPage = 1;
-            
-            // Update active filter button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            searchUsers(currentSearch);
-        }
-
-        // Pagination functions
-        function initializePagination() {
-            updatePagination();
-        }
-
-        function updatePagination() {
-            const rows = document.querySelectorAll('#userTable tbody tr');
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-            const totalItems = visibleRows.length;
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            
-            // Update info text
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const end = Math.min(currentPage * itemsPerPage, totalItems);
-            
-            document.getElementById('currentStart').textContent = start;
-            document.getElementById('currentEnd').textContent = end;
-            document.getElementById('totalItems').textContent = totalItems;
-            
-            // Show/hide rows for current page
-            visibleRows.forEach((row, index) => {
-                const rowPage = Math.floor(index / itemsPerPage) + 1;
-                row.style.display = rowPage === currentPage ? '' : 'none';
-            });
-            
-            // Update page numbers
-            renderPageNumbers(totalPages);
-            
-            // Update prev/next buttons
-            document.getElementById('prevBtn').disabled = currentPage === 1;
-            document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
-        }
-
-        function renderPageNumbers(totalPages) {
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-            pageNumbersContainer.innerHTML = '';
-            
-            if (totalPages <= 1) return;
-            
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            if (endPage - startPage < 4) {
-                startPage = Math.max(1, endPage - 4);
-            }
-            
-            if (startPage > 1) {
-                addPageNumber(1);
-                if (startPage > 2) addPageDots();
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                addPageNumber(i);
-            }
-            
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) addPageDots();
-                addPageNumber(totalPages);
-            }
-        }
-
-        function addPageNumber(pageNum) {
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-            const pageBtn = document.createElement('button');
-            pageBtn.className = 'page-number' + (pageNum === currentPage ? ' active' : '');
-            pageBtn.textContent = pageNum;
-            pageBtn.onclick = () => goToPage(pageNum);
-            pageNumbersContainer.appendChild(pageBtn);
-        }
-
-        function addPageDots() {
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-            const dots = document.createElement('span');
-            dots.className = 'page-number dots';
-            dots.textContent = '...';
-            pageNumbersContainer.appendChild(dots);
-        }
-
-        function goToPage(pageNum) {
-            currentPage = pageNum;
-            updatePagination();
-        }
-
-        function changePage(direction) {
-            const rows = document.querySelectorAll('#userTable tbody tr');
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-            const totalPages = Math.ceil(visibleRows.length / itemsPerPage);
-            
-            currentPage += direction;
-            currentPage = Math.max(1, Math.min(currentPage, totalPages));
-            updatePagination();
-        }
-
-        function updatePaginationInfo(totalItems) {
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const end = Math.min(currentPage * itemsPerPage, totalItems);
-            
-            document.getElementById('currentStart').textContent = start;
-            document.getElementById('currentEnd').textContent = end;
-            document.getElementById('totalItems').textContent = totalItems;
         }
 
         // Modal functions
@@ -1619,12 +1608,10 @@
 
         function addNewUser() {
             alert('Fitur tambah user baru akan segera hadir!');
-            // Implement add user functionality here
         }
 
         function exportUsers() {
             alert('Fitur export akan segera hadir!');
-            // Implement export functionality here
         }
 
         function refreshUsers() {

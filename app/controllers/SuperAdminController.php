@@ -77,11 +77,20 @@ class SuperAdminController
         require_superadmin();
         global $pdo;
 
+        // Get users with booking info for today
         $users = $pdo->query("
-            SELECT u.*, a.name AS admin_name
+            SELECT 
+                u.*,
+                a.name AS admin_name,
+                COUNT(DISTINCT CASE 
+                    WHEN DATE(b.start_time) = CURDATE() 
+                    THEN b.id 
+                END) as has_bookings
             FROM users u
             LEFT JOIN users a ON a.id = u.owner_admin_id
+            LEFT JOIN bookings b ON b.user_id = u.id
             WHERE u.role='user'
+            GROUP BY u.id, u.name, u.email, u.created_at, u.owner_admin_id, a.name
             ORDER BY a.name, u.name
         ")->fetchAll();
 
@@ -124,6 +133,11 @@ class SuperAdminController
             ORDER BY b.start_time DESC
         ");
         $rooms->execute([':uid' => $userId]);
+        
+        $roomsData = $rooms->fetchAll();
+        
+        // Count total bookings
+        $totalBookings = count($roomsData);
 
         header('Content-Type: application/json');
         echo json_encode([
@@ -133,7 +147,8 @@ class SuperAdminController
                 'email' => $user['email'],
             ],
             'admin_name' => $user['admin_name'],
-            'rooms' => $rooms->fetchAll(),
+            'rooms' => $roomsData,
+            'total_bookings' => $totalBookings,
         ]);
     }
 
