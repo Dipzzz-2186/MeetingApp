@@ -1,5 +1,39 @@
 <?php
 /** @var array $bookings */
+
+// Set timezone Indonesia
+date_default_timezone_set('Asia/Jakarta');
+
+// Get current page from URL parameter
+$currentPage = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$itemsPerPage = 10;
+
+// Calculate total pages
+$totalBookings = count($bookings);
+$totalPages = ceil($totalBookings / $itemsPerPage);
+
+// Ensure current page is within bounds
+$currentPage = min($currentPage, max(1, $totalPages));
+
+// Calculate offset
+$offset = ($currentPage - 1) * $itemsPerPage;
+
+// Get bookings for current page
+$paginatedBookings = array_slice($bookings, $offset, $itemsPerPage);
+
+// Calculate stats (menggunakan semua bookings, bukan yang dipaginasi)
+$activeBookings = array_filter($bookings, function($b) {
+    $now = time();
+    $start = strtotime($b['start_time']);
+    $end = strtotime($b['end_time']);
+    return $start <= $now && $now <= $end;
+});
+$completedBookings = array_filter($bookings, function($b) {
+    return time() > strtotime($b['end_time']);
+});
+$upcomingBookings = array_filter($bookings, function($b) {
+    return time() < strtotime($b['start_time']);
+});
 ?>
 
 <!DOCTYPE html>
@@ -418,17 +452,19 @@
             align-items: center;
             gap: 6px;
             font-weight: 500;
+            text-decoration: none;
         }
 
-        .pagination-btn:hover:not(:disabled) {
+        .pagination-btn:hover:not(.disabled) {
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(247, 200, 66, 0.1);
         }
 
-        .pagination-btn:disabled {
+        .pagination-btn.disabled {
             opacity: 0.4;
             cursor: not-allowed;
+            pointer-events: none;
         }
 
         .page-numbers {
@@ -451,9 +487,10 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-weight: 500;
+            text-decoration: none;
         }
 
-        .page-number:hover {
+        .page-number:hover:not(.dots):not(.active) {
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(247, 200, 66, 0.1);
@@ -463,6 +500,18 @@
             background: var(--accent);
             border-color: var(--accent);
             color: #1a1a1a;
+        }
+
+        .page-number.dots {
+            border: none;
+            background: transparent;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .page-number.dots:hover {
+            border: none;
+            background: transparent;
         }
 
         /* Empty State */
@@ -618,21 +667,6 @@
 
         <!-- Stats Bar -->
         <div class="stats-bar">
-            <?php
-            $totalBookings = count($bookings);
-            $activeBookings = array_filter($bookings, function($b) {
-                $now = time();
-                $start = strtotime($b['start_time']);
-                $end = strtotime($b['end_time']);
-                return $start <= $now && $now <= $end;
-            });
-            $completedBookings = array_filter($bookings, function($b) {
-                return time() > strtotime($b['end_time']);
-            });
-            $upcomingBookings = array_filter($bookings, function($b) {
-                return time() < strtotime($b['start_time']);
-            });
-            ?>
             <div class="stat-item">
                 <div class="stat-icon total">
                     <i class="fas fa-calendar-alt"></i>
@@ -700,7 +734,7 @@
             </div>
 
             <div class="table-wrap">
-                <?php if (empty($bookings)): ?>
+                <?php if (empty($paginatedBookings)): ?>
                     <div class="empty-state">
                         <i class="fas fa-calendar-times"></i>
                         <h3>Tidak Ada Booking</h3>
@@ -719,10 +753,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($bookings as $b): 
+                            <?php 
+                            $now = time();
+                            foreach ($paginatedBookings as $b): 
                                 $startTime = strtotime($b['start_time']);
                                 $endTime = strtotime($b['end_time']);
-                                $now = time();
                                 
                                 // Determine status
                                 if ($now < $startTime) {
@@ -756,7 +791,9 @@
                                 <tr data-status="<?= $status ?>"
                                     data-room="<?= htmlspecialchars(strtolower($b['room_name'])) ?>"
                                     data-user="<?= htmlspecialchars(strtolower($b['user_name'])) ?>"
-                                    data-admin="<?= htmlspecialchars(strtolower($b['admin_name'])) ?>">
+                                    data-admin="<?= htmlspecialchars(strtolower($b['admin_name'])) ?>"
+                                    data-start="<?= $startTime ?>"
+                                    data-end="<?= $endTime ?>">
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 12px;">
                                             <div class="avatar room"><?= $roomInitial ?></div>
@@ -833,214 +870,137 @@
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    Menampilkan <span id="currentStart">1</span> - <span id="currentEnd">10</span> 
-                    dari <span id="totalItems"><?= $totalBookings ?></span> booking
+                    Menampilkan <?= $totalBookings > 0 ? $offset + 1 : 0 ?> - <?= min($offset + $itemsPerPage, $totalBookings) ?> 
+                    dari <?= $totalBookings ?> booking
                 </div>
                 <div class="pagination-controls">
-                    <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">
+                    <a href="?page=<?= max(1, $currentPage - 1) ?>" 
+                       class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
                         <i class="fas fa-chevron-left"></i>
                         Sebelumnya
-                    </button>
-                    <div class="page-numbers" id="pageNumbers"></div>
-                    <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">
+                    </a>
+                    
+                    <div class="page-numbers">
+                        <?php
+                        // Determine page range to display
+                        $startPage = max(1, $currentPage - 2);
+                        $endPage = min($totalPages, $startPage + 4);
+                        
+                        if ($endPage - $startPage < 4) {
+                            $startPage = max(1, $endPage - 4);
+                        }
+                        
+                        // First page
+                        if ($startPage > 1) {
+                            echo '<a href="?page=1" class="page-number">1</a>';
+                            if ($startPage > 2) {
+                                echo '<span class="page-number dots">...</span>';
+                            }
+                        }
+                        
+                        // Page numbers
+                        for ($i = $startPage; $i <= $endPage; $i++) {
+                            $activeClass = $i === $currentPage ? 'active' : '';
+                            echo '<a href="?page=' . $i . '" class="page-number ' . $activeClass . '">' . $i . '</a>';
+                        }
+                        
+                        // Last page
+                        if ($endPage < $totalPages) {
+                            if ($endPage < $totalPages - 1) {
+                                echo '<span class="page-number dots">...</span>';
+                            }
+                            echo '<a href="?page=' . $totalPages . '" class="page-number">' . $totalPages . '</a>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <a href="?page=<?= min($totalPages, $currentPage + 1) ?>" 
+                       class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
                         Selanjutnya
                         <i class="fas fa-chevron-right"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // State
-        let currentPage = 1;
-        const itemsPerPage = 10;
-        let currentFilter = 'all';
-        let currentSearch = '';
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initializePagination();
-            updateFilterButtons();
-        });
-
-        // Search functionality
+        // Search functionality - hanya untuk data di halaman saat ini
         function searchBookings(query) {
-            currentSearch = query.toLowerCase();
-            currentPage = 1;
-            
+            const searchTerm = query.toLowerCase();
             const rows = document.querySelectorAll('#bookingTable tbody tr');
-            let visibleCount = 0;
             
             rows.forEach(row => {
                 const room = row.getAttribute('data-room');
                 const user = row.getAttribute('data-user');
                 const admin = row.getAttribute('data-admin');
-                const status = row.getAttribute('data-status');
                 
-                let show = true;
-                
-                if (currentSearch) {
-                    show = room.includes(currentSearch) || user.includes(currentSearch) || admin.includes(currentSearch);
-                }
-                
-                if (currentFilter !== 'all') {
-                    show = show && status === currentFilter;
-                }
+                const show = !searchTerm || 
+                             room.includes(searchTerm) || 
+                             user.includes(searchTerm) || 
+                             admin.includes(searchTerm);
                 
                 row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
             });
-            
-            updatePaginationInfo(visibleCount);
-            updatePagination();
         }
 
-        // Filter functionality
+        // Filter functionality - hanya untuk data di halaman saat ini
         function filterBookings(filter) {
-            currentFilter = filter;
-            currentPage = 1;
-            
-            // Update filter buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
             
-            searchBookings(currentSearch);
+            const rows = document.querySelectorAll('#bookingTable tbody tr');
+            
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                const show = filter === 'all' || status === filter;
+                row.style.display = show ? '' : 'none';
+            });
         }
 
-        function updateFilterButtons() {
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                if (btn.textContent.toLowerCase().includes(currentFilter) || 
-                    (currentFilter === 'all' && btn.textContent === 'Semua')) {
-                    btn.classList.add('active');
+        // Auto-update status berdasarkan waktu real-time
+        function updateBookingStatus() {
+            const now = Math.floor(Date.now() / 1000);
+            const rows = document.querySelectorAll('#bookingTable tbody tr');
+            
+            rows.forEach(row => {
+                const startTime = parseInt(row.getAttribute('data-start'));
+                const endTime = parseInt(row.getAttribute('data-end'));
+                const statusBadge = row.querySelector('.status-badge');
+                
+                if (!statusBadge || !startTime || !endTime) return;
+                
+                let newStatus, newStatusText, newStatusIcon, newStatusClass;
+                
+                if (now < startTime) {
+                    newStatus = 'upcoming';
+                    newStatusText = 'Akan Datang';
+                    newStatusIcon = 'fa-clock';
+                    newStatusClass = 'pending';
+                } else if (now > endTime) {
+                    newStatus = 'completed';
+                    newStatusText = 'Selesai';
+                    newStatusIcon = 'fa-check-circle';
+                    newStatusClass = 'completed';
                 } else {
-                    btn.classList.remove('active');
+                    newStatus = 'active';
+                    newStatusText = 'Berjalan';
+                    newStatusIcon = 'fa-play-circle';
+                    newStatusClass = 'active';
+                }
+                
+                if (row.getAttribute('data-status') !== newStatus) {
+                    row.setAttribute('data-status', newStatus);
+                    statusBadge.className = 'status-badge ' + newStatusClass;
+                    statusBadge.innerHTML = '<i class="fas ' + newStatusIcon + '"></i> ' + newStatusText;
                 }
             });
         }
 
-        // Pagination functions
-        function initializePagination() {
-            updatePagination();
-        }
-
-        function updatePagination() {
-            const rows = document.querySelectorAll('#bookingTable tbody tr');
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-            const totalItems = visibleRows.length;
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            
-            // Update info text
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const end = Math.min(currentPage * itemsPerPage, totalItems);
-            
-            document.getElementById('currentStart').textContent = start;
-            document.getElementById('currentEnd').textContent = end;
-            document.getElementById('totalItems').textContent = totalItems;
-            
-            // Show/hide rows for current page
-            visibleRows.forEach((row, index) => {
-                const rowPage = Math.floor(index / itemsPerPage) + 1;
-                row.style.display = rowPage === currentPage ? '' : 'none';
-            });
-            
-            // Update page numbers
-            renderPageNumbers(totalPages);
-            
-            // Update prev/next buttons
-            document.getElementById('prevBtn').disabled = currentPage === 1;
-            document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
-        }
-
-        function renderPageNumbers(totalPages) {
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-            pageNumbersContainer.innerHTML = '';
-            
-            if (totalPages <= 1) return;
-            
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            if (endPage - startPage < 4) {
-                startPage = Math.max(1, endPage - 4);
-            }
-            
-            if (startPage > 1) {
-                addPageNumber(1);
-                if (startPage > 2) addPageDots();
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                addPageNumber(i);
-            }
-            
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) addPageDots();
-                addPageNumber(totalPages);
-            }
-        }
-
-        function addPageNumber(pageNum) {
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-            const pageBtn = document.createElement('button');
-            pageBtn.className = 'page-number' + (pageNum === currentPage ? ' active' : '');
-            pageBtn.textContent = pageNum;
-            pageBtn.onclick = () => goToPage(pageNum);
-            pageNumbersContainer.appendChild(pageBtn);
-        }
-
-        function addPageDots() {
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-            const dots = document.createElement('span');
-            dots.className = 'page-number dots';
-            dots.textContent = '...';
-            pageNumbersContainer.appendChild(dots);
-        }
-
-        function goToPage(pageNum) {
-            currentPage = pageNum;
-            updatePagination();
-        }
-
-        function changePage(direction) {
-            const rows = document.querySelectorAll('#bookingTable tbody tr');
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-            const totalPages = Math.ceil(visibleRows.length / itemsPerPage);
-            
-            currentPage += direction;
-            currentPage = Math.max(1, Math.min(currentPage, totalPages));
-            updatePagination();
-        }
-
-        function updatePaginationInfo(totalItems) {
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const end = Math.min(currentPage * itemsPerPage, totalItems);
-            
-            document.getElementById('currentStart').textContent = start;
-            document.getElementById('currentEnd').textContent = end;
-            document.getElementById('totalItems').textContent = totalItems;
-        }
-
-        // Auto-refresh for active bookings
-        setInterval(function() {
-            if (currentFilter === 'all' || currentFilter === 'active') {
-                const activeRows = document.querySelectorAll('#bookingTable tbody tr[data-status="active"]');
-                activeRows.forEach(row => {
-                    const statusBadge = row.querySelector('.status-badge');
-                    if (statusBadge) {
-                        const now = new Date();
-                        const endTime = new Date(row.cells[3].querySelector('.time-detail').textContent.replace('⏱️ ', ''));
-                        
-                        if (now > endTime) {
-                            row.setAttribute('data-status', 'completed');
-                            statusBadge.className = 'status-badge completed';
-                            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Selesai';
-                        }
-                    }
-                });
-            }
-        }, 60000); // Check every minute
+        setInterval(updateBookingStatus, 30000);
+        document.addEventListener('DOMContentLoaded', updateBookingStatus);
     </script>
 </body>
 </html>
