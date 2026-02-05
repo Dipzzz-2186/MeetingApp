@@ -513,6 +513,101 @@
             color: var(--accent);
         }
 
+        /* HOVER EFFECT UNTUK TOMBOL BATAL */
+        #cancelEdit,
+        #cancelDelete {
+            flex: 0 0 auto;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.7);
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: "Space Grotesk", sans-serif;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* Gradient background hover */
+        #cancelEdit::before,
+        #cancelDelete::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(154, 160, 170, 0.1),
+                transparent
+            );
+            transition: left 0.5s ease;
+            z-index: -1;
+        }
+
+        /* Hover Effects untuk tombol Batal */
+        #cancelEdit:hover,
+        #cancelDelete:hover {
+            color: var(--ink);
+            border-color: var(--accent);
+            background: rgba(247, 200, 66, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 5px 15px rgba(247, 200, 66, 0.2),
+                0 0 0 1px rgba(247, 200, 66, 0.3);
+        }
+
+        /* Gradient slide effect */
+        #cancelEdit:hover::before,
+        #cancelDelete:hover::before {
+            left: 100%;
+        }
+
+        /* Active state untuk tombol Batal */
+        #cancelEdit:active,
+        #cancelDelete:active {
+            transform: translateY(0);
+            transition: transform 0.1s ease;
+        }
+
+        /* Focus untuk aksesibilitas */
+        #cancelEdit:focus,
+        #cancelDelete:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Disabled state */
+        #cancelEdit:disabled,
+        #cancelDelete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Responsive untuk tombol Batal */
+        @media (max-width: 768px) {
+            #cancelEdit,
+            #cancelDelete {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #cancelEdit,
+            #cancelDelete {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
+
         /* Loading Spinner */
         .spinner {
             animation: spin 1s linear infinite;
@@ -905,7 +1000,7 @@
                             <i class="fas fa-save"></i>
                             Simpan Perubahan
                         </button>
-                        <button type="button" id="cancelEdit" style="flex: 0 0 auto; padding: 15px 20px; border-radius: 10px; border: 1px solid var(--stroke); background: rgba(17, 21, 28, 0.7); color: var(--muted); font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s ease;">
+                        <button type="button" id="cancelEdit">
                             Batal
                         </button>
                     </div>
@@ -945,7 +1040,7 @@
                         <i class="fas fa-trash"></i>
                         Ya, Hapus
                     </button>
-                    <button type="button" id="cancelDelete" style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--stroke); background: rgba(17, 21, 28, 0.7); color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">
+                    <button type="button" id="cancelDelete">
                         Batal
                     </button>
                 </div>
@@ -994,6 +1089,9 @@
                 editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Memuat...';
                 editSubmitBtn.disabled = true;
                 
+                // Disable cancel button during loading
+                if (cancelEditBtn) cancelEditBtn.disabled = true;
+                
                 // Show modal first
                 editModal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
@@ -1032,6 +1130,7 @@
                     // Reset button
                     editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
                     editSubmitBtn.disabled = false;
+                    if (cancelEditBtn) cancelEditBtn.disabled = false;
                     isLoading = false;
                 }
             }
@@ -1061,6 +1160,7 @@
                 document.body.style.overflow = 'auto';
                 editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
                 editSubmitBtn.disabled = false;
+                if (cancelEditBtn) cancelEditBtn.disabled = false;
                 editForm.reset();
             }
             
@@ -1069,6 +1169,7 @@
                 document.body.style.overflow = 'auto';
                 deleteSubmitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
                 deleteSubmitBtn.disabled = false;
+                if (cancelDeleteBtn) cancelDeleteBtn.disabled = false;
             }
             
             // Event listeners for modal close buttons
@@ -1131,6 +1232,9 @@
                 editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menyimpan...';
                 editSubmitBtn.disabled = true;
                 
+                // Disable cancel button during submission
+                if (cancelEditBtn) cancelEditBtn.disabled = true;
+                
                 const formData = new FormData(editForm);
                 
                 // Submit form via AJAX
@@ -1172,6 +1276,8 @@
                 })
                 .finally(() => {
                     isLoading = false;
+                    // Enable cancel button
+                    if (cancelEditBtn) cancelEditBtn.disabled = false;
                 });
             }
             
@@ -1185,6 +1291,9 @@
                 // Show loading state
                 deleteSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Menghapus...';
                 deleteSubmitBtn.disabled = true;
+                
+                // Disable cancel button during submission
+                if (cancelDeleteBtn) cancelDeleteBtn.disabled = true;
                 
                 const formData = new FormData(this);
                 
@@ -1227,6 +1336,8 @@
                 })
                 .finally(() => {
                     isLoading = false;
+                    // Enable cancel button
+                    if (cancelDeleteBtn) cancelDeleteBtn.disabled = false;
                 });
             });
             
