@@ -65,11 +65,21 @@ class SuperAdminController
         ");
         $rooms->execute([':id' => $adminId]);
 
+        // Count total bookings from this admin
+        $bookingsCount = $pdo->prepare("
+            SELECT COUNT(*) 
+            FROM bookings 
+            WHERE admin_id=:id
+        ");
+        $bookingsCount->execute([':id' => $adminId]);
+        $totalBookings = (int)$bookingsCount->fetchColumn();
+
         header('Content-Type: application/json');
         echo json_encode([
             'admin' => $admin,
             'users' => $users->fetchAll(),
             'rooms' => $rooms->fetchAll(),
+            'bookings' => $totalBookings,
         ]);
     }
 

@@ -125,6 +125,19 @@
             border-radius: 12px;
             border: 1px solid var(--stroke);
             min-width: 200px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-item.active {
+            border-color: var(--accent);
+            background: rgba(247, 200, 66, 0.1);
         }
 
         .stat-icon {
@@ -831,6 +844,9 @@
                 transform: translateY(0);
             }
         }
+        .filtered-out {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -857,7 +873,7 @@
             $trialAdmins = array_filter($admins, fn($a) => $a['plan_type'] === 'trial');
             $paidAdmins = array_filter($admins, fn($a) => $a['plan_type'] !== 'trial');
             ?>
-            <div class="stat-item">
+            <div class="stat-item" onclick="filterByPlan('all')" data-filter="all">
                 <div class="stat-icon total">
                     <i class="fas fa-users"></i>
                 </div>
@@ -867,7 +883,7 @@
                 </div>
             </div>
 
-            <div class="stat-item">
+            <div class="stat-item" onclick="filterByPlan('trial')" data-filter="trial">
                 <div class="stat-icon trial">
                     <i class="fas fa-hourglass-half"></i>
                 </div>
@@ -877,7 +893,7 @@
                 </div>
             </div>
 
-            <div class="stat-item">
+            <div class="stat-item" onclick="filterByPlan('paid')" data-filter="paid">
                 <div class="stat-icon paid">
                     <i class="fas fa-crown"></i>
                 </div>
@@ -926,7 +942,7 @@
                         ?>
                             <tr data-name="<?= htmlspecialchars(strtolower($a['name'])) ?>" 
                                 data-email="<?= htmlspecialchars(strtolower($a['email'])) ?>"
-                                data-plan="<?= $a['plan_type'] ?>">
+                                data-plan="<?= $a['plan_type'] === 'trial' ? 'trial' : 'paid' ?>">
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 12px;">
                                         <div class="admin-avatar">
@@ -1067,8 +1083,45 @@
         let currentSearch = '';
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Get page from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageParam = urlParams.get('page');
+            if (pageParam) {
+                currentPage = parseInt(pageParam);
+            }
+            
+            // Set active filter from URL
+            const filterParam = urlParams.get('filter');
+            if (filterParam) {
+                currentFilter = filterParam;
+                updateActiveFilter();
+            }
+            
             initializePagination();
         });
+
+        // Update active filter UI
+        function updateActiveFilter() {
+            document.querySelectorAll('.stat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeFilter = document.querySelector(`.stat-item[data-filter="${currentFilter}"]`);
+            if (activeFilter) {
+                activeFilter.classList.add('active');
+            }
+        }
+
+        // Update URL with page parameter
+        function updateURL() {
+            const url = new URL(window.location);
+            url.searchParams.set('page', currentPage);
+            if (currentFilter !== 'all') {
+                url.searchParams.set('filter', currentFilter);
+            } else {
+                url.searchParams.delete('filter');
+            }
+            window.history.pushState({}, '', url);
+        }
 
         // Search functionality
         function searchAdmins(query) {
@@ -1093,22 +1146,25 @@
                     show = show && plan === currentFilter;
                 }
                 
-                row.style.display = show ? '' : 'none';
+                row.classList.toggle('filtered-out', !show);
                 if (show) visibleCount++;
             });
             
             updatePaginationInfo(visibleCount);
             updatePagination();
+            updateURL();
         }
 
         // Pagination functions
         function initializePagination() {
-            updatePagination();
+            searchAdmins('');
         }
 
         function updatePagination() {
             const rows = document.querySelectorAll('#adminTable tbody tr');
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+            const visibleRows = Array.from(rows).filter(
+                row => !row.classList.contains('filtered-out')
+            );
             const totalItems = visibleRows.length;
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             
@@ -1132,13 +1188,20 @@
             // Update prev/next buttons
             document.getElementById('prevBtn').disabled = currentPage === 1;
             document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+            
+            // Update URL
+            updateURL();
         }
 
         function renderPageNumbers(totalPages) {
             const pageNumbersContainer = document.getElementById('pageNumbers');
             pageNumbersContainer.innerHTML = '';
             
-            if (totalPages <= 1) return;
+            // Always show at least page 1
+            if (totalPages === 0) {
+                addPageNumber(1);
+                return;
+            }
             
             let startPage = Math.max(1, currentPage - 2);
             let endPage = Math.min(totalPages, startPage + 4);
@@ -1176,6 +1239,8 @@
             const dots = document.createElement('span');
             dots.className = 'page-number dots';
             dots.textContent = '...';
+            dots.style.cursor = 'default';
+            dots.style.pointerEvents = 'none';
             pageNumbersContainer.appendChild(dots);
         }
 
@@ -1186,7 +1251,9 @@
 
         function changePage(direction) {
             const rows = document.querySelectorAll('#adminTable tbody tr');
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+            const visibleRows = Array.from(rows).filter(
+                row => !row.classList.contains('filtered-out')
+            );
             const totalPages = Math.ceil(visibleRows.length / itemsPerPage);
             
             currentPage += direction;
@@ -1310,6 +1377,7 @@
         function filterByPlan(planType) {
             currentFilter = planType;
             currentPage = 1;
+            updateActiveFilter();
             searchAdmins(currentSearch);
         }
     </script>
