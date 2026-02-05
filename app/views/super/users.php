@@ -743,53 +743,53 @@
             display: block;
         }
 
-        /* Admin Info Compact - Updated Style */
-        .admin-info-compact {
-            background: rgba(17, 21, 28, 0.5);
-            border-radius: 12px;
-            padding: 15px;
-            border: 1px solid var(--stroke);
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    /* Admin Info Compact - Updated Style */
+    .admin-info-compact {
+        background: rgba(17, 21, 28, 0.5);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid var(--stroke);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
 
-        .admin-avatar-small {
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--warning) 0%, #ffc477 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: #1a1a1a;
-            font-size: 18px;
-            text-transform: uppercase;
-            flex-shrink: 0;
-        }
+    .admin-avatar-small {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--warning) 0%, #ffc477 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 18px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
 
-        .admin-info-content {
-            flex: 1;
-        }
+    .admin-info-content {
+        flex: 1;
+    }
 
-        .admin-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--ink);
-            margin-bottom: 3px;
-        }
+    .admin-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 3px;
+    }
 
-        .admin-role {
-            font-size: 12px;
-            color: var(--accent);
-            font-weight: 500;
-            background: rgba(247, 200, 66, 0.1);
-            padding: 3px 8px;
-            border-radius: 4px;
-            display: inline-block;
-        }
+    .admin-role {
+        font-size: 12px;
+        color: var(--accent);
+        font-weight: 500;
+        background: rgba(247, 200, 66, 0.1);
+        padding: 3px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
 
         /* Booking History - Compact */
         .booking-section {
@@ -1271,16 +1271,15 @@
                                 <span class="meta-label-compact">Status</span>
                                 <span class="meta-value-compact" id="userStatus">-</span>
                             </div>
+                            <!-- Admin dipindahkan ke sini di dalam grid -->
+                            <div class="admin-info-compact" style="margin: 0; padding: 8px 12px; width: 100%;">
+                                <div class="admin-avatar-small" id="adminAvatar">A</div>
+                                <div class="admin-info-content">
+                                    <div class="admin-name" id="adminName">-</div>
+                                    <div class="admin-role" id="adminRole">Admin</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Admin Info - Sesuai dengan gambar -->
-                <div class="admin-info-compact">
-                    <div class="admin-avatar-small" id="adminAvatar">A</div>
-                    <div class="admin-info-content">
-                        <div class="admin-name" id="adminName">-</div>
-                        <div class="admin-role" id="adminRole">Admin</div>
                     </div>
                 </div>
 
