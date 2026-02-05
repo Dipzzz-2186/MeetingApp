@@ -513,7 +513,7 @@
             color: var(--accent);
         }
 
-        /* HOVER EFFECT UNTUK TOMBOL BATAL */
+        /* HOVER EFFECT UNTUK TOMBOL BATAL DENGAN BORDER MERAH */
         #cancelEdit,
         #cancelDelete {
             flex: 0 0 auto;
@@ -544,23 +544,23 @@
             background: linear-gradient(
                 90deg,
                 transparent,
-                rgba(154, 160, 170, 0.1),
+                rgba(255, 87, 87, 0.1),
                 transparent
             );
             transition: left 0.5s ease;
             z-index: -1;
         }
 
-        /* Hover Effects untuk tombol Batal */
+        /* Hover Effects untuk tombol Batal dengan border merah */
         #cancelEdit:hover,
         #cancelDelete:hover {
             color: var(--ink);
-            border-color: var(--accent);
-            background: rgba(247, 200, 66, 0.1);
+            border-color: var(--error); /* WARNA MERAH */
+            background: rgba(255, 87, 87, 0.08); /* Background merah transparan */
             transform: translateY(-2px);
             box-shadow: 
-                0 5px 15px rgba(247, 200, 66, 0.2),
-                0 0 0 1px rgba(247, 200, 66, 0.3);
+                0 5px 15px rgba(255, 87, 87, 0.2), /* Shadow merah */
+                0 0 0 1px rgba(255, 87, 87, 0.3); /* Glow merah */
         }
 
         /* Gradient slide effect */
@@ -574,12 +574,14 @@
         #cancelDelete:active {
             transform: translateY(0);
             transition: transform 0.1s ease;
+            border-color: rgba(255, 87, 87, 0.5);
+            background: rgba(255, 87, 87, 0.12);
         }
 
         /* Focus untuk aksesibilitas */
         #cancelEdit:focus,
         #cancelDelete:focus {
-            outline: 2px solid var(--accent);
+            outline: 2px solid var(--error);
             outline-offset: 2px;
         }
 
@@ -589,6 +591,7 @@
             opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
+            border-color: rgba(255, 87, 87, 0.2) !important;
         }
 
         /* Responsive untuk tombol Batal */
