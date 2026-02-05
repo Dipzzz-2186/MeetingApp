@@ -108,64 +108,6 @@
             background: rgba(17, 21, 28, 0.9);
         }
 
-        .primary-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: none;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            color: #1a1a1a;
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .primary-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(247, 200, 66, 0.2);
-        }
-
-        .search-container {
-            margin-bottom: 30px;
-        }
-
-        .search-box {
-            position: relative;
-            max-width: 400px;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--muted);
-            font-size: 16px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 14px 20px 14px 48px;
-            border-radius: 12px;
-            border: 1px solid var(--stroke);
-            background: rgba(17, 21, 28, 0.9);
-            font-size: 15px;
-            font-family: "Space Grotesk", sans-serif;
-            color: var(--ink);
-            transition: all 0.2s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: rgba(17, 21, 28, 0.95);
-            box-shadow: 0 0 0 3px rgba(247, 200, 66, 0.1);
-        }
-
         /* Stats Bar */
         .stats-bar {
             display: flex;
@@ -222,6 +164,44 @@
             font-size: 24px;
             font-weight: 600;
             color: var(--ink);
+        }
+
+        /* Search Container */
+        .search-container {
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 400px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.9);
+            font-size: 15px;
+            font-family: "Space Grotesk", sans-serif;
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(17, 21, 28, 0.95);
+            box-shadow: 0 0 0 3px rgba(247, 200, 66, 0.1);
         }
 
         /* Table Container */
@@ -393,18 +373,6 @@
             background: rgba(87, 184, 255, 0.1);
         }
 
-        .action-btn.edit:hover {
-            border-color: var(--warning);
-            color: var(--warning);
-            background: rgba(255, 168, 87, 0.1);
-        }
-
-        .action-btn.delete:hover {
-            border-color: var(--error);
-            color: var(--error);
-            background: rgba(255, 87, 87, 0.1);
-        }
-
         /* Pagination */
         .pagination-container {
             display: flex;
@@ -486,7 +454,7 @@
             color: #1a1a1a;
         }
 
-        /* Modal Styles */
+        /* Modal Styles - Fixed */
         .modal {
             display: none;
             position: fixed;
@@ -494,11 +462,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(11, 13, 18, 0.85);
-            z-index: 1000;
+            background: rgba(11, 13, 18, 0.95);
+            z-index: 9999;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 80px 20px 20px; /* Added top padding for navbar */
             animation: fadeIn 0.3s ease;
         }
 
@@ -510,12 +478,13 @@
             background: var(--card);
             border-radius: 20px;
             width: 100%;
-            max-width: 600px;
-            max-height: 90vh;
+            max-width: 800px;
+            max-height: calc(100vh - 100px); /* Adjusted for navbar */
             overflow-y: auto;
             border: 1px solid var(--stroke);
             box-shadow: var(--shadow);
             animation: slideUp 0.3s ease;
+            position: relative;
         }
 
         .modal-header {
@@ -669,7 +638,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-height: 300px;
+            max-height: 200px;
             overflow-y: auto;
             padding-right: 10px;
         }
@@ -739,6 +708,13 @@
 
         .empty-state p {
             font-size: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: flex-end;
         }
 
         /* Responsive */
@@ -822,12 +798,20 @@
                 grid-template-columns: 1fr;
             }
 
+            .modal {
+                padding: 60px 10px 10px;
+            }
+
             .modal-content {
-                max-width: 95%;
+                max-height: calc(100vh - 70px);
             }
 
             .modal-body {
                 padding: 20px;
+            }
+
+            .modal-actions {
+                flex-direction: column;
             }
         }
 
@@ -990,10 +974,6 @@
                                             <i class="fas fa-eye"></i>
                                             Detail
                                         </button>
-                                        <button class="action-btn edit" onclick="editAdmin(<?= (int)$a['id'] ?>)">
-                                            <i class="fas fa-edit"></i>
-                                            Edit
-                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -1027,7 +1007,7 @@
     <div id="adminModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-user-shield"></i> Admin Details</h2>
+                <h2><i class="fas fa-user-shield"></i> Detail Admin</h2>
                 <button class="modal-close" onclick="closeAdminModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -1074,17 +1054,6 @@
                             <p>Belum ada room</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="modal-actions" style="margin-top: 30px;">
-                    <button class="action-btn edit" onclick="editAdminFromModal()">
-                        <i class="fas fa-edit"></i>
-                        Edit Admin
-                    </button>
-                    <button class="action-btn delete" onclick="deleteAdmin()">
-                        <i class="fas fa-trash"></i>
-                        Delete Admin
-                    </button>
                 </div>
             </div>
         </div>
@@ -1307,6 +1276,8 @@
                     
                     // Show modal
                     document.getElementById('adminModal').classList.add('active');
+                    // Prevent body scroll when modal is open
+                    document.body.style.overflow = 'hidden';
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1317,55 +1288,23 @@
         function closeAdminModal() {
             document.getElementById('adminModal').classList.remove('active');
             window.currentAdminId = null;
+            // Restore body scroll
+            document.body.style.overflow = 'auto';
         }
 
-        function editAdminFromModal() {
-            if (window.currentAdminId) {
-                editAdmin(window.currentAdminId);
-            }
-        }
-
-        function editAdmin(id) {
-            alert('Edit admin dengan ID: ' + id);
-            // Implement edit functionality here
-        }
-
-        function deleteAdmin() {
-            if (!window.currentAdminId) return;
-            
-            if (confirm('Apakah Anda yakin ingin menghapus admin ini?')) {
-                fetch('/super/delete-admin?id=' + window.currentAdminId, {
-                    method: 'DELETE'
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Admin berhasil dihapus');
-                        closeAdminModal();
-                        location.reload();
-                    } else {
-                        alert('Gagal menghapus admin: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Terjadi kesalahan saat menghapus admin');
-                });
-            }
-        }
-
-        function addNewAdmin() {
-            alert('Fitur tambah admin baru akan segera hadir!');
-            // Implement add admin functionality here
-        }
-
-        // Close modal when clicking outside
+        // Close modal when clicking outside or pressing ESC
         window.onclick = function(event) {
             const modal = document.getElementById('adminModal');
             if (event.target === modal) {
                 closeAdminModal();
             }
         };
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAdminModal();
+            }
+        });
 
         // Filter by plan type
         function filterByPlan(planType) {
