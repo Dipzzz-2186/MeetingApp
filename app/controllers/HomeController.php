@@ -6,6 +6,16 @@ class HomeController {
     }
 
     public static function articles(): void {
+        if (current_user()) {
+            $user = current_user();
+            if ($user['role'] === 'superadmin') {
+                header('Location: /super/articles');
+            } else {
+                $dashPath = '/dashboard_' . ($user['role'] === 'admin' ? 'admin' : 'user');
+                header('Location: ' . $dashPath);
+            }
+            exit;
+        }
         global $pdo;
         $stmt = $pdo->query("
             SELECT id, title, slug, category, excerpt, cover_url, author, published_at

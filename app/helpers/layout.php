@@ -150,12 +150,9 @@ function render_header(string $title, string $body_class = ''): void {
             echo '<a class="tab' . ($is_active('/users') ? ' active' : '') . '" href="/users">' . $icon_users . '<span>Users</span></a>';
             echo '<a class="tab' . ($is_active('/rooms') ? ' active' : '') . '" href="/rooms">' . $icon_room . '<span>Rooms</span></a>';
             echo '<a class="tab' . ($is_active('/bookings') ? ' active' : '') . '" href="/bookings">' . $icon_book . '<span>Schedule</span></a>';
-            echo '<a class="tab' . ($is_active('/articles') ? ' active' : '') . '" href="/articles">' . $icon_article . '<span>Articles</span></a>';
         } else {
             echo '<a class="tab' . ($is_active('/booking_user') ? ' active' : '') . '" href="/booking_user">'
                 . $icon_book . '<span>Booking</span></a>';
-                
-            echo '<a class="tab' . ($is_active('/articles') ? ' active' : '') . '" href="/articles">' . $icon_article . '<span>Articles</span></a>';
         }
 
         echo '<a class="tab" href="/logout">' . $icon_logout . '<span>Logout</span></a>';

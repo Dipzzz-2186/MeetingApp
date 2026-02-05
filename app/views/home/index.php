@@ -1,10 +1,6 @@
 <?php
 $user = current_user();
-
 $articleUrl = '/articles';
-if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
-    $articleUrl = '/super/articles';
-}
 ?>
 
 <style>
@@ -989,7 +985,6 @@ if ($user && in_array($user['role'], ['superadmin', 'supervisor'])) {
           <span class="admin-info">Admin: <?= htmlspecialchars($user['owner_admin_name']) ?></span>
         <?php endif; ?>
       </div>
-      <a class="btn secondary" href="<?= $articleUrl ?>">Buka Artikel</a>
     </div>
   </section>
 <?php endif; ?>
