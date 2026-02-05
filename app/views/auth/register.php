@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeetFlow | Register</title>
+    <title>RuangMeet | Register</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -470,7 +470,7 @@
         <div class="auth-side">
             <div class="auth-mini">
                 <h2>Buat Akun</h2>
-                <p>Bergabung dengan MeetFlow untuk mengelola ruang meeting dan jadwal dengan sistem manajemen yang efisien.</p>
+                <p>Bergabung dengan RuangMeet untuk mengelola ruang meeting dan jadwal dengan sistem manajemen yang efisien.</p>
                 
                 <ul class="auth-features">
                     <li><i class="fas fa-check"></i> Kelola semua ruang meeting</li>

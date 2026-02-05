@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeetFlow | Super Admin Dashboard</title>
+    <title>RuangMeet | Super Admin Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -613,7 +613,7 @@
         <div class="welcome-card">
             <div class="welcome-title">Selamat Datang, Super Admin!</div>
             <div class="welcome-subtitle">
-                Anda memiliki kontrol penuh atas seluruh sistem MeetFlow. Kelola admin, user, ruangan, dan monitor semua aktivitas dari satu tempat.
+                Anda memiliki kontrol penuh atas seluruh sistem RuangMeet. Kelola admin, user, ruangan, dan monitor semua aktivitas dari satu tempat.
             </div>
             <div class="welcome-features">
                 <div class="welcome-feature">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeetFlow | Scheduling</title>
+    <title>RuangMeet | Scheduling</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -2088,7 +2088,7 @@
         const startDisplay = document.getElementById('start_time_display');
         const endDisplay = document.getElementById('end_time_display');
         const monitorToggle = document.getElementById('monitorToggle');
-        
+
         const roomSelect = document.querySelector('select[name="room_id"]');
 
         roomSelect.addEventListener('change', function () {
