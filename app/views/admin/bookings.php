@@ -1245,7 +1245,7 @@
                     </div>
                 <?php endif; ?>
                 
-                <form method="post" class="grid">
+                <form id="createBookingForm" method="post" class="grid">
                     <input type="hidden" name="action" value="create">
                     <div class="form-row">
                         <div>
@@ -1335,13 +1335,15 @@
                     </button>
                 </div>
                 
-                <?php if (!$bookings): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-calendar-times"></i>
-                        <h3>Belum ada booking</h3>
-                        <p>Buat booking pertama Anda menggunakan form di samping</p>
-                    </div>
-                <?php else: ?>
+                <?php $hasBookings = !empty($bookings); ?>
+
+                <div id="bookingEmptyState" class="empty-state" style="display: <?php echo $hasBookings ? 'none' : 'block'; ?>;">
+                    <i class="fas fa-calendar-times"></i>
+                    <h3>Belum ada booking</h3>
+                    <p>Buat booking pertama Anda menggunakan form di samping</p>
+                </div>
+
+                <div id="bookingDataSection" style="display: <?php echo $hasBookings ? 'block' : 'none'; ?>;">
                     <div class="table-container">
                         <table class="table">
                             <thead>
@@ -1531,7 +1533,7 @@
                             </div>
                         </div>
                     </div>
-                <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -1968,7 +1970,7 @@
             if (data.success) {
                 showAlert(data.notice, 'success');
                 closeAllModals();
-                window.location.reload();
+                refreshLiveBookings();
             } else {
                 showAlert(data.error, 'error');
                 submitBtn.innerHTML = originalText;
@@ -2017,7 +2019,7 @@
             if (data.success) {
                 showAlert(data.notice, 'success');
                 closeAllModals();
-                window.location.reload();
+                refreshLiveBookings();
             } else {
                 showAlert(data.error, 'error');
                 submitBtn.innerHTML = originalText;
@@ -2034,6 +2036,70 @@
             isLoading = false;
         });
     });
+
+    const createForm = document.getElementById('createBookingForm');
+    if (createForm) {
+        createForm.addEventListener('submit', function(e) {
+            if (e.defaultPrevented) return;
+            e.preventDefault();
+
+            if (isLoading) return;
+            isLoading = true;
+
+            const formData = new FormData(this);
+            formData.append('ajax', 'true');
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            submitBtn.disabled = true;
+
+            fetch('', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.notice, 'success');
+                    this.reset();
+
+                    const startDisplay = document.getElementById('start_time_display');
+                    const endDisplay = document.getElementById('end_time_display');
+                    if (startDisplay) {
+                        startDisplay.textContent = 'Belum dipilih';
+                        startDisplay.style.color = 'var(--muted)';
+                        startDisplay.style.fontWeight = 'normal';
+                    }
+                    if (endDisplay) {
+                        endDisplay.textContent = 'Belum dipilih';
+                        endDisplay.style.color = 'var(--muted)';
+                        endDisplay.style.fontWeight = 'normal';
+                    }
+
+                    refreshLiveBookings();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            })
+            .catch(() => {
+                showAlert('Terjadi kesalahan saat membuat booking', 'error');
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                isLoading = false;
+            });
+        });
+    }
 
     // Helper function untuk show alert
     function showAlert(message, type) {
@@ -2132,6 +2198,7 @@
                 
         // Initialize pagination
         initializePagination();
+        startLiveUpdates();
         
         // Format tanggal untuk display
         function formatDateTimeDisplay(dateString) {
@@ -2644,6 +2711,117 @@
         if (ongoingStat) ongoingStat.textContent = ongoingCount;
         if (completedStat) completedStat.textContent = completedCount;
         if (totalStat) totalStat.textContent = totalCount;
+    }
+
+    // Realtime updates
+    let liveTimer = null;
+    let isLiveLoading = false;
+    const liveIntervalMs = 10000;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function toggleBookingSections(hasData) {
+        const emptyState = document.getElementById('bookingEmptyState');
+        const dataSection = document.getElementById('bookingDataSection');
+        if (emptyState) emptyState.style.display = hasData ? 'none' : 'block';
+        if (dataSection) dataSection.style.display = hasData ? 'block' : 'none';
+    }
+
+    function renderBookingRows(bookings) {
+        const tbody = document.getElementById('bookingTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = bookings.map(item => `
+            <tr data-status="${escapeHtml(item.status)}" data-date="${escapeHtml(item.date_iso)}" class="booking-row">
+                <td data-label="User & Room">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="user-avatar">${escapeHtml(item.user_initial)}</div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--ink);">
+                                ${escapeHtml(item.user_name)}
+                            </div>
+                            <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
+                                <span class="room-badge">
+                                    <i class="fas fa-door-open"></i>
+                                    ${escapeHtml(item.room_name)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Waktu">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div style="font-size: 13px; color: var(--muted);">
+                            ${escapeHtml(item.start_date)}
+                        </div>
+                        <div style="font-weight: 600; color: var(--ink);">
+                            ${escapeHtml(item.start_time)} - ${escapeHtml(item.end_time)}
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Durasi">
+                    <span class="duration-indicator">${escapeHtml(item.duration_text)}</span>
+                </td>
+                <td data-label="Status">
+                    <span class="booking-status ${escapeHtml(item.status_class)}">
+                        <i class="fas ${escapeHtml(item.status_icon)}"></i>
+                        ${escapeHtml(item.status_text)}
+                    </span>
+                </td>
+                <td data-label="Aksi">
+                    <div class="actions">
+                        <button class="action-btn view" onclick="viewBooking(${item.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit" onclick="editBooking(${item.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteBooking(${item.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function refreshLiveBookings() {
+        if (isLiveLoading) return;
+        const tbody = document.getElementById('bookingTableBody');
+        if (!tbody) return;
+        if (document.hidden) return;
+
+        isLiveLoading = true;
+        fetch('?ajax=live_bookings', { cache: 'no-store' })
+            .then(response => response.ok ? response.json() : null)
+            .then(data => {
+                if (!data || !Array.isArray(data.bookings)) return;
+                toggleBookingSections(data.bookings.length > 0);
+                renderBookingRows(data.bookings);
+                updatePagination();
+            })
+            .catch(() => {})
+            .finally(() => {
+                isLiveLoading = false;
+            });
+    }
+
+    function startLiveUpdates() {
+        if (liveTimer) {
+            clearInterval(liveTimer);
+        }
+        refreshLiveBookings();
+        liveTimer = setInterval(refreshLiveBookings, liveIntervalMs);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshLiveBookings();
+        });
     }
 </script>
 </body>

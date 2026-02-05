@@ -620,6 +620,81 @@ class AdminController {
             exit;
         }
 
+        if (isset($_GET['ajax']) && $_GET['ajax'] === 'live_bookings') {
+            $bookings = Booking::byAdmin($pdo, (int)$user['id']);
+            $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            $rows = [];
+            $counts = [
+                'upcoming' => 0,
+                'ongoing' => 0,
+                'completed' => 0,
+                'total' => 0,
+            ];
+
+            foreach ($bookings as $row) {
+                try {
+                    $start = new DateTime($row['start_time'], new DateTimeZone('Asia/Jakarta'));
+                    $end = new DateTime($row['end_time'], new DateTimeZone('Asia/Jakarta'));
+                } catch (Exception $e) {
+                    $start = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+                    $end = (clone $start)->modify('+1 hour');
+                }
+
+                if ($now > $end) {
+                    $status = 'completed';
+                } elseif ($now >= $start && $now <= $end) {
+                    $status = 'ongoing';
+                } else {
+                    $status = 'upcoming';
+                }
+
+                $duration = $start->diff($end);
+                $hours = $duration->h + ($duration->days * 24);
+                $minutes = $duration->i;
+                $durationText = '';
+                if ($hours > 0) {
+                    $durationText .= $hours . ' jam ';
+                }
+                if ($minutes > 0) {
+                    $durationText .= $minutes . ' menit';
+                }
+                if ($hours === 0 && $minutes === 0) {
+                    $durationText = '< 1 menit';
+                }
+
+                $statusText = $status === 'upcoming' ? 'Akan Datang' : ($status === 'ongoing' ? 'Berlangsung' : 'Selesai');
+                $statusIcon = $status === 'upcoming' ? 'fa-clock' : ($status === 'ongoing' ? 'fa-play-circle' : 'fa-check-circle');
+
+                $rows[] = [
+                    'id' => (int)$row['id'],
+                    'user_name' => $row['user_name'],
+                    'user_initial' => strtoupper(substr($row['user_name'], 0, 1)),
+                    'room_name' => $row['room_name'],
+                    'start_date' => $start->format('d/m/Y'),
+                    'start_time' => $start->format('H:i'),
+                    'end_time' => $end->format('H:i'),
+                    'date_iso' => $start->format('Y-m-d'),
+                    'status' => $status,
+                    'status_class' => 'status-' . $status,
+                    'status_text' => $statusText,
+                    'status_icon' => $statusIcon,
+                    'duration_text' => $durationText,
+                ];
+
+                $counts['total']++;
+                if (isset($counts[$status])) {
+                    $counts[$status]++;
+                }
+            }
+
+            header('Content-Type: application/json');
+            echo json_encode([
+                'bookings' => $rows,
+                'counts' => $counts,
+            ]);
+            exit;
+        }
+
         if (isset($_GET['ajax']) && $_GET['ajax'] === 'room_schedule') {
             $room_id = (int)($_GET['room_id'] ?? 0);
 
