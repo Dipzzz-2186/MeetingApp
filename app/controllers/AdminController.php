@@ -9,31 +9,48 @@ class AdminController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
-            if ($action === 'mark_paid') {
-                $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $action = $_POST['action'] ?? '';
 
-                if (!empty($user['paid_until'])) {
-                    $base = new DateTime($user['paid_until'], new DateTimeZone('Asia/Jakarta'));
-                    if ($base < $now) {
+                if ($action === 'mark_paid') {
+                    $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+                    if (!empty($user['paid_until'])) {
+                        $base = new DateTime($user['paid_until'], new DateTimeZone('Asia/Jakarta'));
+                        if ($base < $now) {
+                            $base = $now;
+                        }
+                    } else {
                         $base = $now;
                     }
-                } else {
-                    $base = $now;
+
+                    $base->modify('+30 days');
+
+                    User::updatePlanPaidUntil(
+                        $pdo,
+                        (int)$user['id'],
+                        $base->format('Y-m-d H:i:s')
+                    );
                 }
 
-                $base->modify('+30 days');
-
-                User::updatePlanPaidUntil(
-                    $pdo,
-                    (int)$user['id'],
-                    $base->format('Y-m-d H:i:s')
-                );
-            }
-            if ($action === 'extend_paid') {
-                $date = normalize_datetime($_POST['paid_until'] ?? '');
-                if ($date !== '') {
-                    User::updatePlanPaidUntil($pdo, (int)$user['id'], $date);
+                if ($action === 'extend_paid') {
+                    $date = normalize_datetime($_POST['paid_until'] ?? '');
+                    if ($date !== '') {
+                        User::updatePlanPaidUntil($pdo, (int)$user['id'], $date);
+                    }
                 }
+
+                if ($action === 'reset_trial') {
+                    $trial_end = date('Y-m-d H:i:s', strtotime('+10 days'));
+                    User::updatePlanTrialReset($pdo, (int)$user['id'], $trial_end);
+                }
+
+                refresh_user($pdo);
+                $user = current_user();
+
+                // 🔥 INI KUNCI
+                header('Location: /dashboard_admin');
+                exit;
             }
             if ($action === 'reset_trial') {
                 $trial_end = date('Y-m-d H:i:s', strtotime('+10 days'));
