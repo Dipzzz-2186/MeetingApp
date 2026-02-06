@@ -277,7 +277,7 @@ class SuperAdminController
         }
 
         $articles = $pdo->query("
-            SELECT id, title, slug, category, author, published_at, created_at
+            SELECT id, title, slug, category, excerpt, content, cover_url, author, published_at, created_at
             FROM articles
             ORDER BY created_at DESC, id DESC
         ")->fetchAll();
