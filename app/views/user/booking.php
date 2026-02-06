@@ -799,6 +799,27 @@
             color: var(--ink);
         }
 
+        .modal-cancel {
+            background: rgba(154, 160, 170, 0.1);
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            width: 100%;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-cancel:hover {
+            background: var(--error);
+            border-color: var(--error);
+            color: var(--ink);
+        }
+
         .modal-body {
             padding: 30px;
         }
@@ -1594,7 +1615,7 @@
                             <i class="fas fa-save"></i>
                             Simpan Perubahan
                         </button>
-                        <button type="button" class="btn-secondary modal-close">
+                        <button type="button" class="btn-secondary modal-cancel">
                             <i class="fas fa-times"></i>
                             Batal
                         </button>
@@ -1629,7 +1650,7 @@
                             <i class="fas fa-trash"></i>
                             Ya, Hapus
                         </button>
-                        <button type="button" class="btn-secondary modal-close">
+                        <button type="button" class="btn-secondary modal-cancel">
                             <i class="fas fa-times"></i>
                             Batal
                         </button>
@@ -1871,6 +1892,10 @@
 
     // Close modal buttons
     document.querySelectorAll('.modal-close').forEach(button => {
+        button.addEventListener('click', closeAllModals);
+    });
+
+    document.querySelectorAll('.modal-cancel').forEach(button => {
         button.addEventListener('click', closeAllModals);
     });
 
