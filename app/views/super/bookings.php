@@ -725,6 +725,7 @@ $upcomingBookings = array_filter($bookings, function($b) {
             <button class="filter-btn" onclick="filterBookings('active')">Sedang Berjalan</button>
             <button class="filter-btn" onclick="filterBookings('completed')">Selesai</button>
             <button class="filter-btn" onclick="filterBookings('upcoming')">Akan Datang</button>
+            <button class="filter-btn" onclick="filterBookings('today')">Hari Ini</button>
         </div>
 
         <!-- Booking Table -->
@@ -952,10 +953,34 @@ $upcomingBookings = array_filter($bookings, function($b) {
             event.target.classList.add('active');
             
             const rows = document.querySelectorAll('#bookingTable tbody tr');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             
             rows.forEach(row => {
                 const status = row.getAttribute('data-status');
-                const show = filter === 'all' || status === filter;
+                const startTime = parseInt(row.getAttribute('data-start'));
+                const startDate = new Date(startTime * 1000);
+                startDate.setHours(0, 0, 0, 0);
+                
+                let show = false;
+                
+                switch(filter) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'today':
+                        // Check if booking start date is today
+                        show = startDate.getTime() === today.getTime();
+                        break;
+                    case 'active':
+                    case 'completed':
+                    case 'upcoming':
+                        show = status === filter;
+                        break;
+                    default:
+                        show = true;
+                }
+                
                 row.style.display = show ? '' : 'none';
             });
         }

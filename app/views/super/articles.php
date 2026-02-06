@@ -355,6 +355,12 @@
         }
 
         .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(247, 200, 66, 0.1);
+        }
+
+        .btn-secondary.delete-btn:hover {
             border-color: var(--error);
             color: var(--error);
             background: rgba(255, 87, 87, 0.1);
@@ -392,7 +398,7 @@
             line-height: 1.6;
         }
 
-        /* MODAL STYLES */
+        /* MODAL STYLES - General */
         .modal {
             display: none;
             position: fixed;
@@ -400,25 +406,40 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(11, 13, 18, 0.98);
+            background: rgba(11, 13, 18, 0.96);
             z-index: 10000;
             animation: fadeIn 0.3s ease;
             overflow-y: auto;
-            padding: 80px 20px 20px;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
         .modal.active {
-            display: block;
+            display: flex;
         }
 
+        /* Modal untuk create dan preview (besar) */
         .modal-content {
             background: var(--card);
             border-radius: 20px;
             max-width: 800px;
-            margin: 0 auto;
+            width: 100%;
             border: 1px solid var(--stroke);
             box-shadow: var(--shadow);
             animation: slideUp 0.3s ease;
+        }
+
+        /* Modal khusus untuk delete (kecil dan di tengah) */
+        .modal-content-small {
+            background: var(--card);
+            border-radius: 16px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+            animation: slideUpSmall 0.3s ease;
+            position: relative;
         }
 
         .modal-header {
@@ -469,10 +490,140 @@
             color: var(--ink);
         }
 
+        .modal-close-small {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(154, 160, 170, 0.1);
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .modal-close-small:hover {
+            background: var(--error);
+            border-color: var(--error);
+            color: var(--ink);
+        }
+
         .modal-body {
             padding: 30px;
             max-height: calc(100vh - 200px);
             overflow-y: auto;
+        }
+
+        /* Delete Modal Content */
+        .delete-modal-content {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .delete-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 87, 87, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            border: 2px solid rgba(255, 87, 87, 0.3);
+        }
+
+        .delete-icon i {
+            font-size: 20px;
+            color: var(--error);
+        }
+
+        .delete-title {
+            font-family: "Fraunces", serif;
+            font-size: 18px;
+            color: var(--ink);
+            margin-bottom: 12px;
+        }
+
+        .delete-message {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .delete-warning {
+            color: var(--error);
+            font-size: 12px;
+            background: rgba(255, 87, 87, 0.08);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 87, 87, 0.2);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .delete-warning i {
+            font-size: 12px;
+        }
+
+        .delete-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-cancel {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.7);
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-cancel:hover {
+            color: var(--ink);
+            border-color: var(--error);
+            background: rgba(255, 87, 87, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 87, 87, 0.2), 0 0 0 1px rgba(255, 87, 87, 0.3);
+        }
+
+        .btn-cancel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 87, 87, 0.1), transparent);
+            transition: left 0.5s ease;
+            z-index: -1;
+        }
+
+        .btn-cancel:hover::before {
+            left: 100%;
         }
 
         /* Form Styles in Modal */
@@ -634,15 +785,23 @@
             }
 
             .modal {
-                padding: 60px 10px 10px;
+                padding: 15px;
             }
 
             .modal-content {
-                margin: 0;
+                max-width: 100%;
+            }
+
+            .modal-content-small {
+                max-width: 95%;
             }
 
             .modal-header,
             .modal-body {
+                padding: 20px;
+            }
+
+            .delete-modal-content {
                 padding: 20px;
             }
 
@@ -652,6 +811,10 @@
 
             .form-group.span-two {
                 grid-column: span 1;
+            }
+
+            .delete-actions {
+                flex-direction: column;
             }
         }
 
@@ -665,7 +828,11 @@
             }
 
             .modal-content {
-                border-radius: 0;
+                border-radius: 12px;
+            }
+
+            .modal-content-small {
+                border-radius: 12px;
             }
 
             .form-actions {
@@ -691,6 +858,17 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUpSmall {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
             }
         }
     </style>
@@ -810,13 +988,11 @@
                                             <button class="btn-secondary btn-icon" onclick="previewArticle(<?php echo (int)$article['id']; ?>)">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <form method="post" onsubmit="return confirm('Hapus artikel ini?');" style="display: inline;">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="id" value="<?php echo (int)$article['id']; ?>">
-                                                <button class="btn-secondary btn-icon" type="submit">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <button class="btn-secondary btn-icon delete-btn" 
+                                                    data-id="<?php echo (int)$article['id']; ?>" 
+                                                    data-title="<?php echo htmlspecialchars(addslashes($article['title'])); ?>">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -919,6 +1095,46 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal (Kecil dan di tengah) -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content-small">
+            <button class="modal-close-small" onclick="closeDeleteConfirmModal()">&times;</button>
+            
+            <div class="delete-modal-content">
+                <div class="delete-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                
+                <h3 class="delete-title">Hapus Artikel?</h3>
+                
+                <p class="delete-message">
+                    Apakah Anda yakin ingin menghapus artikel 
+                    "<span id="deleteArticleTitle" style="color: var(--ink); font-weight: 600;"></span>"?
+                </p>
+                
+                <div class="delete-warning">
+                    <i class="fas fa-info-circle"></i>
+                    Tindakan ini tidak dapat dibatalkan
+                </div>
+                
+                <form id="deleteConfirmForm" method="post">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" id="deleteArticleId">
+                    
+                    <div class="delete-actions">
+                        <button type="submit" class="primary-btn" style="flex: 1; background: var(--error); border: none; padding: 12px;">
+                            <i class="fas fa-trash"></i>
+                            Ya, Hapus
+                        </button>
+                        <button type="button" onclick="closeDeleteConfirmModal()" class="btn-cancel">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Set default publish date to now
         document.addEventListener('DOMContentLoaded', function() {
@@ -933,6 +1149,22 @@
             if (document.getElementById('publishedAt')) {
                 document.getElementById('publishedAt').value = datetimeLocal;
             }
+
+            // Event listener untuk tombol delete
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const title = this.getAttribute('data-title');
+                    confirmDeleteArticle(id, title);
+                });
+            });
+            
+            // Handle delete form submission
+            document.getElementById('deleteConfirmForm').addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+                submitBtn.disabled = true;
+            });
         });
 
         // Modal functions
@@ -1007,16 +1239,47 @@
             document.body.style.overflow = 'auto';
         }
 
+        // Delete Confirmation Modal Functions
+        function confirmDeleteArticle(id, title) {
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            const deleteTitle = document.getElementById('deleteArticleTitle');
+            const deleteIdInput = document.getElementById('deleteArticleId');
+            
+            deleteTitle.textContent = title;
+            deleteIdInput.value = id;
+            
+            deleteModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteConfirmModal() {
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            const submitBtn = deleteModal.querySelector('button[type="submit"]');
+            
+            // Reset button state
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
+                submitBtn.disabled = false;
+            }
+            
+            deleteModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
         // Close modals when clicking outside
         window.onclick = function(event) {
             const createModal = document.getElementById('createModal');
             const previewModal = document.getElementById('previewModal');
+            const deleteModal = document.getElementById('deleteConfirmModal');
             
             if (event.target === createModal) {
                 closeCreateModal();
             }
             if (event.target === previewModal) {
                 closePreviewModal();
+            }
+            if (event.target === deleteModal) {
+                closeDeleteConfirmModal();
             }
         };
 
@@ -1028,6 +1291,9 @@
                 }
                 if (document.getElementById('previewModal').classList.contains('active')) {
                     closePreviewModal();
+                }
+                if (document.getElementById('deleteConfirmModal').classList.contains('active')) {
+                    closeDeleteConfirmModal();
                 }
             }
         });
@@ -1075,6 +1341,11 @@
                 submitBtn.disabled = false;
             }, 5000);
         });
+
+        // Prevent form resubmission warning
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.pathname + window.location.search);
+        }
     </script>
 </body>
 </html>

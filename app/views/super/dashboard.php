@@ -1,5 +1,6 @@
 <?php
 /** @var array $stats */
+$currentUser = $_SESSION['user'];
 ?>
 
 <!DOCTYPE html>
@@ -611,10 +612,7 @@
 
         <!-- Welcome Section -->
         <div class="welcome-card">
-            <div class="welcome-title">Selamat Datang, Super Admin!</div>
-            <div class="welcome-subtitle">
-                Anda memiliki kontrol penuh atas seluruh sistem RuangMeet. Kelola admin, user, ruangan, dan monitor semua aktivitas dari satu tempat.
-            </div>
+            <div class="welcome-title">Selamat Datang, <?= htmlspecialchars($currentUser['name']) ?>!</div>
             <div class="welcome-features">
                 <div class="welcome-feature">
                     <i class="fas fa-shield-alt"></i>
