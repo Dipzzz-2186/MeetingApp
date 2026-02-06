@@ -515,9 +515,6 @@
                                     <div class="featured-body">
                                         <p class="meta-text mb-15">
                                             <?php echo htmlspecialchars($item['category'] ?? 'Umum'); ?>
-                                            <span style="margin-left: 10px;">
-                                                <i class="far fa-clock"></i> <?php echo htmlspecialchars($item['read_time'] ?? '5 min read'); ?>
-                                            </span>
                                         </p>
                                         <h3 class="heading-3 mb-15"><?php echo htmlspecialchars($item['title']); ?></h3>
                                         <p class="text-small mb-20"><?php echo htmlspecialchars(substr($item['excerpt'] ?? '', 0, 100) . '...'); ?></p>
