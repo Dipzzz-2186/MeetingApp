@@ -3,6 +3,7 @@ require_once __DIR__ . '/../app/helpers/db.php';
 require_once __DIR__ . '/../app/helpers/auth.php';
 require_once __DIR__ . '/../app/helpers/layout.php';
 require_once __DIR__ . '/../app/helpers/view.php';
+require_once __DIR__ . '/../app/helpers/plan.php';
 require_once __DIR__ . '/../app/models/User.php';
 require_once __DIR__ . '/../app/models/Room.php';
 require_once __DIR__ . '/../app/models/Booking.php';

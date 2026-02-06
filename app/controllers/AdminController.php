@@ -10,8 +10,24 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
             if ($action === 'mark_paid') {
-                $paid_until = date('Y-m-d H:i:s', strtotime('+30 days'));
-                User::updatePlanPaidUntil($pdo, (int)$user['id'], $paid_until);
+                $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+                if (!empty($user['paid_until'])) {
+                    $base = new DateTime($user['paid_until'], new DateTimeZone('Asia/Jakarta'));
+                    if ($base < $now) {
+                        $base = $now;
+                    }
+                } else {
+                    $base = $now;
+                }
+
+                $base->modify('+30 days');
+
+                User::updatePlanPaidUntil(
+                    $pdo,
+                    (int)$user['id'],
+                    $base->format('Y-m-d H:i:s')
+                );
             }
             if ($action === 'extend_paid') {
                 $date = normalize_datetime($_POST['paid_until'] ?? '');
@@ -211,11 +227,13 @@ class AdminController {
         error_log('Active Meetings Count: ' . $stats['active_meetings']);
         error_log('Recent Bookings Count: ' . count($recent));
 
+        $plan_status = admin_plan_status($user);
         render_view('admin/dashboard', [
             'plan_message' => $plan_message,
             'blocked' => $blocked,
             'recent' => $recent,
             'stats' => $stats,
+            'plan_status' => $plan_status,
         ], 'Dashboard Admin');
     }
 

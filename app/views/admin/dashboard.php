@@ -841,6 +841,51 @@
                 </div>
             </div>
         </div>
+        <div class="card" style="margin-bottom:30px;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-crown"></i>
+                    Status Akun
+                </h2>
+            </div>
+
+            <?php if ($plan_status['type'] === 'paid'): ?>
+                <div class="alert success">
+                    <i class="fas fa-check-circle"></i>
+                    Akun <strong>Berbayar</strong> — sisa
+                    <strong><?php echo $plan_status['days_left']; ?> hari</strong>
+                    <br>
+                    Aktif sampai: <?php echo $plan_status['until']; ?>
+                </div>
+
+            <?php elseif ($plan_status['type'] === 'trial'): ?>
+                <div class="alert warning">
+                    <i class="fas fa-hourglass-half"></i>
+                    Akun <strong>Trial</strong> — sisa
+                    <strong><?php echo $plan_status['days_left']; ?> hari</strong>
+                    <br>
+                    Berakhir: <?php echo $plan_status['until']; ?>
+                </div>
+
+            <?php else: ?>
+                <div class="alert error">
+                    <i class="fas fa-ban"></i>
+                    Akun <strong>Tidak Aktif</strong> — perlu perpanjangan
+                </div>
+            <?php endif; ?>
+
+            <!-- Extend Paid -->
+            <div class="subscription-form">
+                <h3><i class="fas fa-plus-circle"></i> Perpanjang Langganan</h3>
+                <form method="post">
+                    <input type="hidden" name="action" value="mark_paid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-credit-card"></i>
+                        Tambah 30 Hari — Rp95.000
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <!-- Main Dashboard Grid -->
         <div class="dashboard-grid">

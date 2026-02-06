@@ -592,29 +592,16 @@
             const permanentDetails = document.getElementById('permanent-details');
             const termsCheckbox = document.getElementById('terms');
             const submitBtn = document.getElementById('submitBtn');
-            
-            planOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remove active class from all options
-                    planOptions.forEach(opt => {
-                        opt.classList.remove('active');
-                        opt.querySelector('input[type="radio"]').checked = false;
-                    });
-                    
-                    // Add active class to clicked option
-                    this.classList.add('active');
-                    this.querySelector('input[type="radio"]').checked = true;
-                    
-                    // Show corresponding plan details
-                    const planType = this.getAttribute('data-plan');
-                    trialDetails.classList.remove('active');
-                    permanentDetails.classList.remove('active');
-                    
-                    if (planType === 'trial') {
-                        trialDetails.classList.add('active');
-                    } else {
-                        permanentDetails.classList.add('active');
-                    }
+                        
+            const planRadios = document.querySelectorAll('input[name="plan_type"]');
+
+            planRadios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    planOptions.forEach(opt => opt.classList.remove('active'));
+                    this.closest('.plan-option').classList.add('active');
+
+                    trialDetails.classList.toggle('active', this.value === 'trial');
+                    permanentDetails.classList.toggle('active', this.value === 'permanent');
                 });
             });
 
@@ -647,6 +634,16 @@
                 // You can add more validation here if needed
                 return true;
             });
+        });
+                
+        document.addEventListener('DOMContentLoaded', function () {
+            const payNowCheckbox = document.querySelector('input[name="pay_now"]');
+
+            if (payNowCheckbox) {
+                payNowCheckbox.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
         });
     </script>
 </body>
