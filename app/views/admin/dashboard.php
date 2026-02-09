@@ -24,7 +24,7 @@
             --warning: #ffa857;
             --purple: #b366ff;
         }
-
+    
         * { 
             box-sizing: border-box;
             margin: 0;

@@ -152,6 +152,29 @@
             display: none;
         }
 
+        .monitor-add-btn {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(247, 200, 66, 0.5);
+            background: rgba(247, 200, 66, 0.9);
+            color: #1a1a1a;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .monitor-add-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .fullscreen-mode .monitor-add-btn {
+            display: inline-flex;
+        }
+
         .monitor-error {
             color: var(--error);
             font-size: 12px;
@@ -168,11 +191,56 @@
             background: rgba(247, 200, 66, 0.2);
         }
 
+        .monitor-room-hint {
+            font-size: 12px;
+            color: var(--accent);
+            margin-top: 6px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .monitor-room-hint span {
+            color: var(--muted);
+        }
+
         .grid-two {
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             gap: 30px;
             margin-bottom: 30px;
+        }
+
+        #createBookingCardPlaceholder {
+            display: none;
+        }
+
+        .fullscreen-mode .grid-two {
+            grid-template-columns: 1fr;
+            justify-items: center;
+        }
+
+        .fullscreen-mode #createBookingCard:not(.in-monitor-modal) {
+            display: none;
+        }
+
+        .fullscreen-mode .bookings-card {
+            width: min(1200px, 94vw);
+            margin: 0 auto;
+        }
+
+        .booking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .booking-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         @media (max-width: 1024px) {
@@ -279,6 +347,11 @@
             font-family: "Space Grotesk", sans-serif;
             color: var(--ink);
             transition: all 0.2s ease;
+        }
+
+        select.room-locked {
+            pointer-events: none;
+            opacity: 0.75;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -490,6 +563,138 @@
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(247, 200, 66, 0.1);
+        }
+
+        .fullscreen-mode .filter-btn:not(.monitor-only) {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        .monitor-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 18px 0 10px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.6);
+        }
+
+        .fullscreen-mode .monitor-banner {
+            display: flex;
+        }
+
+        .monitor-clock {
+            font-family: "Fraunces", serif;
+            font-size: 48px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--ink);
+        }
+
+        .monitor-clock span {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--muted);
+            display: inline-block;
+            margin-left: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .monitor-wallpapers {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .wallpaper-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(17, 21, 28, 0.8);
+            color: var(--muted);
+            font-size: 12px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .wallpaper-btn.active,
+        .wallpaper-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(247, 200, 66, 0.12);
+        }
+
+        body[data-wallpaper="aurora"] {
+            background: radial-gradient(circle at 20% 10%, rgba(91, 255, 203, 0.25), transparent 55%),
+                        radial-gradient(circle at 80% 20%, rgba(247, 200, 66, 0.2), transparent 50%),
+                        radial-gradient(circle at 50% 80%, rgba(89, 120, 255, 0.25), transparent 55%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="ember"] {
+            background: radial-gradient(circle at 15% 20%, rgba(255, 120, 80, 0.25), transparent 50%),
+                        radial-gradient(circle at 80% 10%, rgba(247, 200, 66, 0.2), transparent 45%),
+                        radial-gradient(circle at 50% 85%, rgba(255, 90, 90, 0.25), transparent 55%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="atlas"] {
+            background: radial-gradient(circle at 15% 15%, rgba(87, 184, 255, 0.25), transparent 55%),
+                        radial-gradient(circle at 85% 25%, rgba(179, 102, 255, 0.18), transparent 50%),
+                        radial-gradient(circle at 50% 90%, rgba(87, 255, 117, 0.18), transparent 55%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="midnight"] {
+            background: radial-gradient(circle at 20% 15%, rgba(40, 88, 255, 0.18), transparent 55%),
+                        radial-gradient(circle at 80% 30%, rgba(90, 120, 200, 0.18), transparent 50%),
+                        radial-gradient(circle at 50% 85%, rgba(0, 0, 0, 0.4), transparent 60%),
+                        #080a11;
+        }
+
+        body[data-wallpaper="sand"] {
+            background: radial-gradient(circle at 15% 20%, rgba(255, 214, 165, 0.25), transparent 50%),
+                        radial-gradient(circle at 85% 15%, rgba(247, 200, 66, 0.18), transparent 45%),
+                        radial-gradient(circle at 50% 85%, rgba(255, 180, 120, 0.2), transparent 55%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="forest"] {
+            background: radial-gradient(circle at 20% 20%, rgba(87, 255, 117, 0.2), transparent 55%),
+                        radial-gradient(circle at 80% 15%, rgba(20, 120, 80, 0.2), transparent 50%),
+                        radial-gradient(circle at 50% 85%, rgba(10, 60, 40, 0.25), transparent 60%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="glacier"] {
+            background: radial-gradient(circle at 15% 15%, rgba(180, 230, 255, 0.25), transparent 55%),
+                        radial-gradient(circle at 80% 20%, rgba(120, 180, 255, 0.2), transparent 50%),
+                        radial-gradient(circle at 50% 90%, rgba(90, 130, 200, 0.2), transparent 55%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="sunset"] {
+            background: radial-gradient(circle at 10% 15%, rgba(255, 120, 80, 0.25), transparent 50%),
+                        radial-gradient(circle at 90% 20%, rgba(255, 190, 120, 0.22), transparent 50%),
+                        radial-gradient(circle at 50% 85%, rgba(180, 80, 140, 0.2), transparent 55%),
+                        #0b0d12;
+        }
+
+        body[data-wallpaper="onyx"] {
+            background: radial-gradient(circle at 20% 20%, rgba(60, 60, 80, 0.18), transparent 55%),
+                        radial-gradient(circle at 80% 30%, rgba(30, 30, 40, 0.22), transparent 50%),
+                        radial-gradient(circle at 50% 85%, rgba(0, 0, 0, 0.5), transparent 60%),
+                        #050607;
+        }
+
+        body[data-wallpaper="orchid"] {
+            background: radial-gradient(circle at 15% 15%, rgba(200, 120, 255, 0.22), transparent 55%),
+                        radial-gradient(circle at 85% 20%, rgba(120, 80, 200, 0.22), transparent 50%),
+                        radial-gradient(circle at 50% 85%, rgba(180, 90, 140, 0.2), transparent 55%),
+                        #0b0d12;
         }
 
         /* Booking Status */
@@ -1196,6 +1401,10 @@
             <i class="fas fa-unlock"></i> Keluar Monitor
         </button>
 
+        <button type="button" class="monitor-add-btn" id="monitorAddBookingBtn">
+            <i class="fas fa-plus"></i> Tambah Booking
+        </button>
+
         <!-- Modal: Exit Monitor -->
         <div class="modal" id="monitorExitModal">
             <div class="modal-content">
@@ -1225,10 +1434,61 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal: Create Booking (Monitor) -->
+        <div class="modal" id="monitorCreateModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-plus-circle"></i> Buat Booking Baru</h2>
+                    <button class="modal-close" type="button" id="monitorCreateClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="monitorCreateBody"></div>
+            </div>
+        </div>
+
+        <!-- Modal: Select Room for Monitor -->
+        <div class="modal" id="monitorRoomModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-door-open"></i> Pilih Room Monitor</h2>
+                    <button class="modal-close" type="button" id="monitorRoomClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--muted); margin-bottom: 16px;">
+                        Pilih room sebelum masuk mode monitor. Room akan terkunci selama mode monitor aktif.
+                    </p>
+                    <div class="detail-item">
+                        <label><i class="fas fa-door-open"></i> Room</label>
+                        <select id="monitor_room_select">
+                            <option value="">Pilih room</option>
+                            <?php foreach ($rooms as $row): ?>
+                                <option value="<?php echo (int)$row['id']; ?>">
+                                    <?php echo htmlspecialchars($row['name']); ?> (<?php echo $row['capacity']; ?> orang)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="monitor-error" id="monitor_room_error" style="display:none;"></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="action-btn" type="button" id="monitorRoomCancel">
+                            <i class="fas fa-times"></i> Batal
+                        </button>
+                        <button class="action-btn monitor-confirm" type="button" id="monitorRoomConfirm">
+                            <i class="fas fa-expand"></i> Masuk Monitor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <div class="grid-two">
+            <div id="createBookingCardPlaceholder"></div>
             <!-- Form Buat Booking -->
-            <div class="card">
+            <div class="card" id="createBookingCard">
                 <h1><i class="fas fa-plus-circle"></i> Buat Booking Baru</h1>
                 
                 <?php if (!empty($notice)): ?>
@@ -1269,6 +1529,10 @@
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <div id="monitorRoomHint" class="monitor-room-hint">
+                                <i class="fas fa-lock"></i>
+                                <span>Pilih room terlebih dahulu untuk mode monitor.</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -1308,9 +1572,30 @@
             </div>
             
             <!-- Daftar Booking -->
-            <div class="card">
-                <h2><i class="fas fa-list"></i> Daftar Booking</h2>
+            <div class="card bookings-card">
+                <div class="booking-header">
+                    <h2><i class="fas fa-list"></i> Daftar Booking</h2>
+                    <div class="booking-header-actions" id="bookingHeaderActions"></div>
+                </div>
                 
+                <div class="monitor-banner" id="monitorBanner">
+                    <div class="monitor-clock" id="monitorClock">
+                        00:00 <span>--/--/----</span>
+                    </div>
+                    <div class="monitor-wallpapers" id="monitorWallpapers">
+                        <button type="button" class="wallpaper-btn" data-wallpaper="aurora">Aurora</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="ember">Ember</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="atlas">Atlas</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="midnight">Midnight</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="sand">Sand</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="forest">Forest</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="glacier">Glacier</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="sunset">Sunset</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="onyx">Onyx</button>
+                        <button type="button" class="wallpaper-btn" data-wallpaper="orchid">Orchid</button>
+                    </div>
+                </div>
+
                 <!-- Filter Controls -->
                 <div class="filter-controls">
                     <button class="filter-btn active" onclick="filterBookings('all')">
@@ -1329,7 +1614,7 @@
                         <i class="fas fa-check-circle"></i>
                         Selesai
                     </button>
-                    <button class="filter-btn" onclick="filterBookings('today')">
+                    <button class="filter-btn monitor-only" onclick="filterBookings('today')">
                         <i class="fas fa-calendar-day"></i>
                         Hari Ini
                     </button>
@@ -1393,6 +1678,7 @@
                                 ?>
                                     <tr data-status="<?php echo $status; ?>" 
                                         data-date="<?php echo $start->format('Y-m-d'); ?>"
+                                        data-room-id="<?php echo (int)$row['room_id']; ?>"
                                         class="booking-row">
                                         <td data-label="User & Room">
                                             <div style="display: flex; align-items: center; gap: 12px;">
@@ -2002,18 +2288,12 @@
         submitBtn.disabled = true;
         
         // Submit via AJAX
-        fetch('', {
+        fetchJsonWithTimeout('', {
             method: 'POST',
             body: formData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
         })
         .then(data => {
             if (data.success) {
@@ -2022,17 +2302,15 @@
                 refreshLiveBookings();
             } else {
                 showAlert(data.error, 'error');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
             showAlert('Terjadi kesalahan saat menghapus', 'error');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
         })
         .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
             isLoading = false;
         });
     });
@@ -2045,6 +2323,15 @@
 
             if (isLoading) return;
             isLoading = true;
+
+            if (isMonitorMode()) {
+                const roomSelect = this.querySelector('select[name="room_id"]');
+                if (!roomSelect || !roomSelect.value) {
+                    showAlert('Pilih room terlebih dahulu untuk mode monitor.', 'error');
+                    isLoading = false;
+                    return;
+                }
+            }
 
             const formData = new FormData(this);
             formData.append('ajax', 'true');
@@ -2085,6 +2372,11 @@
                         endDisplay.style.fontWeight = 'normal';
                     }
 
+                    if (isMonitorMode() && lockedRoomId) {
+                        const roomSelect = this.querySelector('select[name="room_id"]');
+                        if (roomSelect) roomSelect.value = lockedRoomId;
+                    }
+                    applyMonitorRoomRules();
                     refreshLiveBookings();
                 } else {
                     showAlert(data.error, 'error');
@@ -2130,10 +2422,103 @@
         }, 5000);
     }
 
+    function fetchJsonWithTimeout(url, options, timeoutMs = 8000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        return fetch(url, { ...options, signal: controller.signal })
+            .then(async response => {
+                const text = await response.text();
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (err) {
+                    throw new Error('Invalid JSON response');
+                }
+            })
+            .finally(() => {
+                clearTimeout(timeoutId);
+            });
+    }
+
     // Pagination variables
     let currentPage = 1;
     const itemsPerPage = 5;
     let currentFilter = 'all';
+    let lockedRoomId = null;
+
+    function isMonitorMode() {
+        return document.body.classList.contains('fullscreen-mode') || !!document.fullscreenElement;
+    }
+
+    function setFormDisabled(fields, disabled) {
+        fields.forEach(field => {
+            if (field) field.disabled = disabled;
+        });
+    }
+
+    function setRoomLocked(roomSelect, locked) {
+        if (!roomSelect) return;
+        if (locked) {
+            roomSelect.classList.add('room-locked');
+            roomSelect.setAttribute('aria-disabled', 'true');
+            roomSelect.setAttribute('tabindex', '-1');
+        } else {
+            roomSelect.classList.remove('room-locked');
+            roomSelect.removeAttribute('aria-disabled');
+            roomSelect.removeAttribute('tabindex');
+        }
+    }
+
+    function applyMonitorRoomRules() {
+        const form = document.getElementById('createBookingForm');
+        if (!form) return;
+
+        const roomSelect = form.querySelector('select[name="room_id"]');
+        if (!roomSelect) return;
+
+        const userSelect = form.querySelector('select[name="user_id"]');
+        const startInput = document.getElementById('start_time');
+        const endInput = document.getElementById('end_time');
+        const purposeInput = form.querySelector('input[name="purpose"]');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const monitorRoomHint = document.getElementById('monitorRoomHint');
+        const otherFields = [userSelect, startInput, endInput, purposeInput, submitBtn];
+
+        if (!isMonitorMode()) {
+            setFormDisabled(otherFields, false);
+            setRoomLocked(roomSelect, false);
+            if (monitorRoomHint) monitorRoomHint.style.display = 'none';
+            lockedRoomId = null;
+            return;
+        }
+
+        if (!lockedRoomId && roomSelect.value) {
+            lockedRoomId = roomSelect.value;
+        }
+
+        if (!lockedRoomId) {
+            setFormDisabled(otherFields, true);
+            setRoomLocked(roomSelect, false);
+            if (monitorRoomHint) {
+                monitorRoomHint.style.display = 'flex';
+                const hintText = monitorRoomHint.querySelector('span');
+                if (hintText) hintText.textContent = 'Pilih room terlebih dahulu untuk mode monitor.';
+            }
+            return;
+        }
+
+        roomSelect.value = lockedRoomId;
+        setFormDisabled(otherFields, false);
+        setRoomLocked(roomSelect, true);
+        if (monitorRoomHint) {
+            monitorRoomHint.style.display = 'flex';
+            const hintText = monitorRoomHint.querySelector('span');
+            if (hintText) hintText.textContent = 'Room terkunci di mode monitor. Keluar mode monitor untuk mengganti.';
+        }
+    }
 
     function isOverlapping(start, end) {
         return roomSchedules.some(slot =>
@@ -2184,7 +2569,15 @@
 
         roomSelect.addEventListener('change', function () {
             const roomId = this.value;
-            if (!roomId) return;
+            if (isMonitorMode()) {
+                lockedRoomId = roomId || null;
+                applyMonitorRoomRules();
+            }
+
+            if (!roomId) {
+                roomSchedules = [];
+                return;
+            }
 
             fetch(`?ajax=room_schedule&room_id=${roomId}`)
                 .then(res => res.json())
@@ -2199,6 +2592,7 @@
         // Initialize pagination
         initializePagination();
         startLiveUpdates();
+        applyMonitorRoomRules();
         
         // Format tanggal untuk display
         function formatDateTimeDisplay(dateString) {
@@ -2392,6 +2786,23 @@
             const monitorExitConfirm = document.getElementById('monitorExitConfirm');
             const monitorPassword = document.getElementById('monitor_password');
             const monitorPasswordError = document.getElementById('monitor_password_error');
+            const monitorRoomModal = document.getElementById('monitorRoomModal');
+            const monitorRoomClose = document.getElementById('monitorRoomClose');
+            const monitorRoomCancel = document.getElementById('monitorRoomCancel');
+            const monitorRoomConfirm = document.getElementById('monitorRoomConfirm');
+            const monitorRoomSelect = document.getElementById('monitor_room_select');
+            const monitorRoomError = document.getElementById('monitor_room_error');
+            const formRoomSelect = document.querySelector('select[name="room_id"]');
+            const monitorAddBookingBtn = document.getElementById('monitorAddBookingBtn');
+            const monitorCreateModal = document.getElementById('monitorCreateModal');
+            const monitorCreateClose = document.getElementById('monitorCreateClose');
+            const monitorCreateBody = document.getElementById('monitorCreateBody');
+            const createBookingCard = document.getElementById('createBookingCard');
+            const createBookingCardPlaceholder = document.getElementById('createBookingCardPlaceholder');
+            const bookingHeaderActions = document.getElementById('bookingHeaderActions');
+            const monitorClock = document.getElementById('monitorClock');
+            const monitorWallpapers = document.getElementById('monitorWallpapers');
+            let monitorClockTimer = null;
 
             const openMonitorModal = () => {
                 if (!monitorExitModal) return;
@@ -2413,6 +2824,26 @@
                 document.body.style.overflow = '';
             };
 
+            const openMonitorRoomModal = () => {
+                if (!monitorRoomModal) return;
+                monitorRoomModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                if (monitorRoomSelect) {
+                    monitorRoomSelect.value = lockedRoomId || formRoomSelect?.value || '';
+                    monitorRoomSelect.focus();
+                }
+                if (monitorRoomError) {
+                    monitorRoomError.style.display = 'none';
+                    monitorRoomError.textContent = '';
+                }
+            };
+
+            const closeMonitorRoomModal = () => {
+                if (!monitorRoomModal) return;
+                monitorRoomModal.classList.remove('active');
+                document.body.style.overflow = '';
+            };
+
             if (monitorExitClose) monitorExitClose.addEventListener('click', closeMonitorModal);
             if (monitorExitCancel) monitorExitCancel.addEventListener('click', closeMonitorModal);
             if (monitorExitModal) {
@@ -2422,6 +2853,13 @@
             }
             if (monitorExitBtn) {
                 monitorExitBtn.addEventListener('click', openMonitorModal);
+            }
+            if (monitorRoomClose) monitorRoomClose.addEventListener('click', closeMonitorRoomModal);
+            if (monitorRoomCancel) monitorRoomCancel.addEventListener('click', closeMonitorRoomModal);
+            if (monitorRoomModal) {
+                monitorRoomModal.addEventListener('click', (e) => {
+                    if (e.target === monitorRoomModal) closeMonitorRoomModal();
+                });
             }
 
             if (monitorExitConfirm) {
@@ -2474,6 +2912,50 @@
                 });
             }
 
+            if (monitorRoomConfirm) {
+                monitorRoomConfirm.addEventListener('click', () => {
+                    const selectedRoomId = monitorRoomSelect ? monitorRoomSelect.value : '';
+                    if (!selectedRoomId) {
+                        if (monitorRoomError) {
+                            monitorRoomError.textContent = 'Pilih room terlebih dahulu.';
+                            monitorRoomError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    lockedRoomId = selectedRoomId;
+                    if (formRoomSelect) {
+                        formRoomSelect.value = selectedRoomId;
+                        formRoomSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+
+                    closeMonitorRoomModal();
+                    document.documentElement.requestFullscreen?.();
+                });
+            }
+
+            const openMonitorCreateModal = () => {
+                if (!monitorCreateModal) return;
+                monitorCreateModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closeMonitorCreateModal = () => {
+                if (!monitorCreateModal) return;
+                monitorCreateModal.classList.remove('active');
+                document.body.style.overflow = '';
+            };
+
+            if (monitorAddBookingBtn) {
+                monitorAddBookingBtn.addEventListener('click', openMonitorCreateModal);
+            }
+            if (monitorCreateClose) monitorCreateClose.addEventListener('click', closeMonitorCreateModal);
+            if (monitorCreateModal) {
+                monitorCreateModal.addEventListener('click', (e) => {
+                    if (e.target === monitorCreateModal) closeMonitorCreateModal();
+                });
+            }
+
             const updateMonitorState = () => {
                 const isFs = !!document.fullscreenElement;
                 document.body.classList.toggle('fullscreen-mode', isFs);
@@ -2492,13 +2974,85 @@
                     setActiveFilterBtn('all');
                     updatePagination();
                 }
+
+                if (isFs && monitorCreateBody && createBookingCard) {
+                    createBookingCard.classList.add('in-monitor-modal');
+                    monitorCreateBody.appendChild(createBookingCard);
+                } else if (!isFs && createBookingCardPlaceholder && createBookingCard) {
+                    createBookingCard.classList.remove('in-monitor-modal');
+                    createBookingCardPlaceholder.insertAdjacentElement('afterend', createBookingCard);
+                    closeMonitorCreateModal();
+                }
+
+                if (monitorAddBookingBtn) {
+                    if (isFs && bookingHeaderActions) {
+                        bookingHeaderActions.appendChild(monitorAddBookingBtn);
+                    } else {
+                        document.body.appendChild(monitorAddBookingBtn);
+                    }
+                }
+
+                if (isFs) {
+                    const tick = () => {
+                        if (!monitorClock) return;
+                        const now = new Date();
+                        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                        const date = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        monitorClock.innerHTML = `${time} <span>${date}</span>`;
+                    };
+                    tick();
+                    if (monitorClockTimer) clearInterval(monitorClockTimer);
+                    monitorClockTimer = setInterval(tick, 1000);
+                    if (monitorWallpapers) {
+                        const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
+                        const buttons = monitorWallpapers.querySelectorAll('.wallpaper-btn');
+                        buttons.forEach(btn => {
+                            btn.classList.toggle('active', btn.getAttribute('data-wallpaper') === saved);
+                        });
+                        document.body.setAttribute('data-wallpaper', saved);
+                    }
+                } else if (monitorClockTimer) {
+                    clearInterval(monitorClockTimer);
+                    monitorClockTimer = null;
+                }
+                if (!isFs) {
+                    document.body.removeAttribute('data-wallpaper');
+                }
+
+                applyMonitorRoomRules();
             };
+
+            if (monitorWallpapers) {
+                const buttons = monitorWallpapers.querySelectorAll('.wallpaper-btn');
+                const applyWallpaper = (value) => {
+                    if (!isMonitorMode()) return;
+                    document.body.setAttribute('data-wallpaper', value);
+                    localStorage.setItem('monitor_wallpaper', value);
+                    buttons.forEach(btn => {
+                        btn.classList.toggle('active', btn.getAttribute('data-wallpaper') === value);
+                    });
+                };
+
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const value = btn.getAttribute('data-wallpaper');
+                        if (value) applyWallpaper(value);
+                    });
+                });
+
+                const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
+                if (isMonitorMode()) {
+                    applyWallpaper(saved);
+                } else {
+                    document.body.removeAttribute('data-wallpaper');
+                }
+            }
 
             monitorToggle.addEventListener('click', () => {
                 if (document.fullscreenElement) {
                     openMonitorModal();
                 } else {
-                    document.documentElement.requestFullscreen?.();
+                    openMonitorRoomModal();
                 }
             });
 
@@ -2519,26 +3073,31 @@
         allRows.forEach(row => {
             const status = row.getAttribute('data-status');
             const date = row.getAttribute('data-date');
+            const roomId = row.getAttribute('data-room-id');
             const today = new Date().toISOString().slice(0, 10);
             
             let show = true;
+
+            if (isMonitorMode() && lockedRoomId) {
+                show = roomId === String(lockedRoomId);
+            }
             
             switch(currentFilter) {
                 case 'upcoming':
-                    show = status === 'upcoming';
+                    show = show && status === 'upcoming';
                     break;
                 case 'ongoing':
-                    show = status === 'ongoing';
+                    show = show && status === 'ongoing';
                     break;
                 case 'completed':
-                    show = status === 'completed';
+                    show = show && status === 'completed';
                     break;
                 case 'today':
-                    show = date === today;
+                    show = show && date === today;
                     break;
                 case 'all':
                 default:
-                    show = true;
+                    show = show && true;
             }
             
             // Mark rows based on filter (using data attribute)
@@ -2667,10 +3226,18 @@
     window.filterBookings = function(filter) {
         const rows = document.querySelectorAll('.booking-row');
         const filterBtns = document.querySelectorAll('.filter-btn');
+        if (isMonitorMode() && filter !== 'today') {
+            filter = 'today';
+        }
         
         // Update active button
         filterBtns.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        if (event?.target && event.target.classList.contains('filter-btn')) {
+            event.target.classList.add('active');
+        } else {
+            const todayBtn = Array.from(filterBtns).find(btn => btn.getAttribute('onclick')?.includes(`'${filter}'`));
+            if (todayBtn) todayBtn.classList.add('active');
+        }
         
         // Update current filter
         currentFilter = filter;
@@ -2739,7 +3306,7 @@
         if (!tbody) return;
 
         tbody.innerHTML = bookings.map(item => `
-            <tr data-status="${escapeHtml(item.status)}" data-date="${escapeHtml(item.date_iso)}" class="booking-row">
+            <tr data-status="${escapeHtml(item.status)}" data-date="${escapeHtml(item.date_iso)}" data-room-id="${escapeHtml(item.room_id)}" class="booking-row">
                 <td data-label="User & Room">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="user-avatar">${escapeHtml(item.user_initial)}</div>

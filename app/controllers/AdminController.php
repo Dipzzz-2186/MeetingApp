@@ -704,6 +704,7 @@ class AdminController {
                     'id' => (int)$row['id'],
                     'user_name' => $row['user_name'],
                     'user_initial' => strtoupper(substr($row['user_name'], 0, 1)),
+                    'room_id' => (int)$row['room_id'],
                     'room_name' => $row['room_name'],
                     'start_date' => $start->format('d/m/Y'),
                     'start_time' => $start->format('H:i'),
