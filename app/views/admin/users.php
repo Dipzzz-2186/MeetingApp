@@ -460,6 +460,13 @@
             animation: slideUp 0.3s ease;
         }
 
+        body.modal-open .header,
+        body.modal-open .topbar,
+        body.modal-open .tabbar,
+        body.modal-open .mobile-brand {
+            display: none !important;
+        }
+
         .modal-close {
             position: absolute;
             top: 20px;
@@ -936,6 +943,13 @@
             const cancelDeleteBtn = document.getElementById('cancelDelete');
             const editSubmitBtn = document.getElementById('editSubmitBtn');
             const deleteSubmitBtn = document.getElementById('deleteSubmitBtn');
+
+            function setModalOpenState() {
+                const isOpen =
+                    (editModal && editModal.style.display === 'flex') ||
+                    (deleteModal && deleteModal.style.display === 'flex');
+                document.body.classList.toggle('modal-open', !!isOpen);
+            }
             
             // State
             let isLoading = false;
@@ -958,6 +972,7 @@
                     // Show modal first
                     editModal.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
+                    setModalOpenState();
                     
                     try {
                         // Load user data via AJAX
@@ -1012,6 +1027,7 @@
                     // Show modal
                     deleteModal.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
+                    setModalOpenState();
                 });
             });
             
@@ -1021,6 +1037,7 @@
                 document.body.style.overflow = 'auto';
                 editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
                 editSubmitBtn.disabled = false;
+                setModalOpenState();
             }
             
             function closeDeleteModal() {
@@ -1028,6 +1045,7 @@
                 document.body.style.overflow = 'auto';
                 deleteSubmitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
                 deleteSubmitBtn.disabled = false;
+                setModalOpenState();
             }
             
             // Event listeners for modal close buttons

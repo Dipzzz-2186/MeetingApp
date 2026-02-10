@@ -482,6 +482,13 @@
             animation: slideUp 0.3s ease;
         }
 
+        body.modal-open .header,
+        body.modal-open .topbar,
+        body.modal-open .tabbar,
+        body.modal-open .mobile-brand {
+            display: none !important;
+        }
+
         .modal-close {
             position: absolute;
             top: 20px;
@@ -1087,6 +1094,13 @@
             const editWallpaperImg = document.getElementById('editWallpaperImg');
             const editWallpaperEmpty = document.getElementById('editWallpaperEmpty');
 
+            function setModalOpenState() {
+                const isOpen =
+                    (editModal && editModal.style.display === 'flex') ||
+                    (deleteModal && deleteModal.style.display === 'flex');
+                document.body.classList.toggle('modal-open', !!isOpen);
+            }
+
             function normalizeWallpaperUrl(url) {
                 if (!url) return '';
                 const cleaned = String(url)
@@ -1178,6 +1192,7 @@
                 // Show modal first
                 editModal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
+                setModalOpenState();
                 
                 try {
                     // Try to load fresh data via AJAX
@@ -1238,6 +1253,7 @@
                     // Show modal
                     deleteModal.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
+                    setModalOpenState();
                 });
             });
             
@@ -1250,6 +1266,7 @@
                 if (cancelEditBtn) cancelEditBtn.disabled = false;
                 editForm.reset();
                 setWallpaperPreview('');
+                setModalOpenState();
             }
 
             if (editRoomWallpaperInput) {
@@ -1273,6 +1290,7 @@
                 deleteSubmitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
                 deleteSubmitBtn.disabled = false;
                 if (cancelDeleteBtn) cancelDeleteBtn.disabled = false;
+                setModalOpenState();
             }
             
             // Event listeners for modal close buttons

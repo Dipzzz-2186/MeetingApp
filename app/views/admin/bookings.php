@@ -144,6 +144,13 @@
             display: none !important;
         }
 
+        body.modal-open .header,
+        body.modal-open .topbar,
+        body.modal-open .tabbar,
+        body.modal-open .mobile-brand {
+            display: none !important;
+        }
+
         .fullscreen-mode main.container {
             padding-top: 0;
         }
@@ -2253,6 +2260,11 @@
     };
 
     // Modal utility functions
+    function setModalOpenState() {
+        const hasOpenModal = !!document.querySelector('.modal.active');
+        document.body.classList.toggle('modal-open', hasOpenModal);
+    }
+
     function openModal(type) {
         // Close all modals first
         closeAllModals();
@@ -2272,6 +2284,7 @@
         
         // Prevent body scroll
         document.body.style.overflow = 'hidden';
+        setModalOpenState();
     }
 
     function closeAllModals() {
@@ -2280,6 +2293,7 @@
         deleteModal.classList.remove('active');
         document.body.style.overflow = '';
         isLoading = false;
+        setModalOpenState();
     }
 
     // Close modal on click outside
@@ -2988,6 +3002,7 @@
                 if (!monitorExitModal) return;
                 monitorExitModal.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                setModalOpenState();
                 if (monitorPassword) {
                     monitorPassword.value = '';
                     monitorPassword.focus();
@@ -3002,12 +3017,14 @@
                 if (!monitorExitModal) return;
                 monitorExitModal.classList.remove('active');
                 document.body.style.overflow = '';
+                setModalOpenState();
             };
 
             const openMonitorRoomModal = () => {
                 if (!monitorRoomModal) return;
                 monitorRoomModal.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                setModalOpenState();
                 if (monitorRoomSelect) {
                     monitorRoomSelect.value = lockedRoomId || formRoomSelect?.value || '';
                     monitorRoomSelect.focus();
@@ -3022,6 +3039,7 @@
                 if (!monitorRoomModal) return;
                 monitorRoomModal.classList.remove('active');
                 document.body.style.overflow = '';
+                setModalOpenState();
             };
 
             if (monitorExitClose) monitorExitClose.addEventListener('click', closeMonitorModal);
@@ -3119,12 +3137,14 @@
                 if (!monitorCreateModal) return;
                 monitorCreateModal.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                setModalOpenState();
             };
 
             const closeMonitorCreateModal = () => {
                 if (!monitorCreateModal) return;
                 monitorCreateModal.classList.remove('active');
                 document.body.style.overflow = '';
+                setModalOpenState();
             };
 
             if (monitorAddBookingBtn) {
