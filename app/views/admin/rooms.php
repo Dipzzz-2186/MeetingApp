@@ -1093,7 +1093,7 @@
                     .replace(/^[\s'",\\]+/, '')
                     .replace(/[\s'",\\]+$/, '');
                 if (!cleaned) return '';
-                if (cleaned.startsWith('http://') || cleaned.startsWith('https://') || cleaned.startsWith('/')) {
+                if (cleaned.startsWith('data:') || cleaned.startsWith('http://') || cleaned.startsWith('https://') || cleaned.startsWith('/')) {
                     return cleaned;
                 }
                 return '/' + cleaned;
