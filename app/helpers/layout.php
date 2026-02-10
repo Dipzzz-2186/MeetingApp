@@ -91,9 +91,6 @@ function render_header(string $title, string $body_class = ''): void {
             echo '<a href="/"'
                 . ($is_active('/') ? ' class="active"' : '')
                 . '>Home</a>';
-            echo '<a href="/articles"'
-                . ($is_active('/articles') ? ' class="active"' : '')
-                . '>Articles</a>';
             echo '<a href="/login" class="ghost">Login</a>';
             echo '</nav>';
         }
@@ -124,7 +121,6 @@ function render_header(string $title, string $body_class = ''): void {
         <path d="M8 2v4M16 2v4M3 9h18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         <path d="M7 13h4M7 17h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>';
-        $icon_article = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h7M8 12h7M8 16h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
         $icon_logout = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7v-2a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 12h9M16 8l3.5 4L16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
         echo '<nav class="tabbar" aria-label="Primary">';
@@ -143,8 +139,6 @@ function render_header(string $title, string $body_class = ''): void {
 
             echo '<a class="tab' . ($is_active('/super/bookings') ? ' active' : '') . '" href="/super/bookings">'
                 . $icon_book . '<span>Bookings</span></a>';
-            echo '<a class="tab' . ($is_active('/super/articles') ? ' active' : '') . '" href="/super/articles">'
-                . $icon_article . '<span>Articles</span></a>';
 
         } else if ($user['role'] === 'admin') {
             echo '<a class="tab' . ($is_active('/users') ? ' active' : '') . '" href="/users">' . $icon_users . '<span>Users</span></a>';
@@ -159,12 +153,10 @@ function render_header(string $title, string $body_class = ''): void {
         echo '</nav>';
     } elseif (!$is_auth && !$is_login_page) {
         $icon_home = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
-        $icon_article = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h7M8 12h7M8 16h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
         $icon_login = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7V5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 12h11M10 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         echo '<nav class="tabbar" aria-label="Primary">';
         echo '<a class="tab brand-tab" href="/"><span class="brand-pill"><img src="/assets/Ogol.png" alt="" width="26" height="26"><span>RuangMeet</span></span></a>';
         echo '<a class="tab tab-primary' . ($is_active('/') ? ' active' : '') . '" data-indicator="1" href="/">' . $icon_home . '<span>Home</span></a>';
-        echo '<a class="tab' . ($is_active('/articles') ? ' active' : '') . '" href="/articles">' . $icon_article . '<span>Articles</span></a>';
         echo '<a class="tab' . ($is_active('/login') ? ' active' : '') . '" href="/login">' . $icon_login . '<span>Login</span></a>';
         echo '</nav>';
     }

@@ -1,6 +1,5 @@
 <?php
 $user = current_user();
-$articleUrl = '/articles';
 ?>
 
 <style>
@@ -965,7 +964,6 @@ $articleUrl = '/articles';
     <div class="cta-buttons">
       <a class="btn primary" href="/register">Mulai Trial</a>
       <a class="btn secondary" href="/login">Masuk</a>
-      <a class="btn tertiary" href="<?= $articleUrl ?>">Lihat Artikel</a>
     </div>
     
     <div class="trust-badges">
