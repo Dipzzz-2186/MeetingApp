@@ -791,7 +791,7 @@
                     </div>
                 <?php endif; ?>
                 
-                <form method="post" class="grid">
+                <form method="post" class="grid" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="create">
                     <div class="form-row">
                         <div>
@@ -802,6 +802,11 @@
                             <label><i class="fas fa-users"></i> Kapasitas</label>
                             <input type="number" name="capacity" min="1" max="100" placeholder="Jumlah orang" required>
                         </div>
+                    </div>
+                    <div>
+                        <label><i class="fas fa-image"></i> Wallpaper (Upload)</label>
+                        <input type="file" name="wallpaper_file" accept="image/*">
+                        <small style="color: var(--muted); font-size: 12px;">Format JPG, PNG, WEBP. Disarankan 1920x1080, max 5MB.</small>
                     </div>
                     <button type="submit">
                         <i class="fas fa-plus"></i>
@@ -845,6 +850,7 @@
                                 <?php foreach ($rooms as $row): 
                                     $capacityBadge = getCapacityBadge($row['capacity']);
                                     $createdDate = date('d/m/Y', strtotime($row['created_at']));
+                                    $wallpaperUrl = trim((string)($row['wallpaper_url'] ?? ''), " \t\n\r\0\x0B'\",");
                                 ?>
                                     <tr data-room-id="<?php echo $row['id']; ?>">
                                         <td data-label="Ruangan">
@@ -873,7 +879,8 @@
                                                 <button class="action-btn edit" 
                                                         data-room-id="<?php echo $row['id']; ?>"
                                                         data-room-name="<?php echo htmlspecialchars($row['name']); ?>"
-                                                        data-room-capacity="<?php echo $row['capacity']; ?>">
+                                                        data-room-capacity="<?php echo $row['capacity']; ?>"
+                                                        data-room-wallpaper="<?php echo htmlspecialchars($wallpaperUrl); ?>">
                                                     <i class="fas fa-edit"></i>
                                                     Edit
                                                 </button>
@@ -983,7 +990,7 @@
                 <i class="fas fa-edit"></i> Edit Ruangan
             </h2>
             
-            <form id="editForm" method="post">
+            <form id="editForm" method="post" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="id" id="editRoomId">
                 
@@ -996,6 +1003,16 @@
                     <div>
                         <label><i class="fas fa-users"></i> Kapasitas</label>
                         <input type="number" name="capacity" id="editRoomCapacity" min="1" max="100" placeholder="Jumlah orang" required>
+                    </div>
+                    
+                    <div>
+                        <label><i class="fas fa-image"></i> Wallpaper (Upload)</label>
+                        <input type="file" name="wallpaper_file" id="editRoomWallpaper" accept="image/*">
+                        <div id="editWallpaperPreview" style="margin-top: 10px; border: 1px dashed var(--stroke); border-radius: 10px; padding: 10px; text-align: center;">
+                            <img id="editWallpaperImg" src="" alt="Wallpaper Preview" style="max-width: 100%; max-height: 160px; border-radius: 8px; display: none;">
+                            <div id="editWallpaperEmpty" style="color: var(--muted); font-size: 12px;">Belum ada wallpaper.</div>
+                        </div>
+                        <small style="color: var(--muted); font-size: 12px;">Biarkan kosong untuk mempertahankan wallpaper lama.</small>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -1066,6 +1083,68 @@
             const deleteSubmitBtn = document.getElementById('deleteSubmitBtn');
             const editRoomNameInput = document.getElementById('editRoomName');
             const editRoomCapacityInput = document.getElementById('editRoomCapacity');
+            const editRoomWallpaperInput = document.getElementById('editRoomWallpaper');
+            const editWallpaperImg = document.getElementById('editWallpaperImg');
+            const editWallpaperEmpty = document.getElementById('editWallpaperEmpty');
+
+            function normalizeWallpaperUrl(url) {
+                if (!url) return '';
+                const cleaned = String(url)
+                    .replace(/^[\s'",\\]+/, '')
+                    .replace(/[\s'",\\]+$/, '');
+                if (!cleaned) return '';
+                if (cleaned.startsWith('http://') || cleaned.startsWith('https://') || cleaned.startsWith('/')) {
+                    return cleaned;
+                }
+                return '/' + cleaned;
+            }
+
+            function getWallpaperCandidates(url) {
+                const base = normalizeWallpaperUrl(url);
+                if (!base) return [];
+                const candidates = [base];
+                if (base.startsWith('/uploads/')) {
+                    candidates.push('/public' + base);
+                } else if (base.startsWith('/public/uploads/')) {
+                    candidates.push(base.replace(/^\/public/, ''));
+                }
+                return [...new Set(candidates)];
+            }
+
+            function setWallpaperPreview(url) {
+                if (!editWallpaperImg || !editWallpaperEmpty) return;
+                const candidates = getWallpaperCandidates(url);
+                if (candidates.length > 0) {
+                    let index = 0;
+                    editWallpaperImg.style.display = 'none';
+                    editWallpaperEmpty.style.display = 'block';
+                    editWallpaperEmpty.textContent = 'Memuat wallpaper...';
+                    const tryLoad = () => {
+                        const currentUrl = candidates[index];
+                        if (!currentUrl) {
+                            editWallpaperImg.style.display = 'none';
+                            editWallpaperEmpty.style.display = 'block';
+                            editWallpaperEmpty.textContent = 'Wallpaper gagal dimuat.';
+                            return;
+                        }
+                        editWallpaperImg.onload = () => {
+                            editWallpaperImg.style.display = 'block';
+                            editWallpaperEmpty.style.display = 'none';
+                        };
+                        editWallpaperImg.onerror = () => {
+                            index += 1;
+                            tryLoad();
+                        };
+                        editWallpaperImg.src = currentUrl;
+                    };
+                    tryLoad();
+                } else {
+                    editWallpaperImg.removeAttribute('src');
+                    editWallpaperImg.style.display = 'none';
+                    editWallpaperEmpty.style.display = 'block';
+                    editWallpaperEmpty.textContent = 'Belum ada wallpaper.';
+                }
+            }
             
             // State
             let isLoading = false;
@@ -1080,14 +1159,15 @@
                     const roomId = this.getAttribute('data-room-id');
                     const roomName = this.getAttribute('data-room-name');
                     const roomCapacity = this.getAttribute('data-room-capacity');
+                    const roomWallpaper = this.getAttribute('data-room-wallpaper') || '';
                     
                     // Load room data via AJAX for more accurate data
-                    loadRoomData(roomId, roomName, roomCapacity);
+                    loadRoomData(roomId, roomName, roomCapacity, roomWallpaper);
                 });
             });
             
             // Function to load room data
-            async function loadRoomData(roomId, roomName, roomCapacity) {
+            async function loadRoomData(roomId, roomName, roomCapacity, roomWallpaper) {
                 // Show loading in modal
                 editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Memuat...';
                 editSubmitBtn.disabled = true;
@@ -1111,17 +1191,20 @@
                             document.getElementById('editRoomId').value = roomId;
                             editRoomNameInput.value = roomName;
                             editRoomCapacityInput.value = roomCapacity;
+                            setWallpaperPreview(roomWallpaper);
                         } else {
                             // Use fresh data from server
                             document.getElementById('editRoomId').value = roomData.id;
                             editRoomNameInput.value = roomData.name;
                             editRoomCapacityInput.value = roomData.capacity;
+                            setWallpaperPreview(roomData.wallpaper_url || roomWallpaper);
                         }
                     } else {
                         // Fallback to data attributes
                         document.getElementById('editRoomId').value = roomId;
                         editRoomNameInput.value = roomName;
                         editRoomCapacityInput.value = roomCapacity;
+                        setWallpaperPreview(roomWallpaper);
                     }
                 } catch (error) {
                     console.error('Error loading room data:', error);
@@ -1129,6 +1212,7 @@
                     document.getElementById('editRoomId').value = roomId;
                     editRoomNameInput.value = roomName;
                     editRoomCapacityInput.value = roomCapacity;
+                    setWallpaperPreview(roomWallpaper);
                 } finally {
                     // Reset button
                     editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
@@ -1165,6 +1249,22 @@
                 editSubmitBtn.disabled = false;
                 if (cancelEditBtn) cancelEditBtn.disabled = false;
                 editForm.reset();
+                setWallpaperPreview('');
+            }
+
+            if (editRoomWallpaperInput) {
+                editRoomWallpaperInput.addEventListener('change', function () {
+                    const file = this.files && this.files[0];
+                    if (!file) {
+                        setWallpaperPreview('');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        setWallpaperPreview(e.target?.result || '');
+                    };
+                    reader.readAsDataURL(file);
+                });
             }
             
             function closeDeleteModal() {

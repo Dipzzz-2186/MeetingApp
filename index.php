@@ -10,6 +10,15 @@ if ($path !== '/' && is_file($file)) {
     return false;
 }
 
+// Serve files from /public when running with project root as docroot.
+$publicFile = __DIR__ . '/public' . $path;
+if ($path !== '/' && is_file($publicFile)) {
+    $mime = mime_content_type($publicFile) ?: 'application/octet-stream';
+    header('Content-Type: ' . $mime);
+    readfile($publicFile);
+    exit;
+}
+
 require_once __DIR__ . '/app/helpers/db.php';
 require_once __DIR__ . '/app/helpers/auth.php';
 require_once __DIR__ . '/app/helpers/layout.php';

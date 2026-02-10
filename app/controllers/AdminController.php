@@ -410,6 +410,63 @@ class AdminController {
         ], 'Add User');
     }
 
+    private static function storeRoomWallpaper(array $file): array {
+        if (empty($file) || !isset($file['error'])) {
+            return ['path' => null, 'error' => null];
+        }
+
+        if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+            return ['path' => null, 'error' => null];
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return ['path' => null, 'error' => 'Upload wallpaper gagal.'];
+        }
+
+        if (!is_uploaded_file($file['tmp_name'])) {
+            return ['path' => null, 'error' => 'File upload tidak valid.'];
+        }
+
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        if ($file['size'] > $maxSize) {
+            return ['path' => null, 'error' => 'Ukuran wallpaper maksimal 5MB.'];
+        }
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+
+        if (!isset($allowed[$mime])) {
+            return ['path' => null, 'error' => 'Format wallpaper harus JPG, PNG, atau WEBP.'];
+        }
+
+        $publicDir = dirname(__DIR__, 2) . '/public';
+        $uploadDir = $publicDir . '/uploads/rooms';
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                return ['path' => null, 'error' => 'Gagal membuat folder upload.'];
+            }
+        }
+
+        try {
+            $rand = bin2hex(random_bytes(8));
+        } catch (Exception $e) {
+            $rand = uniqid();
+        }
+        $filename = 'room_' . date('Ymd_His') . '_' . $rand . '.' . $allowed[$mime];
+        $targetPath = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            return ['path' => null, 'error' => 'Gagal menyimpan file wallpaper.'];
+        }
+
+        return ['path' => '/uploads/rooms/' . $filename, 'error' => null];
+    }
+
     public static function rooms(): void {
         require_admin();
         global $pdo;
@@ -437,10 +494,17 @@ class AdminController {
                     $_SESSION['error'] = 'Kapasitas maksimal 100 orang.';
                 } else {
                     try {
+                        $upload = self::storeRoomWallpaper($_FILES['wallpaper_file'] ?? []);
+                        if ($upload['error']) {
+                            $_SESSION['error'] = $upload['error'];
+                            header('Location: ' . $_SERVER['REQUEST_URI']);
+                            exit;
+                        }
                         Room::create($pdo, [
                             'owner_admin_id' => $user['id'],
                             'name' => $name,
                             'capacity' => $capacity,
+                            'wallpaper_url' => $upload['path'],
                             'created_at' => now_iso(),
                         ]);
                         $_SESSION['notice'] = 'Room berhasil ditambahkan.';
@@ -455,7 +519,7 @@ class AdminController {
                 $id = (int)($_POST['id'] ?? 0);
                 $name = trim($_POST['name'] ?? '');
                 $capacity = (int)($_POST['capacity'] ?? 0);
-                
+
                 if ($id <= 0 || $name === '' || $capacity <= 0) {
                     $_SESSION['error'] = 'Data tidak valid.';
                 } elseif ($capacity > 100) {
@@ -463,15 +527,33 @@ class AdminController {
                 } else {
                     try {
                         // Cek apakah room milik admin ini
-                        $stmt = $pdo->prepare("SELECT id FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                        $stmt = $pdo->prepare("SELECT id, wallpaper_url FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
                         $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
                         
-                        if ($stmt->fetch()) {
+                        $roomRow = $stmt->fetch();
+                        if ($roomRow) {
+                            $existingWallpaper = $roomRow['wallpaper_url'] ?? null;
+                            $upload = self::storeRoomWallpaper($_FILES['wallpaper_file'] ?? []);
+                            if ($upload['error']) {
+                                $_SESSION['error'] = $upload['error'];
+                                header('Location: ' . $_SERVER['REQUEST_URI']);
+                                exit;
+                            }
+                            $finalWallpaper = $upload['path'] ?? $existingWallpaper;
+
+                            if ($upload['path'] && $existingWallpaper) {
+                                $publicDir = dirname(__DIR__, 2) . '/public';
+                                $oldPath = $publicDir . $existingWallpaper;
+                                if (is_file($oldPath)) {
+                                    @unlink($oldPath);
+                                }
+                            }
                             // Update room
-                            $stmt = $pdo->prepare("UPDATE rooms SET name = :name, capacity = :capacity WHERE id = :id");
+                            $stmt = $pdo->prepare("UPDATE rooms SET name = :name, capacity = :capacity, wallpaper_url = :wallpaper_url WHERE id = :id");
                             $stmt->execute([
                                 ':name' => $name,
                                 ':capacity' => $capacity,
+                                ':wallpaper_url' => $finalWallpaper,
                                 ':id' => $id
                             ]);
                             
@@ -529,11 +611,12 @@ class AdminController {
             $id = (int)($_GET['id'] ?? 0);
             
             if ($id > 0) {
-                $stmt = $pdo->prepare("SELECT id, name, capacity FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                $stmt = $pdo->prepare("SELECT id, name, capacity, wallpaper_url FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
                 $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
                 $roomData = $stmt->fetch();
                 
                 if ($roomData) {
+                    $roomData['wallpaper_url'] = trim((string)($roomData['wallpaper_url'] ?? ''), " \t\n\r\0\x0B'\",");
                     header('Content-Type: application/json');
                     echo json_encode($roomData);
                     exit;
@@ -566,7 +649,7 @@ class AdminController {
         
         // Query dengan LIMIT untuk pagination
         $stmt = $pdo->prepare("
-            SELECT id, name, capacity, created_at 
+            SELECT id, name, capacity, wallpaper_url, created_at 
             FROM rooms 
             WHERE owner_admin_id = :owner_admin_id 
             ORDER BY created_at DESC

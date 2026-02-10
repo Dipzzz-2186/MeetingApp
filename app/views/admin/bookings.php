@@ -23,6 +23,7 @@
             --info: #57b8ff;
             --warning: #ffa857;
             --purple: #b366ff;
+            --monitor-wallpaper-url: none;
         }
 
         * { 
@@ -150,6 +151,13 @@
         .fullscreen-mode .action-btn.edit,
         .fullscreen-mode .action-btn.delete {
             display: none;
+        }
+
+        .fullscreen-mode .filter-controls,
+        .fullscreen-mode .stats-grid,
+        .fullscreen-mode .monitor-wallpapers,
+        .fullscreen-mode #monitorWallpaperNote {
+            display: none !important;
         }
 
         .monitor-add-btn {
@@ -609,6 +617,17 @@
             flex-wrap: wrap;
         }
 
+        .monitor-wallpapers.is-locked .wallpaper-btn {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .monitor-wallpaper-note {
+            font-size: 12px;
+            color: var(--accent);
+            margin-top: 6px;
+        }
+
         .wallpaper-btn {
             border: 1px solid rgba(255, 255, 255, 0.12);
             background: rgba(17, 21, 28, 0.8);
@@ -625,6 +644,14 @@
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(247, 200, 66, 0.12);
+        }
+
+        body.monitor-wallpaper {
+            background: #0b0d12;
+            background-image: linear-gradient(180deg, rgba(11, 13, 18, 0.65), rgba(11, 13, 18, 0.85)), var(--monitor-wallpaper-url);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         body[data-wallpaper="aurora"] {
@@ -1466,7 +1493,8 @@
                         <select id="monitor_room_select">
                             <option value="">Pilih room</option>
                             <?php foreach ($rooms as $row): ?>
-                                <option value="<?php echo (int)$row['id']; ?>">
+                                <?php $wallpaperUrl = trim((string)($row['wallpaper_url'] ?? ''), " \t\n\r\0\x0B'\","); ?>
+                                <option value="<?php echo (int)$row['id']; ?>" data-wallpaper="<?php echo htmlspecialchars($wallpaperUrl); ?>">
                                     <?php echo htmlspecialchars($row['name']); ?> (<?php echo $row['capacity']; ?> orang)
                                 </option>
                             <?php endforeach; ?>
@@ -1593,6 +1621,9 @@
                         <button type="button" class="wallpaper-btn" data-wallpaper="sunset">Sunset</button>
                         <button type="button" class="wallpaper-btn" data-wallpaper="onyx">Onyx</button>
                         <button type="button" class="wallpaper-btn" data-wallpaper="orchid">Orchid</button>
+                    </div>
+                    <div class="monitor-wallpaper-note" id="monitorWallpaperNote" style="display: none;">
+                        Wallpaper room aktif.
                     </div>
                 </div>
 
@@ -2472,6 +2503,96 @@
         }
     }
 
+    function getRoomWallpaperUrl(roomId) {
+        if (!roomId) return '';
+        const select = document.getElementById('monitor_room_select');
+        if (!select) return '';
+        const options = select.options;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === String(roomId)) {
+                return options[i].dataset.wallpaper || '';
+            }
+        }
+        return '';
+    }
+
+    function clearMonitorWallpaper() {
+        document.body.classList.remove('monitor-wallpaper');
+        document.body.style.removeProperty('--monitor-wallpaper-url');
+        const monitorWallpapers = document.getElementById('monitorWallpapers');
+        const note = document.getElementById('monitorWallpaperNote');
+        if (monitorWallpapers) monitorWallpapers.classList.remove('is-locked');
+        if (note) note.style.display = 'none';
+    }
+
+    function applyMonitorWallpaper(roomId) {
+        if (!isMonitorMode()) {
+            clearMonitorWallpaper();
+            return false;
+        }
+        const rawUrl = (getRoomWallpaperUrl(roomId) || '').replace(/^[\s'"]+|[\s'",]+$/g, '');
+        if (!rawUrl) {
+            clearMonitorWallpaper();
+            return false;
+        }
+        const candidates = [];
+        const base = rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('/')
+            ? rawUrl
+            : '/' + rawUrl;
+        candidates.push(base);
+        if (base.startsWith('/uploads/')) {
+            candidates.push('/public' + base);
+        } else if (base.startsWith('/public/uploads/')) {
+            candidates.push(base.replace(/^\/public/, ''));
+        }
+
+        const uniqueCandidates = [...new Set(candidates)];
+        if (uniqueCandidates.length === 0) {
+            clearMonitorWallpaper();
+            return false;
+        }
+
+        const applyPresetWallpaper = () => {
+            const monitorWallpapers = document.getElementById('monitorWallpapers');
+            if (!monitorWallpapers) return;
+            const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
+            const buttons = monitorWallpapers.querySelectorAll('.wallpaper-btn');
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-wallpaper') === saved);
+            });
+            document.body.setAttribute('data-wallpaper', saved);
+        };
+
+        let index = 0;
+        const tryLoad = () => {
+            const currentUrl = uniqueCandidates[index];
+            if (!currentUrl) {
+                clearMonitorWallpaper();
+                applyPresetWallpaper();
+                return;
+            }
+            const img = new Image();
+            img.onload = () => {
+                const safeUrl = currentUrl.replace(/"/g, '\\"');
+                document.body.style.setProperty('--monitor-wallpaper-url', `url("${safeUrl}")`);
+                document.body.classList.add('monitor-wallpaper');
+                document.body.removeAttribute('data-wallpaper');
+                const monitorWallpapers = document.getElementById('monitorWallpapers');
+                const note = document.getElementById('monitorWallpaperNote');
+                if (monitorWallpapers) monitorWallpapers.classList.add('is-locked');
+                if (note) note.style.display = 'block';
+            };
+            img.onerror = () => {
+                index += 1;
+                tryLoad();
+            };
+            img.src = currentUrl;
+        };
+
+        tryLoad();
+        return true;
+    }
+
     function applyMonitorRoomRules() {
         const form = document.getElementById('createBookingForm');
         if (!form) return;
@@ -2492,6 +2613,7 @@
             setRoomLocked(roomSelect, false);
             if (monitorRoomHint) monitorRoomHint.style.display = 'none';
             lockedRoomId = null;
+            clearMonitorWallpaper();
             return;
         }
 
@@ -2507,6 +2629,7 @@
                 const hintText = monitorRoomHint.querySelector('span');
                 if (hintText) hintText.textContent = 'Pilih room terlebih dahulu untuk mode monitor.';
             }
+            clearMonitorWallpaper();
             return;
         }
 
@@ -2518,6 +2641,8 @@
             const hintText = monitorRoomHint.querySelector('span');
             if (hintText) hintText.textContent = 'Room terkunci di mode monitor. Keluar mode monitor untuk mengganti.';
         }
+
+        applyMonitorWallpaper(lockedRoomId);
     }
 
     function isOverlapping(start, end) {
@@ -2571,6 +2696,7 @@
             const roomId = this.value;
             if (isMonitorMode()) {
                 lockedRoomId = roomId || null;
+                applyMonitorWallpaper(lockedRoomId);
                 applyMonitorRoomRules();
             }
 
@@ -2929,6 +3055,7 @@
                         formRoomSelect.dispatchEvent(new Event('change', { bubbles: true }));
                     }
 
+                    applyMonitorWallpaper(lockedRoomId);
                     closeMonitorRoomModal();
                     document.documentElement.requestFullscreen?.();
                 });
@@ -3003,7 +3130,8 @@
                     tick();
                     if (monitorClockTimer) clearInterval(monitorClockTimer);
                     monitorClockTimer = setInterval(tick, 1000);
-                    if (monitorWallpapers) {
+                    const hasRoomWallpaper = applyMonitorWallpaper(lockedRoomId);
+                    if (!hasRoomWallpaper && monitorWallpapers) {
                         const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
                         const buttons = monitorWallpapers.querySelectorAll('.wallpaper-btn');
                         buttons.forEach(btn => {
@@ -3016,6 +3144,7 @@
                     monitorClockTimer = null;
                 }
                 if (!isFs) {
+                    clearMonitorWallpaper();
                     document.body.removeAttribute('data-wallpaper');
                 }
 
@@ -3026,6 +3155,7 @@
                 const buttons = monitorWallpapers.querySelectorAll('.wallpaper-btn');
                 const applyWallpaper = (value) => {
                     if (!isMonitorMode()) return;
+                    if (document.body.classList.contains('monitor-wallpaper')) return;
                     document.body.setAttribute('data-wallpaper', value);
                     localStorage.setItem('monitor_wallpaper', value);
                     buttons.forEach(btn => {

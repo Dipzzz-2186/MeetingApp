@@ -2,12 +2,13 @@
 
 class Room {
     public static function create(PDO $pdo, array $data): void {
-        $stmt = $pdo->prepare('INSERT INTO rooms (owner_admin_id, name, capacity, created_at)
-            VALUES (:owner_admin_id, :name, :capacity, :created_at)');
+        $stmt = $pdo->prepare('INSERT INTO rooms (owner_admin_id, name, capacity, wallpaper_url, created_at)
+            VALUES (:owner_admin_id, :name, :capacity, :wallpaper_url, :created_at)');
         $stmt->execute([
             ':owner_admin_id' => $data['owner_admin_id'],
             ':name' => $data['name'],
             ':capacity' => $data['capacity'],
+            ':wallpaper_url' => $data['wallpaper_url'] ?? null,
             ':created_at' => $data['created_at'],
         ]);
     }

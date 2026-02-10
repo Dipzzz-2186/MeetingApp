@@ -2463,53 +2463,99 @@
     }
 
     // Filter functionality
-    window.filterBookings = function(filter) {
-        const rows = document.querySelectorAll('.booking-row');
-        const filterBtns = document.querySelectorAll('.filter-btn');
+    window.editBooking = function(bookingId) {
+        if (isLoading) return;
+        isLoading = true;
         
-        // Update active button
-        filterBtns.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        // Show modal first
+        openModal('edit');
         
-        // Update current filter
-        currentFilter = filter;
-        
-        // Reset to page 1 when filtering
-        currentPage = 1;
-        
-        // Update pagination after filtering (this will handle the display logic)
-        updatePagination();
-    };
-    
-    // Fungsi untuk update stats berdasarkan filter
-    function updateFilteredStats() {
-        const rows = document.querySelectorAll('.booking-row');
-        let upcomingCount = 0;
-        let ongoingCount = 0;
-        let completedCount = 0;
-        let totalCount = 0;
-        
-        rows.forEach(row => {
-            if (row.getAttribute('data-filtered') === 'true') {
-                const status = row.getAttribute('data-status');
-                totalCount++;
-                
-                if (status === 'upcoming') upcomingCount++;
-                if (status === 'ongoing') ongoingCount++;
-                if (status === 'completed') completedCount++;
+        // Show loading state in form
+        const editForm = document.getElementById('editBookingForm');
+        const inputs = editForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden') {
+                input.value = 'Memuat...';
+                input.disabled = true;
             }
         });
         
-        // Update stats display
-        const upcomingStat = document.getElementById('stat-upcoming');
-        const ongoingStat = document.getElementById('stat-ongoing');
-        const completedStat = document.getElementById('stat-completed');
-        const totalStat = document.getElementById('stat-total');
+        const submitBtn = editForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat data...';
+        submitBtn.disabled = true;
         
-        if (upcomingStat) upcomingStat.textContent = upcomingCount;
-        if (ongoingStat) ongoingStat.textContent = ongoingCount;
-        if (completedStat) completedStat.textContent = completedCount;
-        if (totalStat) totalStat.textContent = totalCount;
+        // Fetch booking details untuk form edit
+        fetch(`?ajax=get_booking&booking_id=${bookingId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    showAlert(data.error, 'error');
+                    closeAllModals();
+                    return;
+                }
+                
+                // Format datetime untuk input datetime-local
+                function formatForDateTimeLocal(datetimeStr) {
+                    const date = new Date(datetimeStr);
+                    if (isNaN(date.getTime())) return '';
+                    
+                    // Format: YYYY-MM-DDTHH:MM
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    
+                    return `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+                
+                // Isi form edit dengan format yang benar
+                document.getElementById('edit_booking_id').value = bookingId;
+                document.getElementById('edit_room_id').value = data.room_id;
+                document.getElementById('edit_start_time').value = formatForDateTimeLocal(data.start_time);
+                document.getElementById('edit_end_time').value = formatForDateTimeLocal(data.end_time);
+                document.getElementById('edit_purpose').value = data.purpose || '';
+                
+                // Enable inputs
+                inputs.forEach(input => {
+                    input.disabled = false;
+                });
+                
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                // Set minimum time untuk end time
+                const startInput = document.getElementById('edit_start_time');
+                const endInput = document.getElementById('edit_end_time');
+                
+                startInput.addEventListener('change', function() {
+                    if (this.value) {
+                        const start = new Date(this.value);
+                        const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+                        endInput.min = formatForDateTimeLocal(minEnd);
+                    }
+                });
+                
+                // Trigger change untuk set min value
+                if (startInput.value) {
+                    startInput.dispatchEvent(new Event('change'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Gagal mengambil data booking', 'error');
+                closeAllModals();
+            })
+            .finally(() => {
+                isLoading = false;
+            });
     }
 </script>
 </body>
