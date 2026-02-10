@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS rooms (
   owner_admin_id BIGINT UNSIGNED NOT NULL,
   name VARCHAR(120) NOT NULL,
   capacity INT NOT NULL,
+  wallpaper_url VARCHAR(255) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_rooms_name (name),
