@@ -2060,6 +2060,8 @@
     const detailModal = document.getElementById('detailModal');
     const editModal = document.getElementById('editModal');
     const deleteModal = document.getElementById('deleteModal');
+    const editBookingForm = document.getElementById('editBookingForm');
+    const deleteBookingForm = document.getElementById('deleteBookingForm');
     
     let roomSchedules = [];
 
@@ -2229,11 +2231,11 @@
 
                     // 1️⃣ SET MIN DULU
                     const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
-                    endInput.min = minEnd.toISOString().slice(0, 16);
+                    endInput.min = toLocalInputValue(minEnd);
 
                     // 2️⃣ BARU SET DEFAULT +2 JAM
                     const defaultEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-                    endInput.value = defaultEnd.toISOString().slice(0, 16);
+                    endInput.value = toLocalInputValue(defaultEnd);
 
                     updateTimeDisplays();
                 });
@@ -2265,6 +2267,22 @@
         document.body.classList.toggle('modal-open', hasOpenModal);
     }
 
+    function resetEditSubmitState() {
+        if (!editBookingForm) return;
+        const submitBtn = editBookingForm.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+        submitBtn.disabled = false;
+    }
+
+    function resetDeleteSubmitState() {
+        if (!deleteBookingForm) return;
+        const submitBtn = deleteBookingForm.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        submitBtn.innerHTML = '<i class="fas fa-trash"></i> Ya, Hapus';
+        submitBtn.disabled = false;
+    }
+
     function openModal(type) {
         // Close all modals first
         closeAllModals();
@@ -2285,6 +2303,8 @@
         // Prevent body scroll
         document.body.style.overflow = 'hidden';
         setModalOpenState();
+        if (type === 'edit') resetEditSubmitState();
+        if (type === 'delete') resetDeleteSubmitState();
     }
 
     function closeAllModals() {
@@ -2294,6 +2314,8 @@
         document.body.style.overflow = '';
         isLoading = false;
         setModalOpenState();
+        resetEditSubmitState();
+        resetDeleteSubmitState();
     }
 
     // Close modal on click outside
@@ -2347,15 +2369,13 @@
                 refreshLiveBookings();
             } else {
                 showAlert(data.error, 'error');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                resetEditSubmitState();
             }
         })
         .catch(error => {
             console.error('Error:', error);
             showAlert('Terjadi kesalahan saat menyimpan', 'error');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            resetEditSubmitState();
         })
         .finally(() => {
             isLoading = false;
@@ -2397,8 +2417,7 @@
             showAlert('Terjadi kesalahan saat menghapus', 'error');
         })
         .finally(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            resetDeleteSubmitState();
             isLoading = false;
         });
     });
@@ -2588,6 +2607,22 @@
         return toggle.checked;
     }
 
+    function updateRoomWallpaperToggleVisibility(roomId) {
+        const toggleWrap = document.getElementById('monitorWallpaperToggle');
+        const toggleInput = document.getElementById('toggleRoomWallpaper');
+        if (!toggleWrap || !toggleInput) return;
+        const hasWallpaper = !!(getRoomWallpaperUrl(roomId) || '').trim();
+        toggleWrap.style.display = hasWallpaper ? 'block' : 'none';
+        if (!hasWallpaper) {
+            toggleInput.checked = false;
+            localStorage.setItem('monitor_room_wallpaper_enabled', 'false');
+            return;
+        }
+        // If room has wallpaper, make it the default background
+        toggleInput.checked = true;
+        localStorage.setItem('monitor_room_wallpaper_enabled', 'true');
+    }
+
     function applyMonitorWallpaper(roomId) {
         if (!isMonitorMode()) {
             clearMonitorWallpaper();
@@ -2681,6 +2716,7 @@
             if (monitorRoomHint) monitorRoomHint.style.display = 'none';
             lockedRoomId = null;
             clearMonitorWallpaper();
+            updateRoomWallpaperToggleVisibility(null);
             return;
         }
 
@@ -2697,6 +2733,7 @@
                 if (hintText) hintText.textContent = 'Pilih room terlebih dahulu untuk mode monitor.';
             }
             clearMonitorWallpaper();
+            updateRoomWallpaperToggleVisibility(null);
             return;
         }
 
@@ -2709,6 +2746,7 @@
             if (hintText) hintText.textContent = 'Room terkunci di mode monitor. Keluar mode monitor untuk mengganti.';
         }
 
+        updateRoomWallpaperToggleVisibility(lockedRoomId);
         applyMonitorWallpaper(lockedRoomId);
     }
 
@@ -3127,6 +3165,7 @@
                         formRoomSelect.dispatchEvent(new Event('change', { bubbles: true }));
                     }
 
+                    updateRoomWallpaperToggleVisibility(lockedRoomId);
                     applyMonitorWallpaper(lockedRoomId);
                     closeMonitorRoomModal();
                     document.documentElement.requestFullscreen?.();
