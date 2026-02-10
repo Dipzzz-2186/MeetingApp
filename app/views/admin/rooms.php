@@ -1323,7 +1323,14 @@
                     showAlert('Nama ruangan tidak boleh kosong.', 'error');
                     return;
                 }
-                
+
+                const hasFile = !!(editRoomWallpaperInput && editRoomWallpaperInput.files && editRoomWallpaperInput.files.length > 0);
+                if (hasFile) {
+                    // Use normal form submit for file uploads to avoid AJAX issues
+                    editForm.submit();
+                    return;
+                }
+
                 submitEditForm();
             });
             

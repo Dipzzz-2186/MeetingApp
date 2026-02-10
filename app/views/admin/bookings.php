@@ -154,9 +154,7 @@
         }
 
         .fullscreen-mode .filter-controls,
-        .fullscreen-mode .stats-grid,
-        .fullscreen-mode .monitor-wallpapers,
-        .fullscreen-mode #monitorWallpaperNote {
+        .fullscreen-mode .stats-grid {
             display: none !important;
         }
 
@@ -628,6 +626,25 @@
             margin-top: 6px;
         }
 
+        .monitor-wallpaper-toggle {
+            margin-top: 8px;
+        }
+
+        .monitor-wallpaper-toggle .toggle-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .monitor-wallpaper-toggle input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+        }
+
         .wallpaper-btn {
             border: 1px solid rgba(255, 255, 255, 0.12);
             background: rgba(17, 21, 28, 0.8);
@@ -652,6 +669,26 @@
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+        }
+
+        body.fullscreen-mode.monitor-wallpaper {
+            background-image: linear-gradient(180deg, rgba(11, 13, 18, 0.25), rgba(11, 13, 18, 0.45)), var(--monitor-wallpaper-url);
+        }
+
+        .fullscreen-mode .bookings-card {
+            background: rgba(12, 16, 24, 0.55);
+            border-color: rgba(42, 49, 61, 0.5);
+            box-shadow: 0 18px 40px rgba(5, 6, 9, 0.45);
+            backdrop-filter: blur(6px);
+        }
+
+        .fullscreen-mode .table-container {
+            background: rgba(11, 13, 18, 0.2);
+            border-color: rgba(42, 49, 61, 0.4);
+        }
+
+        .fullscreen-mode .table thead {
+            background: rgba(17, 21, 28, 0.5);
         }
 
         body[data-wallpaper="aurora"] {
@@ -1625,6 +1662,12 @@
                     <div class="monitor-wallpaper-note" id="monitorWallpaperNote" style="display: none;">
                         Wallpaper room aktif.
                     </div>
+                    <div class="monitor-wallpaper-toggle" id="monitorWallpaperToggle">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggleRoomWallpaper" checked>
+                            <span>Gunakan wallpaper room</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Filter Controls -->
@@ -2525,8 +2568,18 @@
         if (note) note.style.display = 'none';
     }
 
+    function isRoomWallpaperEnabled() {
+        const toggle = document.getElementById('toggleRoomWallpaper');
+        if (!toggle) return true;
+        return toggle.checked;
+    }
+
     function applyMonitorWallpaper(roomId) {
         if (!isMonitorMode()) {
+            clearMonitorWallpaper();
+            return false;
+        }
+        if (!isRoomWallpaperEnabled()) {
             clearMonitorWallpaper();
             return false;
         }
@@ -2925,6 +2978,7 @@
             const monitorCreateBody = document.getElementById('monitorCreateBody');
             const createBookingCard = document.getElementById('createBookingCard');
             const createBookingCardPlaceholder = document.getElementById('createBookingCardPlaceholder');
+            const toggleRoomWallpaper = document.getElementById('toggleRoomWallpaper');
             const bookingHeaderActions = document.getElementById('bookingHeaderActions');
             const monitorClock = document.getElementById('monitorClock');
             const monitorWallpapers = document.getElementById('monitorWallpapers');
@@ -3155,7 +3209,7 @@
                 const buttons = monitorWallpapers.querySelectorAll('.wallpaper-btn');
                 const applyWallpaper = (value) => {
                     if (!isMonitorMode()) return;
-                    if (document.body.classList.contains('monitor-wallpaper')) return;
+                    if (document.body.classList.contains('monitor-wallpaper') && isRoomWallpaperEnabled()) return;
                     document.body.setAttribute('data-wallpaper', value);
                     localStorage.setItem('monitor_wallpaper', value);
                     buttons.forEach(btn => {
@@ -3172,10 +3226,33 @@
 
                 const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
                 if (isMonitorMode()) {
-                    applyWallpaper(saved);
+                    if (!isRoomWallpaperEnabled()) {
+                        applyWallpaper(saved);
+                    }
                 } else {
                     document.body.removeAttribute('data-wallpaper');
                 }
+            }
+
+            if (toggleRoomWallpaper) {
+                const savedToggle = localStorage.getItem('monitor_room_wallpaper_enabled');
+                if (savedToggle !== null) {
+                    toggleRoomWallpaper.checked = savedToggle === 'true';
+                }
+                toggleRoomWallpaper.addEventListener('change', () => {
+                    localStorage.setItem('monitor_room_wallpaper_enabled', String(toggleRoomWallpaper.checked));
+                    if (toggleRoomWallpaper.checked) {
+                        const hasRoomWallpaper = applyMonitorWallpaper(lockedRoomId);
+                        if (!hasRoomWallpaper) {
+                            const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
+                            document.body.setAttribute('data-wallpaper', saved);
+                        }
+                    } else {
+                        clearMonitorWallpaper();
+                        const saved = localStorage.getItem('monitor_wallpaper') || 'aurora';
+                        document.body.setAttribute('data-wallpaper', saved);
+                    }
+                });
             }
 
             monitorToggle.addEventListener('click', () => {
