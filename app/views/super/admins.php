@@ -44,6 +44,17 @@
             padding: 30px 20px;
         }
 
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        body.modal-open .topbar,
+        body.modal-open .tabbar,
+        body.modal-open .mobile-brand,
+        body.modal-open .navbar {
+            display: none !important;
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -479,7 +490,7 @@
             z-index: 9999;
             align-items: center;
             justify-content: center;
-            padding: 80px 20px 20px; /* Added top padding for navbar */
+            padding: 20px;
             animation: fadeIn 0.3s ease;
         }
 
@@ -492,7 +503,7 @@
             border-radius: 20px;
             width: 100%;
             max-width: 800px;
-            max-height: calc(100vh - 100px); /* Adjusted for navbar */
+            max-height: 85vh;
             overflow-y: auto;
             border: 1px solid var(--stroke);
             box-shadow: var(--shadow);
@@ -812,11 +823,11 @@
             }
 
             .modal {
-                padding: 60px 10px 10px;
+                padding: 10px;
             }
 
             .modal-content {
-                max-height: calc(100vh - 70px);
+                max-height: 90vh;
             }
 
             .modal-body {
@@ -1343,8 +1354,8 @@
                     
                     // Show modal
                     document.getElementById('adminModal').classList.add('active');
-                    // Prevent body scroll when modal is open
-                    document.body.style.overflow = 'hidden';
+                    // Prevent body scroll and hide nav bars while modal is open
+                    document.body.classList.add('modal-open');
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1355,8 +1366,7 @@
         function closeAdminModal() {
             document.getElementById('adminModal').classList.remove('active');
             window.currentAdminId = null;
-            // Restore body scroll
-            document.body.style.overflow = 'auto';
+            document.body.classList.remove('modal-open');
         }
 
         // Close modal when clicking outside or pressing ESC

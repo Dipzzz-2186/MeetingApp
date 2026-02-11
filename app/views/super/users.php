@@ -95,9 +95,13 @@ $usersWithBookings = count(array_filter($users, function($u) {
 
         body.modal-open {
             overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
+        }
+
+        body.modal-open .topbar,
+        body.modal-open .tabbar,
+        body.modal-open .mobile-brand,
+        body.modal-open .navbar {
+            display: none !important;
         }
 
         .container {
@@ -1567,8 +1571,8 @@ $usersWithBookings = count(array_filter($users, function($u) {
                 // Show modal
                 document.getElementById('userModal').classList.add('active');
 
-                // Disable background scroll
-                document.body.style.overflow = 'hidden';
+                // Disable background scroll and hide nav bars while modal is open
+                document.body.classList.add('modal-open');
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -1579,7 +1583,7 @@ $usersWithBookings = count(array_filter($users, function($u) {
         function closeUserModal() {
             document.getElementById('userModal').classList.remove('active');
             currentUserId = null;
-            document.body.style.overflow = 'auto';
+            document.body.classList.remove('modal-open');
         }
 
         function deleteUser() {
