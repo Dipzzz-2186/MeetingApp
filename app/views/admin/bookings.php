@@ -1075,6 +1075,10 @@
             color: var(--ink);
         }
 
+        #monitorCreateModal .modal-header {
+            justify-content: flex-end;
+        }
+
         .modal-cancel {
             background: rgba(154, 160, 170, 0.1);
             border: 1px solid var(--stroke);
@@ -1510,7 +1514,6 @@
         <div class="modal" id="monitorCreateModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2><i class="fas fa-plus-circle"></i> Buat Booking Baru</h2>
                     <button class="modal-close" type="button" id="monitorCreateClose">
                         <i class="fas fa-times"></i>
                     </button>
