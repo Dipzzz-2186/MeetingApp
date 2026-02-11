@@ -672,14 +672,14 @@
 
         body.monitor-wallpaper {
             background: #0b0d12;
-            background-image: linear-gradient(180deg, rgba(11, 13, 18, 0.65), rgba(11, 13, 18, 0.85)), var(--monitor-wallpaper-url);
+            background-image: linear-gradient(180deg, rgba(11, 13, 18, 0.5), rgba(11, 13, 18, 0.7)), var(--monitor-wallpaper-url);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }
 
         body.fullscreen-mode.monitor-wallpaper {
-            background-image: linear-gradient(180deg, rgba(11, 13, 18, 0.25), rgba(11, 13, 18, 0.45)), var(--monitor-wallpaper-url);
+            background-image: linear-gradient(180deg, rgba(11, 13, 18, 0.16), rgba(11, 13, 18, 0.32)), var(--monitor-wallpaper-url);
         }
 
         .fullscreen-mode .bookings-card {
@@ -692,10 +692,68 @@
         .fullscreen-mode .table-container {
             background: rgba(11, 13, 18, 0.2);
             border-color: rgba(42, 49, 61, 0.4);
+            overflow-x: hidden;
         }
 
         .fullscreen-mode .table thead {
             background: rgba(17, 21, 28, 0.5);
+        }
+
+        .fullscreen-mode .table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .fullscreen-mode .table th,
+        .fullscreen-mode .table td {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .fullscreen-mode .booking-row {
+            transition: all 0.25s ease;
+        }
+
+        .fullscreen-mode .booking-row.monitor-current {
+            transform: none;
+        }
+
+        .fullscreen-mode .booking-row.monitor-current td {
+            padding-top: 22px;
+            padding-bottom: 22px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-current .user-avatar {
+            width: 44px;
+            height: 44px;
+            font-size: 16px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-current .duration-indicator,
+        .fullscreen-mode .booking-row.monitor-current .room-badge,
+        .fullscreen-mode .booking-row.monitor-current .booking-status {
+            font-size: 13px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next {
+            opacity: 0.72;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next td {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next .user-avatar {
+            width: 28px;
+            height: 28px;
+            font-size: 11px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next .duration-indicator,
+        .fullscreen-mode .booking-row.monitor-next .room-badge,
+        .fullscreen-mode .booking-row.monitor-next .booking-status {
+            font-size: 10px;
         }
 
         body[data-wallpaper="aurora"] {
@@ -3337,6 +3395,7 @@
     function updatePagination() {
         // Get ALL rows first
         const allRows = document.querySelectorAll('.booking-row');
+        const monitorMode = isMonitorMode();
         
         // First, show all rows temporarily to check filter
         allRows.forEach(row => {
@@ -3368,6 +3427,11 @@
                 default:
                     show = show && true;
             }
+
+            // Di mode monitor, booking selesai tidak ditampilkan.
+            if (monitorMode) {
+                show = show && status !== 'completed';
+            }
             
             // Mark rows based on filter (using data attribute)
             row.setAttribute('data-filtered', show ? 'true' : 'false');
@@ -3375,6 +3439,21 @@
         
         // Get visible rows after filter
         const visibleRows = Array.from(allRows).filter(row => row.getAttribute('data-filtered') === 'true');
+
+        // Highlight prioritas row saat monitor:
+        // ongoing dibesarkan, upcoming diperkecil.
+        allRows.forEach(row => row.classList.remove('monitor-current', 'monitor-next'));
+        if (monitorMode) {
+            visibleRows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                if (status === 'ongoing') {
+                    row.classList.add('monitor-current');
+                } else if (status === 'upcoming') {
+                    row.classList.add('monitor-next');
+                }
+            });
+        }
+
         const totalItems = visibleRows.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         
