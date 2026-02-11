@@ -483,6 +483,69 @@
             color: var(--accent);
         }
 
+        #cancelEdit,
+        #cancelDelete {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        #cancelEdit::before,
+        #cancelDelete::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 87, 87, 0.1),
+                transparent
+            );
+            transition: left 0.5s ease;
+            z-index: -1;
+        }
+
+        #cancelEdit:hover,
+        #cancelDelete:hover {
+            color: var(--ink);
+            border-color: var(--error);
+            background: rgba(255, 87, 87, 0.08);
+            transform: translateY(-2px);
+            box-shadow:
+                0 5px 15px rgba(255, 87, 87, 0.2),
+                0 0 0 1px rgba(255, 87, 87, 0.3);
+        }
+
+        #cancelEdit:hover::before,
+        #cancelDelete:hover::before {
+            left: 100%;
+        }
+
+        #cancelEdit:active,
+        #cancelDelete:active {
+            transform: translateY(0);
+            transition: transform 0.1s ease;
+            border-color: rgba(255, 87, 87, 0.5);
+            background: rgba(255, 87, 87, 0.12);
+        }
+
+        #cancelEdit:focus,
+        #cancelDelete:focus {
+            outline: 2px solid var(--error);
+            outline-offset: 2px;
+        }
+
+        #cancelEdit:disabled,
+        #cancelDelete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            border-color: rgba(255, 87, 87, 0.2) !important;
+        }
+
         /* Loading Spinner */
         .spinner {
             animation: spin 1s linear infinite;
