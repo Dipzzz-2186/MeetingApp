@@ -683,10 +683,13 @@
         }
 
         .fullscreen-mode .bookings-card {
-            background: rgba(12, 16, 24, 0.55);
-            border-color: rgba(42, 49, 61, 0.5);
-            box-shadow: 0 18px 40px rgba(5, 6, 9, 0.45);
-            backdrop-filter: blur(6px);
+            width: min(900px, 92vw);
+            margin: 0 auto;
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
+            padding: 0;
         }
 
         .fullscreen-mode .table-container {
@@ -696,12 +699,29 @@
         }
 
         .fullscreen-mode .table thead {
-            background: rgba(17, 21, 28, 0.5);
+            display: table-header-group;
+            background: rgba(17, 21, 28, 0.38);
         }
 
         .fullscreen-mode .table {
             width: 100%;
             table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0 12px;
+        }
+
+        .fullscreen-mode .table tbody {
+            display: table-row-group;
+        }
+
+        .fullscreen-mode .table tr {
+            display: table-row;
+        }
+
+        .fullscreen-mode .table td,
+        .fullscreen-mode .table th {
+            display: table-cell;
+            vertical-align: middle;
         }
 
         .fullscreen-mode .table th,
@@ -710,23 +730,50 @@
             word-break: break-word;
         }
 
+        .fullscreen-mode .table th:nth-child(1),
+        .fullscreen-mode .table td:nth-child(1) {
+            width: 38%;
+        }
+
+        .fullscreen-mode .table th:nth-child(2),
+        .fullscreen-mode .table td:nth-child(2) {
+            width: 32%;
+        }
+
+        .fullscreen-mode .table th:nth-child(3),
+        .fullscreen-mode .table td:nth-child(3) {
+            width: 12%;
+        }
+
+        .fullscreen-mode .table th:nth-child(4),
+        .fullscreen-mode .table td:nth-child(4) {
+            width: 20%;
+        }
+
         .fullscreen-mode .booking-row {
             transition: all 0.25s ease;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(10, 13, 20, 0.5);
+            margin: 0 0 16px;
+            overflow: hidden;
         }
 
         .fullscreen-mode .booking-row.monitor-current {
-            transform: none;
+            border-color: rgba(247, 200, 66, 0.55);
+            background: rgba(11, 14, 22, 0.72);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
         }
 
         .fullscreen-mode .booking-row.monitor-current td {
-            padding-top: 22px;
-            padding-bottom: 22px;
+            padding-top: 20px;
+            padding-bottom: 20px;
         }
 
         .fullscreen-mode .booking-row.monitor-current .user-avatar {
-            width: 44px;
-            height: 44px;
-            font-size: 16px;
+            width: 54px;
+            height: 54px;
+            font-size: 20px;
         }
 
         .fullscreen-mode .booking-row.monitor-current .duration-indicator,
@@ -735,18 +782,40 @@
             font-size: 13px;
         }
 
+        .fullscreen-mode .booking-row.monitor-current td[data-label="Waktu"] {
+            font-size: 16px;
+        }
+
+        .fullscreen-mode .booking-row td[data-label="Waktu"] > div > div:first-child {
+            font-size: 14px !important;
+            color: rgba(242, 243, 245, 0.7) !important;
+        }
+
+        .fullscreen-mode .booking-row td[data-label="Waktu"] > div > div:last-child {
+            font-size: 34px !important;
+            line-height: 1.05;
+            font-weight: 800 !important;
+            letter-spacing: 0.3px;
+            color: var(--ink) !important;
+            white-space: nowrap;
+            overflow-wrap: normal !important;
+            word-break: normal !important;
+        }
+
         .fullscreen-mode .booking-row.monitor-next {
-            opacity: 0.72;
+            opacity: 0.84;
+            border-color: rgba(255, 255, 255, 0.22);
+            background: rgba(10, 12, 18, 0.52);
         }
 
         .fullscreen-mode .booking-row.monitor-next td {
-            padding-top: 10px;
-            padding-bottom: 10px;
+            padding-top: 8px;
+            padding-bottom: 8px;
         }
 
         .fullscreen-mode .booking-row.monitor-next .user-avatar {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             font-size: 11px;
         }
 
@@ -754,6 +823,45 @@
         .fullscreen-mode .booking-row.monitor-next .room-badge,
         .fullscreen-mode .booking-row.monitor-next .booking-status {
             font-size: 10px;
+        }
+
+        .fullscreen-mode .booking-row .booking-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            padding: 4px 9px;
+            letter-spacing: 0.35px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next td[data-label="Waktu"] {
+            font-size: 12px;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next td[data-label="Waktu"] > div > div:first-child {
+            font-size: 12px !important;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next td[data-label="Waktu"] > div > div:last-child {
+            font-size: 24px !important;
+            font-weight: 750 !important;
+        }
+
+        .fullscreen-mode .booking-row.monitor-next td[data-label="User & Room"] > div > div:last-child > div:first-child {
+            font-size: 13px !important;
+        }
+
+        .fullscreen-mode .booking-row td {
+            border: none;
+        }
+
+        .fullscreen-mode .table th:nth-child(5),
+        .fullscreen-mode .booking-row td[data-label="Aksi"] {
+            display: none;
+        }
+
+        .fullscreen-mode .pagination-container {
+            display: none !important;
         }
 
         body[data-wallpaper="aurora"] {
@@ -3392,6 +3500,65 @@
         updatePagination();
     }
 
+    function parseRowDateTime(row) {
+        const dateIso = row.getAttribute('data-date') || '';
+        const timeCell = row.querySelector('td[data-label="Waktu"]');
+        const rangeText = (timeCell?.querySelector('div > div:last-child')?.textContent || '')
+            .trim()
+            .replace(/\s+/g, ' ');
+        const match = rangeText.match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/);
+        if (!dateIso || !match) {
+            return { start: null, end: null };
+        }
+
+        const start = new Date(`${dateIso}T${match[1]}:00`);
+        let end = new Date(`${dateIso}T${match[2]}:00`);
+        if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+            return { start: null, end: null };
+        }
+
+        if (end <= start) {
+            end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+        }
+        return { start, end };
+    }
+
+    function pickMonitorRows(visibleRows) {
+        if (!visibleRows.length) return [];
+
+        const now = new Date();
+        const ordered = visibleRows
+            .map(row => {
+                const timing = parseRowDateTime(row);
+                return { row, ...timing };
+            })
+            .filter(item => item.start && item.end)
+            .sort((a, b) => a.start - b.start);
+
+        if (!ordered.length) {
+            return visibleRows.slice(0, 2);
+        }
+
+        const active = ordered.find(item => now >= item.start && now < item.end);
+        let current = null;
+        let next = null;
+
+        if (active) {
+            current = active;
+            next = ordered.find(item => item.start > now && item.row !== current.row) || null;
+        } else {
+            current = ordered.find(item => item.start >= now) || null;
+            if (current) {
+                next = ordered.find(item => item.start > current.start && item.row !== current.row) || null;
+            }
+        }
+
+        const result = [];
+        if (current) result.push(current.row);
+        if (next) result.push(next.row);
+        return result;
+    }
+
     function updatePagination() {
         // Get ALL rows first
         const allRows = document.querySelectorAll('.booking-row');
@@ -3439,23 +3606,18 @@
         
         // Get visible rows after filter
         const visibleRows = Array.from(allRows).filter(row => row.getAttribute('data-filtered') === 'true');
+        const displayRows = monitorMode ? pickMonitorRows(visibleRows) : visibleRows;
+        const displaySet = new Set(displayRows);
 
-        // Highlight prioritas row saat monitor:
-        // ongoing dibesarkan, upcoming diperkecil.
         allRows.forEach(row => row.classList.remove('monitor-current', 'monitor-next'));
         if (monitorMode) {
-            visibleRows.forEach(row => {
-                const status = row.getAttribute('data-status');
-                if (status === 'ongoing') {
-                    row.classList.add('monitor-current');
-                } else if (status === 'upcoming') {
-                    row.classList.add('monitor-next');
-                }
-            });
+            if (displayRows[0]) displayRows[0].classList.add('monitor-current');
+            if (displayRows[1]) displayRows[1].classList.add('monitor-next');
+            currentPage = 1;
         }
 
-        const totalItems = visibleRows.length;
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const totalItems = displayRows.length;
+        const totalPages = monitorMode ? (totalItems > 0 ? 1 : 0) : Math.ceil(totalItems / itemsPerPage);
         
         // Update info text
         const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
@@ -3467,11 +3629,16 @@
         
         // Show/hide rows for current page
         allRows.forEach(row => {
-            if (row.getAttribute('data-filtered') === 'false') {
+            if (!displaySet.has(row)) {
                 row.style.display = 'none';
+                return;
+            }
+
+            if (monitorMode) {
+                row.style.display = '';
             } else {
                 // This row passes the filter, now check pagination
-                const indexInVisible = visibleRows.indexOf(row);
+                const indexInVisible = displayRows.indexOf(row);
                 const rowPage = Math.floor(indexInVisible / itemsPerPage) + 1;
                 
                 if (rowPage === currentPage) {
@@ -3491,7 +3658,7 @@
         
         // Show/hide pagination container - hanya tampilkan jika data lebih dari itemsPerPage
         const paginationContainer = document.querySelector('.pagination-container');
-        if (totalItems <= itemsPerPage) {
+        if (monitorMode || totalItems <= itemsPerPage) {
             paginationContainer.style.display = 'none';
         } else {
             paginationContainer.style.display = 'flex';
