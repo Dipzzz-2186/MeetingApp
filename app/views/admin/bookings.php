@@ -3563,6 +3563,7 @@
         // Get ALL rows first
         const allRows = document.querySelectorAll('.booking-row');
         const monitorMode = isMonitorMode();
+        const now = new Date();
         
         // First, show all rows temporarily to check filter
         allRows.forEach(row => {
@@ -3598,6 +3599,10 @@
             // Di mode monitor, booking selesai tidak ditampilkan.
             if (monitorMode) {
                 show = show && status !== 'completed';
+                const timing = parseRowDateTime(row);
+                if (timing.end && now >= timing.end) {
+                    show = false;
+                }
             }
             
             // Mark rows based on filter (using data attribute)
@@ -3611,8 +3616,19 @@
 
         allRows.forEach(row => row.classList.remove('monitor-current', 'monitor-next'));
         if (monitorMode) {
-            if (displayRows[0]) displayRows[0].classList.add('monitor-current');
-            if (displayRows[1]) displayRows[1].classList.add('monitor-next');
+            const tbody = document.getElementById('bookingTableBody');
+            if (tbody) {
+                displayRows.forEach(row => tbody.appendChild(row));
+            }
+
+            const ongoingRow = displayRows.find(row => row.getAttribute('data-status') === 'ongoing');
+            if (ongoingRow) {
+                ongoingRow.classList.add('monitor-current');
+                const nextRow = displayRows.find(row => row !== ongoingRow);
+                if (nextRow) nextRow.classList.add('monitor-next');
+            } else {
+                displayRows.forEach(row => row.classList.add('monitor-next'));
+            }
             currentPage = 1;
         }
 
