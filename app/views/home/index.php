@@ -16,7 +16,7 @@ $user = current_user();
   justify-content: center;
   overflow: hidden;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #1e2530 100%);
+  background: transparent;
 }
 
 /* Fullscreen layout override for home */
@@ -42,10 +42,8 @@ $user = current_user();
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(234, 179, 8, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(251, 191, 36, 0.1) 0%, transparent 50%);
-  animation: pulse 8s ease-in-out infinite;
+  background: none;
+  animation: none;
 }
 
 .hero-overlay {
@@ -54,11 +52,8 @@ $user = current_user();
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    linear-gradient(90deg, rgba(234, 179, 8, 0.03) 1px, transparent 1px),
-    linear-gradient(rgba(234, 179, 8, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  opacity: 0.3;
+  background: none;
+  opacity: 0;
 }
 
 @keyframes pulse {
