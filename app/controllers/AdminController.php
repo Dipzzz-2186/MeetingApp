@@ -646,20 +646,24 @@ class AdminController {
                 continue;
             }
             if ($err !== UPLOAD_ERR_OK) {
+                self::deleteRoomWallpaperFiles($savedPaths);
                 return ['paths' => [], 'error' => 'Upload wallpaper gagal.'];
             }
 
             $tmp = (string)($tmpNames[$index] ?? '');
             $size = (int)($sizes[$index] ?? 0);
             if ($tmp === '' || !is_uploaded_file($tmp)) {
+                self::deleteRoomWallpaperFiles($savedPaths);
                 return ['paths' => [], 'error' => 'File upload tidak valid.'];
             }
             if ($size > $maxSize) {
+                self::deleteRoomWallpaperFiles($savedPaths);
                 return ['paths' => [], 'error' => 'Ukuran wallpaper maksimal 5MB per file.'];
             }
 
             $mime = $finfo->file($tmp);
             if (!isset($allowed[$mime])) {
+                self::deleteRoomWallpaperFiles($savedPaths);
                 return ['paths' => [], 'error' => 'Format wallpaper harus JPG, PNG, atau WEBP.'];
             }
 
@@ -672,6 +676,7 @@ class AdminController {
             $targetPath = $uploadDir . '/' . $filename;
 
             if (!move_uploaded_file($tmp, $targetPath)) {
+                self::deleteRoomWallpaperFiles($savedPaths);
                 return ['paths' => [], 'error' => 'Gagal menyimpan file wallpaper.'];
             }
 
@@ -679,6 +684,23 @@ class AdminController {
         }
 
         return ['paths' => $savedPaths, 'error' => null];
+    }
+
+    private static function deleteRoomWallpaperFiles(array $paths): void {
+        if (empty($paths)) {
+            return;
+        }
+        $publicDir = dirname(__DIR__, 2) . '/public';
+        foreach ($paths as $path) {
+            $path = trim((string)$path);
+            if ($path === '' || strpos($path, '/uploads/rooms/') !== 0) {
+                continue;
+            }
+            $fullPath = $publicDir . $path;
+            if (is_file($fullPath)) {
+                @unlink($fullPath);
+            }
+        }
     }
 
     public static function rooms(): void {
@@ -735,14 +757,19 @@ class AdminController {
                             exit;
                         }
                         $wallpaperValue = !empty($upload['paths']) ? implode("\n", $upload['paths']) : null;
-                        Room::create($pdo, [
-                            'owner_admin_id' => $user['id'],
-                            'name' => $storedName,
-                            'capacity' => $capacity,
-                            'wallpaper_url' => $wallpaperValue,
-                            'created_at' => now_iso(),
-                        ]);
-                        $_SESSION['notice'] = 'Room berhasil ditambahkan.';
+                        try {
+                            Room::create($pdo, [
+                                'owner_admin_id' => $user['id'],
+                                'name' => $storedName,
+                                'capacity' => $capacity,
+                                'wallpaper_url' => $wallpaperValue,
+                                'created_at' => now_iso(),
+                            ]);
+                            $_SESSION['notice'] = 'Room berhasil ditambahkan.';
+                        } catch (PDOException $e) {
+                            self::deleteRoomWallpaperFiles($upload['paths'] ?? []);
+                            throw $e;
+                        }
                     } catch (PDOException $e) {
                         $_SESSION['error'] = 'Nama room sudah digunakan.';
                     }
@@ -790,33 +817,6 @@ class AdminController {
                                 }
                             }
 
-                            $uploadInput = $_FILES['wallpaper_files'] ?? ($_FILES['wallpaper_file'] ?? []);
-                            $upload = self::storeRoomWallpapers($uploadInput);
-                            if ($upload['error']) {
-                                $_SESSION['error'] = $upload['error'];
-                                header('Location: ' . $_SERVER['REQUEST_URI']);
-                                exit;
-                            }
-                            // Mode edit menambahkan wallpaper baru tanpa menghapus wallpaper lama.
-                            $finalWallpapers = $keptWallpapers;
-                            if (!empty($upload['paths'])) {
-                                $finalWallpapers = array_values(array_unique(array_merge($finalWallpapers, $upload['paths'])));
-                            }
-                            $finalWallpaper = !empty($finalWallpapers) ? implode("\n", $finalWallpapers) : null;
-
-                            if (!empty($removedWallpapers)) {
-                                $publicDir = dirname(__DIR__, 2) . '/public';
-                                foreach ($removedWallpapers as $removedPath) {
-                                    if (strpos($removedPath, '/uploads/rooms/') !== 0) {
-                                        continue;
-                                    }
-                                    $oldPath = $publicDir . $removedPath;
-                                    if (is_file($oldPath)) {
-                                        @unlink($oldPath);
-                                    }
-                                }
-                            }
-
                             $stmt = $pdo->prepare("
                                 SELECT id
                                 FROM rooms
@@ -837,16 +837,40 @@ class AdminController {
                                 exit;
                             }
 
+                            $uploadInput = $_FILES['wallpaper_files'] ?? ($_FILES['wallpaper_file'] ?? []);
+                            $upload = self::storeRoomWallpapers($uploadInput);
+                            if ($upload['error']) {
+                                $_SESSION['error'] = $upload['error'];
+                                header('Location: ' . $_SERVER['REQUEST_URI']);
+                                exit;
+                            }
+                            // Mode edit menambahkan wallpaper baru tanpa menghapus wallpaper lama.
+                            $finalWallpapers = $keptWallpapers;
+                            if (!empty($upload['paths'])) {
+                                $finalWallpapers = array_values(array_unique(array_merge($finalWallpapers, $upload['paths'])));
+                            }
+                            $finalWallpaper = !empty($finalWallpapers) ? implode("\n", $finalWallpapers) : null;
+
                             // Update room
-                            $stmt = $pdo->prepare("UPDATE rooms SET name = :name, capacity = :capacity, wallpaper_url = :wallpaper_url WHERE id = :id");
-                            $stmt->execute([
-                                ':name' => $storedName,
-                                ':capacity' => $capacity,
-                                ':wallpaper_url' => $finalWallpaper,
-                                ':id' => $id
-                            ]);
-                            
-                            $_SESSION['notice'] = 'Room berhasil diperbarui.';
+                            try {
+                                $stmt = $pdo->prepare("UPDATE rooms SET name = :name, capacity = :capacity, wallpaper_url = :wallpaper_url WHERE id = :id");
+                                $stmt->execute([
+                                    ':name' => $storedName,
+                                    ':capacity' => $capacity,
+                                    ':wallpaper_url' => $finalWallpaper,
+                                    ':id' => $id
+                                ]);
+
+                                // Hapus wallpaper lama hanya setelah update DB berhasil.
+                                if (!empty($removedWallpapers)) {
+                                    self::deleteRoomWallpaperFiles($removedWallpapers);
+                                }
+
+                                $_SESSION['notice'] = 'Room berhasil diperbarui.';
+                            } catch (PDOException $e) {
+                                self::deleteRoomWallpaperFiles($upload['paths'] ?? []);
+                                throw $e;
+                            }
                         } else {
                             $_SESSION['error'] = 'Room tidak ditemukan.';
                         }
@@ -862,11 +886,13 @@ class AdminController {
                 
                 if ($id > 0) {
                     try {
-                        // Cek apakah room milik admin ini
-                        $stmt = $pdo->prepare("SELECT id FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
+                        // Cek apakah room milik admin ini dan ambil wallpaper untuk cleanup file.
+                        $stmt = $pdo->prepare("SELECT id, wallpaper_url FROM rooms WHERE id = :id AND owner_admin_id = :owner_admin_id");
                         $stmt->execute([':id' => $id, ':owner_admin_id' => $user['id']]);
                         
-                        if ($stmt->fetch()) {
+                        $roomRow = $stmt->fetch();
+                        if ($roomRow) {
+                            $wallpaperPaths = self::parseRoomWallpaperPaths($roomRow['wallpaper_url'] ?? null);
                             // Cek apakah ada booking aktif untuk room ini
                             $stmt = $pdo->prepare("SELECT COUNT(*) as booking_count FROM bookings WHERE room_id = :room_id AND end_time > NOW()");
                             $stmt->execute([':room_id' => $id]);
@@ -878,6 +904,7 @@ class AdminController {
                                 // Hapus room
                                 $stmt = $pdo->prepare("DELETE FROM rooms WHERE id = :id");
                                 $stmt->execute([':id' => $id]);
+                                self::deleteRoomWallpaperFiles($wallpaperPaths);
                                 
                                 $_SESSION['notice'] = 'Room berhasil dihapus.';
                             }

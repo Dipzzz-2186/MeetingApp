@@ -2,8 +2,11 @@
 
 class Room {
     public static function encodeNameForOwner(string $name, int $ownerAdminId): string {
-        // Nama room disimpan apa adanya; owner dipisahkan lewat kolom owner_admin_id.
-        return self::decodeStoredName(trim($name));
+        $plainName = self::decodeStoredName(trim($name));
+        if ($plainName === '') {
+            return '';
+        }
+        return $plainName . '__adm_' . (int)$ownerAdminId;
     }
 
     public static function decodeStoredName(?string $storedName): string {
