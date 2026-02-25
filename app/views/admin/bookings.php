@@ -760,15 +760,16 @@
             transition: all 0.25s ease;
             border-radius: 22px;
             border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(10, 13, 20, 0.5);
+            background: rgba(10, 13, 20, 0.74);
             margin: 0 0 16px;
             overflow: hidden;
         }
 
         .fullscreen-mode .booking-row.monitor-current {
-            border-color: rgba(247, 200, 66, 0.55);
-            background: rgba(11, 14, 22, 0.72);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            border: 2px solid rgba(247, 200, 66, 0.95);
+            background: rgba(10, 13, 20, 0.85);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(247, 200, 66, 0.9), 0 0 24px rgba(247, 200, 66, 0.85);
+            animation: monitorBorderGlow 1.4s ease-in-out infinite;
         }
 
         .fullscreen-mode .booking-row.monitor-current td {
@@ -810,6 +811,15 @@
 
         .fullscreen-mode .booking-row.monitor-current td[data-label="Waktu"] > div > div:last-child {
             font-size: 38px !important;
+        }
+
+        @keyframes monitorBorderGlow {
+            0%, 100% {
+                box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(247, 200, 66, 0.9), 0 0 18px rgba(247, 200, 66, 0.75);
+            }
+            50% {
+                box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(255, 216, 107, 1), 0 0 36px rgba(247, 200, 66, 1);
+            }
         }
 
         .fullscreen-mode .booking-row.monitor-next {
@@ -3744,6 +3754,46 @@
         return { start, end };
     }
 
+    function computeStatusByNow(row, now = new Date()) {
+        const timing = parseRowDateTime(row);
+        if (!timing.start || !timing.end) return null;
+        if (now > timing.end) return 'completed';
+        if (now >= timing.start && now <= timing.end) return 'ongoing';
+        return 'upcoming';
+    }
+
+    function applyRowStatus(row, status) {
+        if (!row || !status) return;
+        row.setAttribute('data-status', status);
+
+        const badge = row.querySelector('.booking-status');
+        if (!badge) return;
+
+        const icon = status === 'upcoming'
+            ? 'fa-clock'
+            : (status === 'ongoing' ? 'fa-play-circle' : 'fa-check-circle');
+        const text = status === 'upcoming'
+            ? 'Akan Datang'
+            : (status === 'ongoing' ? 'Berlangsung' : 'Selesai');
+
+        badge.className = `booking-status status-${status}`;
+        badge.innerHTML = `<i class="fas ${icon}"></i> ${text}`;
+    }
+
+    function recalculateStatusesRealtime() {
+        const rows = document.querySelectorAll('.booking-row');
+        if (!rows.length) return;
+
+        const now = new Date();
+        rows.forEach(row => {
+            const nextStatus = computeStatusByNow(row, now);
+            if (!nextStatus) return;
+            if (row.getAttribute('data-status') !== nextStatus) {
+                applyRowStatus(row, nextStatus);
+            }
+        });
+    }
+
     function sortMonitorRows(rows) {
         const withTime = rows.map(row => {
             const timing = parseRowDateTime(row);
@@ -4009,6 +4059,7 @@
 
     // Realtime updates
     let liveTimer = null;
+    let statusTimer = null;
     let isLiveLoading = false;
     const liveIntervalMs = 10000;
 
@@ -4111,10 +4162,22 @@
         if (liveTimer) {
             clearInterval(liveTimer);
         }
+        if (statusTimer) {
+            clearInterval(statusTimer);
+        }
         refreshLiveBookings();
         liveTimer = setInterval(refreshLiveBookings, liveIntervalMs);
+        statusTimer = setInterval(() => {
+            if (document.hidden) return;
+            recalculateStatusesRealtime();
+            updatePagination();
+        }, 1000);
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) refreshLiveBookings();
+            if (!document.hidden) {
+                recalculateStatusesRealtime();
+                updatePagination();
+                refreshLiveBookings();
+            }
         });
     }
 </script>
