@@ -833,6 +833,45 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
             $isAjax = isset($_POST['ajax']) && $_POST['ajax'] === 'true';
+            $validateMonitorCreator = static function (string $email, string $password) use ($pdo, $user): array {
+                $email = trim($email);
+                $password = (string)$password;
+
+                if ($email === '' || $password === '') {
+                    return [
+                        'ok' => false,
+                        'error' => 'Email dan password wajib diisi.',
+                    ];
+                }
+
+                $stmt = $pdo->prepare("
+                    SELECT id, name, password_hash
+                    FROM users
+                    WHERE email = :email
+                    AND role = 'user'
+                    AND owner_admin_id = :owner_admin_id
+                    LIMIT 1
+                ");
+                $stmt->execute([
+                    ':email' => $email,
+                    ':owner_admin_id' => $user['id'],
+                ]);
+                $matchedUser = $stmt->fetch();
+
+                if (!$matchedUser || !password_verify($password, (string)$matchedUser['password_hash'])) {
+                    return [
+                        'ok' => false,
+                        'error' => 'Email atau password tidak valid.',
+                    ];
+                }
+
+                return [
+                    'ok' => true,
+                    'user_id' => (int)$matchedUser['id'],
+                    'user_name' => (string)$matchedUser['name'],
+                    'email' => $email,
+                ];
+            };
             
             if ($action === 'verify_password') {
                 $password = $_POST['password'] ?? '';
@@ -861,20 +900,95 @@ class AdminController {
                     exit;
                 }
             }
+            elseif ($action === 'verify_monitor_creator') {
+                $verification = $validateMonitorCreator(
+                    $_POST['email'] ?? '',
+                    $_POST['password'] ?? ''
+                );
+
+                if ($verification['ok']) {
+                    $notice = 'OK';
+                } else {
+                    $error = $verification['error'];
+                }
+
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => !$error,
+                        'notice' => $notice,
+                        'error' => $error,
+                        'user_id' => $verification['user_id'] ?? null,
+                        'user_name' => $verification['user_name'] ?? null,
+                        'email' => $verification['email'] ?? null,
+                    ]);
+                    exit;
+                }
+            }
             elseif ($action === 'create') {
                 $user_id = (int)($_POST['user_id'] ?? 0);
                 $room_id = (int)($_POST['room_id'] ?? 0);
                 $start = normalize_datetime($_POST['start_time'] ?? '');
                 $end = normalize_datetime($_POST['end_time'] ?? '');
                 $purpose = trim($_POST['purpose'] ?? '');
+                $isMonitorCreate = isset($_POST['monitor_mode']) && $_POST['monitor_mode'] === '1';
+
+                if ($isMonitorCreate) {
+                    $verification = $validateMonitorCreator(
+                        $_POST['monitor_email'] ?? '',
+                        $_POST['monitor_password'] ?? ''
+                    );
+
+                    if (!$verification['ok']) {
+                        $error = $verification['error'];
+                    } else {
+                        // Paksa user booking sesuai user yang sudah diverifikasi.
+                        $user_id = (int)$verification['user_id'];
+                    }
+                }
 
                 if ($user_id <= 0 || $room_id <= 0 || $start === '' || $end === '') {
                     $error = 'Semua field wajib diisi.';
-                } elseif (strtotime($end) <= strtotime($start)) {
+                } elseif (!$error) {
+                    $stmt = $pdo->prepare("
+                        SELECT id
+                        FROM users
+                        WHERE id = :id
+                        AND role = 'user'
+                        AND owner_admin_id = :owner_admin_id
+                        LIMIT 1
+                    ");
+                    $stmt->execute([
+                        ':id' => $user_id,
+                        ':owner_admin_id' => $user['id'],
+                    ]);
+                    if (!$stmt->fetch()) {
+                        $error = 'User tidak valid untuk admin yang sedang login.';
+                    }
+                }
+
+                if (!$error) {
+                    $stmt = $pdo->prepare("
+                        SELECT id
+                        FROM rooms
+                        WHERE id = :id
+                        AND owner_admin_id = :owner_admin_id
+                        LIMIT 1
+                    ");
+                    $stmt->execute([
+                        ':id' => $room_id,
+                        ':owner_admin_id' => $user['id'],
+                    ]);
+                    if (!$stmt->fetch()) {
+                        $error = 'Room tidak valid untuk admin yang sedang login.';
+                    }
+                }
+
+                if (!$error && strtotime($end) <= strtotime($start)) {
                     $error = 'Waktu selesai harus lebih besar dari waktu mulai.';
-                } elseif (!is_room_available($pdo, $room_id, $start, $end)) {
+                } elseif (!$error && !is_room_available($pdo, $room_id, $start, $end)) {
                     $error = 'Room sudah terbooking pada waktu tersebut.';
-                } else {
+                } elseif (!$error) {
                     try {
                         Booking::create($pdo, [
                             'admin_id' => $user['id'],

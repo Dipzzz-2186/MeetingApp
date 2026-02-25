@@ -367,6 +367,11 @@
             opacity: 0.75;
         }
 
+        select.user-locked {
+            pointer-events: none;
+            opacity: 0.75;
+        }
+
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--accent);
@@ -792,7 +797,7 @@
         }
 
         .fullscreen-mode .booking-row td[data-label="Waktu"] > div > div:last-child {
-            font-size: 34px !important;
+            font-size: 24px !important;
             line-height: 1.05;
             font-weight: 800 !important;
             letter-spacing: 0.3px;
@@ -800,6 +805,10 @@
             white-space: nowrap;
             overflow-wrap: normal !important;
             word-break: normal !important;
+        }
+
+        .fullscreen-mode .booking-row.monitor-current td[data-label="Waktu"] > div > div:last-child {
+            font-size: 38px !important;
         }
 
         .fullscreen-mode .booking-row.monitor-next {
@@ -1677,6 +1686,40 @@
         </div>
 
         <!-- Modal: Create Booking (Monitor) -->
+        <div class="modal" id="monitorAuthModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-user-shield"></i> Verifikasi User Monitor</h2>
+                    <button class="modal-close" type="button" id="monitorAuthClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--muted); margin-bottom: 16px;">
+                        Masukkan email dan password user yang terdaftar di admin ini sebelum menambah booking.
+                    </p>
+                    <div class="detail-item">
+                        <label><i class="fas fa-envelope"></i> Email User</label>
+                        <input type="email" id="monitor_user_email" placeholder="user@email.com" autocomplete="username">
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fas fa-key"></i> Password User</label>
+                        <input type="password" id="monitor_user_password" placeholder="Password user" autocomplete="current-password">
+                    </div>
+                    <div class="monitor-error" id="monitor_auth_error" style="display:none;"></div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="action-btn" type="button" id="monitorAuthCancel">
+                            <i class="fas fa-times"></i> Batal
+                        </button>
+                        <button class="action-btn monitor-confirm" type="button" id="monitorAuthConfirm">
+                            <i class="fas fa-check-circle"></i> Verifikasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Create Booking (Monitor) -->
         <div class="modal" id="monitorCreateModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1759,6 +1802,10 @@
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <div id="monitorUserHint" class="monitor-room-hint">
+                                <i class="fas fa-user-lock"></i>
+                                <span>User akan terisi otomatis setelah verifikasi monitor.</span>
+                            </div>
                         </div>
                         <div>
                             <label><i class="fas fa-door-open"></i> Room</label>
@@ -2601,6 +2648,11 @@
             isLoading = true;
 
             if (isMonitorMode()) {
+                if (!monitorVerifiedCreator) {
+                    showAlert('Verifikasi email dan password user terlebih dahulu.', 'error');
+                    isLoading = false;
+                    return;
+                }
                 const roomSelect = this.querySelector('select[name="room_id"]');
                 if (!roomSelect || !roomSelect.value) {
                     showAlert('Pilih room terlebih dahulu untuk mode monitor.', 'error');
@@ -2610,6 +2662,14 @@
             }
 
             const formData = new FormData(this);
+            if (isMonitorMode() && monitorVerifiedCreator) {
+                formData.set('monitor_mode', '1');
+                formData.set('monitor_email', monitorVerifiedCreator.email);
+                formData.set('monitor_password', monitorVerifiedCreator.password);
+                formData.set('user_id', String(monitorVerifiedCreator.userId));
+            } else {
+                formData.set('monitor_mode', '0');
+            }
             formData.append('ajax', 'true');
 
             const submitBtn = this.querySelector('button[type="submit"]');
@@ -2651,6 +2711,11 @@
                     if (isMonitorMode() && lockedRoomId) {
                         const roomSelect = this.querySelector('select[name="room_id"]');
                         if (roomSelect) roomSelect.value = lockedRoomId;
+                        resetMonitorCreatorVerification();
+                        const monitorCreateModalEl = document.getElementById('monitorCreateModal');
+                        if (monitorCreateModalEl) monitorCreateModalEl.classList.remove('active');
+                        document.body.style.overflow = '';
+                        document.body.classList.toggle('modal-open', !!document.querySelector('.modal.active'));
                     }
                     applyMonitorRoomRules();
                     refreshLiveBookings();
@@ -2724,6 +2789,7 @@
     const itemsPerPage = 5;
     let currentFilter = 'all';
     let lockedRoomId = null;
+    let monitorVerifiedCreator = null;
 
     function isMonitorMode() {
         return document.body.classList.contains('fullscreen-mode') || !!document.fullscreenElement;
@@ -2746,6 +2812,23 @@
             roomSelect.removeAttribute('aria-disabled');
             roomSelect.removeAttribute('tabindex');
         }
+    }
+
+    function setUserLocked(userSelect, locked) {
+        if (!userSelect) return;
+        if (locked) {
+            userSelect.classList.add('user-locked');
+            userSelect.setAttribute('aria-disabled', 'true');
+            userSelect.setAttribute('tabindex', '-1');
+        } else {
+            userSelect.classList.remove('user-locked');
+            userSelect.removeAttribute('aria-disabled');
+            userSelect.removeAttribute('tabindex');
+        }
+    }
+
+    function resetMonitorCreatorVerification() {
+        monitorVerifiedCreator = null;
     }
 
     function getRoomWallpaperUrl(roomId) {
@@ -2877,13 +2960,17 @@
         const purposeInput = form.querySelector('input[name="purpose"]');
         const submitBtn = form.querySelector('button[type="submit"]');
         const monitorRoomHint = document.getElementById('monitorRoomHint');
-        const otherFields = [userSelect, startInput, endInput, purposeInput, submitBtn];
+        const monitorUserHint = document.getElementById('monitorUserHint');
+        const editableFields = [startInput, endInput, purposeInput, submitBtn];
 
         if (!isMonitorMode()) {
-            setFormDisabled(otherFields, false);
+            setFormDisabled([userSelect, ...editableFields], false);
             setRoomLocked(roomSelect, false);
+            setUserLocked(userSelect, false);
             if (monitorRoomHint) monitorRoomHint.style.display = 'none';
+            if (monitorUserHint) monitorUserHint.style.display = 'none';
             lockedRoomId = null;
+            resetMonitorCreatorVerification();
             clearMonitorWallpaper();
             updateRoomWallpaperToggleVisibility(null);
             return;
@@ -2894,12 +2981,16 @@
         }
 
         if (!lockedRoomId) {
-            setFormDisabled(otherFields, true);
+            setFormDisabled([userSelect, ...editableFields], true);
             setRoomLocked(roomSelect, false);
+            setUserLocked(userSelect, false);
             if (monitorRoomHint) {
                 monitorRoomHint.style.display = 'flex';
                 const hintText = monitorRoomHint.querySelector('span');
                 if (hintText) hintText.textContent = 'Pilih room terlebih dahulu untuk mode monitor.';
+            }
+            if (monitorUserHint) {
+                monitorUserHint.style.display = 'none';
             }
             clearMonitorWallpaper();
             updateRoomWallpaperToggleVisibility(null);
@@ -2907,12 +2998,33 @@
         }
 
         roomSelect.value = lockedRoomId;
-        setFormDisabled(otherFields, false);
+        setFormDisabled(editableFields, false);
         setRoomLocked(roomSelect, true);
         if (monitorRoomHint) {
             monitorRoomHint.style.display = 'flex';
             const hintText = monitorRoomHint.querySelector('span');
             if (hintText) hintText.textContent = 'Room terkunci di mode monitor. Keluar mode monitor untuk mengganti.';
+        }
+
+        if (!monitorVerifiedCreator) {
+            if (userSelect) userSelect.value = '';
+            setFormDisabled([userSelect, ...editableFields], true);
+            setUserLocked(userSelect, true);
+            if (monitorUserHint) {
+                monitorUserHint.style.display = 'flex';
+                const hintText = monitorUserHint.querySelector('span');
+                if (hintText) hintText.textContent = 'Verifikasi email dan password user sebelum input booking.';
+            }
+        } else {
+            if (userSelect) userSelect.value = String(monitorVerifiedCreator.userId);
+            setFormDisabled(editableFields, false);
+            if (userSelect) userSelect.disabled = false;
+            setUserLocked(userSelect, true);
+            if (monitorUserHint) {
+                monitorUserHint.style.display = 'flex';
+                const hintText = monitorUserHint.querySelector('span');
+                if (hintText) hintText.textContent = `User terkunci: ${monitorVerifiedCreator.userName}.`;
+            }
         }
 
         updateRoomWallpaperToggleVisibility(lockedRoomId);
@@ -3194,6 +3306,13 @@
             const monitorRoomError = document.getElementById('monitor_room_error');
             const formRoomSelect = document.querySelector('select[name="room_id"]');
             const monitorAddBookingBtn = document.getElementById('monitorAddBookingBtn');
+            const monitorAuthModal = document.getElementById('monitorAuthModal');
+            const monitorAuthClose = document.getElementById('monitorAuthClose');
+            const monitorAuthCancel = document.getElementById('monitorAuthCancel');
+            const monitorAuthConfirm = document.getElementById('monitorAuthConfirm');
+            const monitorUserEmail = document.getElementById('monitor_user_email');
+            const monitorUserPassword = document.getElementById('monitor_user_password');
+            const monitorAuthError = document.getElementById('monitor_auth_error');
             const monitorCreateModal = document.getElementById('monitorCreateModal');
             const monitorCreateClose = document.getElementById('monitorCreateClose');
             const monitorCreateBody = document.getElementById('monitorCreateBody');
@@ -3249,6 +3368,31 @@
                 setModalOpenState();
             };
 
+            const openMonitorAuthModal = () => {
+                if (!monitorAuthModal) return;
+                monitorAuthModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                setModalOpenState();
+                if (monitorUserEmail) {
+                    monitorUserEmail.value = '';
+                    monitorUserEmail.focus();
+                }
+                if (monitorUserPassword) {
+                    monitorUserPassword.value = '';
+                }
+                if (monitorAuthError) {
+                    monitorAuthError.style.display = 'none';
+                    monitorAuthError.textContent = '';
+                }
+            };
+
+            const closeMonitorAuthModal = () => {
+                if (!monitorAuthModal) return;
+                monitorAuthModal.classList.remove('active');
+                document.body.style.overflow = '';
+                setModalOpenState();
+            };
+
             if (monitorExitClose) monitorExitClose.addEventListener('click', closeMonitorModal);
             if (monitorExitCancel) monitorExitCancel.addEventListener('click', closeMonitorModal);
             if (monitorExitModal) {
@@ -3264,6 +3408,13 @@
             if (monitorRoomModal) {
                 monitorRoomModal.addEventListener('click', (e) => {
                     if (e.target === monitorRoomModal) closeMonitorRoomModal();
+                });
+            }
+            if (monitorAuthClose) monitorAuthClose.addEventListener('click', closeMonitorAuthModal);
+            if (monitorAuthCancel) monitorAuthCancel.addEventListener('click', closeMonitorAuthModal);
+            if (monitorAuthModal) {
+                monitorAuthModal.addEventListener('click', (e) => {
+                    if (e.target === monitorAuthModal) closeMonitorAuthModal();
                 });
             }
 
@@ -3329,6 +3480,7 @@
                     }
 
                     lockedRoomId = selectedRoomId;
+                    resetMonitorCreatorVerification();
                     if (formRoomSelect) {
                         formRoomSelect.value = selectedRoomId;
                         formRoomSelect.dispatchEvent(new Event('change', { bubbles: true }));
@@ -3343,6 +3495,15 @@
 
             const openMonitorCreateModal = () => {
                 if (!monitorCreateModal) return;
+                if (!isMonitorMode()) return;
+                if (!lockedRoomId) {
+                    showAlert('Pilih room monitor terlebih dahulu.', 'error');
+                    return;
+                }
+                if (!monitorVerifiedCreator) {
+                    openMonitorAuthModal();
+                    return;
+                }
                 monitorCreateModal.classList.add('active');
                 document.body.style.overflow = 'hidden';
                 setModalOpenState();
@@ -3357,6 +3518,63 @@
 
             if (monitorAddBookingBtn) {
                 monitorAddBookingBtn.addEventListener('click', openMonitorCreateModal);
+            }
+            if (monitorAuthConfirm) {
+                monitorAuthConfirm.addEventListener('click', () => {
+                    const email = monitorUserEmail ? monitorUserEmail.value.trim() : '';
+                    const password = monitorUserPassword ? monitorUserPassword.value : '';
+
+                    if (!email || !password) {
+                        if (monitorAuthError) {
+                            monitorAuthError.textContent = 'Email dan password wajib diisi.';
+                            monitorAuthError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('action', 'verify_monitor_creator');
+                    formData.append('email', email);
+                    formData.append('password', password);
+                    formData.append('ajax', 'true');
+
+                    monitorAuthConfirm.disabled = true;
+                    const originalText = monitorAuthConfirm.innerHTML;
+                    monitorAuthConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa...';
+
+                    fetch('', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.success && data.user_id) {
+                            monitorVerifiedCreator = {
+                                userId: Number(data.user_id),
+                                userName: data.user_name || email,
+                                email,
+                                password
+                            };
+                            applyMonitorRoomRules();
+                            closeMonitorAuthModal();
+                            openMonitorCreateModal();
+                        } else if (monitorAuthError) {
+                            monitorAuthError.textContent = data?.error || 'Email atau password tidak valid.';
+                            monitorAuthError.style.display = 'block';
+                        }
+                    })
+                    .catch(() => {
+                        if (monitorAuthError) {
+                            monitorAuthError.textContent = 'Gagal memeriksa kredensial user.';
+                            monitorAuthError.style.display = 'block';
+                        }
+                    })
+                    .finally(() => {
+                        monitorAuthConfirm.disabled = false;
+                        monitorAuthConfirm.innerHTML = originalText;
+                    });
+                });
             }
             if (monitorCreateClose) monitorCreateClose.addEventListener('click', closeMonitorCreateModal);
             if (monitorCreateModal) {
@@ -3382,6 +3600,7 @@
                     currentPage = 1;
                     setActiveFilterBtn('all');
                     updatePagination();
+                    resetMonitorCreatorVerification();
                 }
 
                 if (isFs && monitorCreateBody && createBookingCard) {
@@ -3523,40 +3742,21 @@
         return { start, end };
     }
 
-    function pickMonitorRows(visibleRows) {
-        if (!visibleRows.length) return [];
+    function sortMonitorRows(rows) {
+        const withTime = rows.map(row => {
+            const timing = parseRowDateTime(row);
+            const status = row.getAttribute('data-status') || '';
+            const priority = status === 'ongoing' ? 0 : (status === 'upcoming' ? 1 : 2);
+            const startValue = timing.start ? timing.start.getTime() : Number.MAX_SAFE_INTEGER;
+            return { row, priority, startValue };
+        });
 
-        const now = new Date();
-        const ordered = visibleRows
-            .map(row => {
-                const timing = parseRowDateTime(row);
-                return { row, ...timing };
-            })
-            .filter(item => item.start && item.end)
-            .sort((a, b) => a.start - b.start);
+        withTime.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            return a.startValue - b.startValue;
+        });
 
-        if (!ordered.length) {
-            return visibleRows.slice(0, 2);
-        }
-
-        const active = ordered.find(item => now >= item.start && now < item.end);
-        let current = null;
-        let next = null;
-
-        if (active) {
-            current = active;
-            next = ordered.find(item => item.start > now && item.row !== current.row) || null;
-        } else {
-            current = ordered.find(item => item.start >= now) || null;
-            if (current) {
-                next = ordered.find(item => item.start > current.start && item.row !== current.row) || null;
-            }
-        }
-
-        const result = [];
-        if (current) result.push(current.row);
-        if (next) result.push(next.row);
-        return result;
+        return withTime.map(item => item.row);
     }
 
     function updatePagination() {
@@ -3611,7 +3811,7 @@
         
         // Get visible rows after filter
         const visibleRows = Array.from(allRows).filter(row => row.getAttribute('data-filtered') === 'true');
-        const displayRows = monitorMode ? pickMonitorRows(visibleRows) : visibleRows;
+        const displayRows = monitorMode ? sortMonitorRows(visibleRows) : visibleRows;
         const displaySet = new Set(displayRows);
 
         allRows.forEach(row => row.classList.remove('monitor-current', 'monitor-next'));
@@ -3622,13 +3822,7 @@
             }
 
             const ongoingRow = displayRows.find(row => row.getAttribute('data-status') === 'ongoing');
-            if (ongoingRow) {
-                ongoingRow.classList.add('monitor-current');
-                const nextRow = displayRows.find(row => row !== ongoingRow);
-                if (nextRow) nextRow.classList.add('monitor-next');
-            } else {
-                displayRows.forEach(row => row.classList.add('monitor-next'));
-            }
+            if (ongoingRow) ongoingRow.classList.add('monitor-current');
             currentPage = 1;
         }
 
