@@ -342,6 +342,19 @@
             text-decoration: underline;
         }
 
+        .btn-gateway {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 14px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            color: #1a1a1a;
+            font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
         button[type="submit"] {
             background: var(--accent);
             color: #1a1a1a;
@@ -492,8 +505,15 @@
             <?php elseif (!empty($error)): ?>
                 <div class="alert error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
+            <?php
+                $selectedPlan = $_POST['plan_type'] ?? 'trial';
+                if (!in_array($selectedPlan, ['trial', 'permanent'], true)) {
+                    $selectedPlan = 'trial';
+                }
+            ?>
             
             <form method="post" class="grid" id="registerForm">
+                <input type="hidden" name="go_gateway" id="goGatewayInput" value="0">
                 <div>
                     <label>Nama Lengkap</label>
                     <input type="text" name="name" placeholder="Nama Lengkap" value="<?php echo htmlspecialchars($_POST['name'] ?? '', ENT_QUOTES); ?>" required>
@@ -510,18 +530,18 @@
                 <div>
                     <label>Pilih Paket</label>
                     <div class="plan-toggle">
-                        <label class="plan-option active" data-plan="trial">
-                            <input type="radio" name="plan_type" value="trial" checked>
+                        <label class="plan-option <?php echo $selectedPlan === 'trial' ? 'active' : ''; ?>" data-plan="trial">
+                            <input type="radio" name="plan_type" value="trial" <?php echo $selectedPlan === 'trial' ? 'checked' : ''; ?>>
                             Trial 10 Hari
                         </label>
-                        <label class="plan-option" data-plan="permanent">
-                            <input type="radio" name="plan_type" value="permanent">
+                        <label class="plan-option <?php echo $selectedPlan === 'permanent' ? 'active' : ''; ?>" data-plan="permanent">
+                            <input type="radio" name="plan_type" value="permanent" <?php echo $selectedPlan === 'permanent' ? 'checked' : ''; ?>>
                             Langganan Bulanan
                         </label>
                     </div>
                     
                     <!-- Trial Plan Details -->
-                    <div class="plan-details active" id="trial-details">
+                    <div class="plan-details <?php echo $selectedPlan === 'trial' ? 'active' : ''; ?>" id="trial-details">
                         <h3>Trial 10 Hari</h3>
                         <div class="plan-feature">
                             <i class="fas fa-check-circle"></i>
@@ -543,7 +563,7 @@
                     </div>
                     
                     <!-- Permanent Plan Details -->
-                    <div class="plan-details" id="permanent-details">
+                    <div class="plan-details <?php echo $selectedPlan === 'permanent' ? 'active' : ''; ?>" id="permanent-details">
                         <h3>Langganan Bulanan</h3>
                         <div class="plan-feature">
                             <i class="fas fa-check-circle"></i>
@@ -562,11 +582,9 @@
                             <span>Integrasi dengan kalender</span>
                         </div>
                         <div class="plan-price">Rp95.000/bulan</div>
-                        
-                        <label class="checkbox">
-                            <input type="checkbox" name="pay_now" value="1" checked>
+                        <button type="button" class="btn-gateway" id="payNowGatewayBtn">
                             Bayar sekarang (aktif 30 hari)
-                        </label>
+                        </button>
                     </div>
                 </div>
                 
@@ -592,6 +610,10 @@
             const permanentDetails = document.getElementById('permanent-details');
             const termsCheckbox = document.getElementById('terms');
             const submitBtn = document.getElementById('submitBtn');
+            const registerForm = document.getElementById('registerForm');
+            const goGatewayInput = document.getElementById('goGatewayInput');
+            const payNowGatewayBtn = document.getElementById('payNowGatewayBtn');
+            const permanentPlanRadio = document.querySelector('input[name="plan_type"][value="permanent"]');
                         
             const planRadios = document.querySelectorAll('input[name="plan_type"]');
 
@@ -613,8 +635,8 @@
             syncSubmitState();
             
             // Form submission
-            const registerForm = document.getElementById('registerForm');
             registerForm.addEventListener('submit', function(e) {
+                goGatewayInput.value = '0';
                 // Client-side validation
                 const password = document.querySelector('input[name="password"]').value;
                 const terms = termsCheckbox.checked;
@@ -634,14 +656,22 @@
                 // You can add more validation here if needed
                 return true;
             });
-        });
-                
-        document.addEventListener('DOMContentLoaded', function () {
-            const payNowCheckbox = document.querySelector('input[name="pay_now"]');
 
-            if (payNowCheckbox) {
-                payNowCheckbox.addEventListener('click', function (e) {
-                    e.stopPropagation();
+            if (payNowGatewayBtn && permanentPlanRadio) {
+                payNowGatewayBtn.addEventListener('click', function() {
+                    permanentPlanRadio.checked = true;
+                    planOptions.forEach(opt => opt.classList.remove('active'));
+                    permanentPlanRadio.closest('.plan-option').classList.add('active');
+                    trialDetails.classList.remove('active');
+                    permanentDetails.classList.add('active');
+                    goGatewayInput.value = '1';
+
+                    if (!registerForm.reportValidity()) {
+                        goGatewayInput.value = '0';
+                        return;
+                    }
+
+                    registerForm.submit();
                 });
             }
         });

@@ -16,8 +16,8 @@ function admin_plan_status(array $user): array
         }
     }
 
-    if (!empty($user['trial_until'])) {
-        $trialUntil = new DateTime($user['trial_until'], new DateTimeZone('Asia/Jakarta'));
+    if (!empty($user['trial_end'])) {
+        $trialUntil = new DateTime($user['trial_end'], new DateTimeZone('Asia/Jakarta'));
         if ($trialUntil > $now) {
             return [
                 'type' => 'trial',

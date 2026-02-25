@@ -784,6 +784,18 @@
 </head>
 <body data-plan-blocked="<?php echo !empty($blocked) ? '1' : '0'; ?>">
     <div class="container">
+        <?php if (!empty($billing_notice)): ?>
+            <div class="alert success">
+                <i class="fas fa-check-circle"></i>
+                <?php echo htmlspecialchars($billing_notice); ?>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($billing_error)): ?>
+            <div class="alert error">
+                <i class="fas fa-exclamation-circle"></i>
+                <?php echo htmlspecialchars($billing_error); ?>
+            </div>
+        <?php endif; ?>
         <!-- Header -->
         <header class="dashboard-header">
             <div class="header-left">
@@ -877,13 +889,10 @@
             <!-- Extend Paid -->
             <div class="subscription-form">
                 <h3><i class="fas fa-plus-circle"></i> Perpanjang Langganan</h3>
-                <form method="post">
-                    <input type="hidden" name="action" value="mark_paid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-credit-card"></i>
-                        Tambah 30 Hari — Rp95.000
-                    </button>
-                </form>
+                <a href="/billing/checkout" class="btn btn-primary">
+                    <i class="fas fa-credit-card"></i>
+                    Bayar  - Rp95.000/30 hari
+                </a>
             </div>
         </div>
 
@@ -949,13 +958,10 @@
                     
                     <div class="subscription-form">
                         <h3><i class="fas fa-rocket"></i> Aktifkan Kembali</h3>
-                        <form method="post">
-                            <input type="hidden" name="action" value="mark_paid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-credit-card"></i>
-                                Bayar & Aktifkan 30 Hari
-                            </button>
-                        </form>
+                        <a href="/billing/checkout" class="btn btn-primary">
+                            <i class="fas fa-credit-card"></i>
+                            Bayar & Aktifkan 30 Hari
+                        </a>
                     </div>
                     
                     <div class="subscription-form">
@@ -1222,3 +1228,5 @@
     </script>
 </body>
 </html>
+
+

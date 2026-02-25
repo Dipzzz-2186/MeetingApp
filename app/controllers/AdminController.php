@@ -1,6 +1,162 @@
 <?php
 
 class AdminController {
+    private static function createBillingToken(array $user, int $amount, int $days): string {
+        try {
+            $token = bin2hex(random_bytes(16));
+        } catch (Exception $e) {
+            $token = md5(uniqid((string)$user['id'], true));
+        }
+
+        if (!isset($_SESSION['billing_pending']) || !is_array($_SESSION['billing_pending'])) {
+            $_SESSION['billing_pending'] = [];
+        }
+
+        $_SESSION['billing_pending'][$token] = [
+            'admin_id' => (int)$user['id'],
+            'amount' => $amount,
+            'days' => $days,
+            'created_at' => time(),
+        ];
+
+        return $token;
+    }
+
+    private static function getBillingPayment(string $token, int $adminId): ?array {
+        if ($token === '') {
+            return null;
+        }
+
+        $payment = $_SESSION['billing_pending'][$token] ?? null;
+        if (!is_array($payment)) {
+            return null;
+        }
+
+        if ((int)($payment['admin_id'] ?? 0) !== $adminId) {
+            return null;
+        }
+
+        $createdAt = (int)($payment['created_at'] ?? 0);
+        if ($createdAt <= 0 || $createdAt < (time() - 3600)) {
+            unset($_SESSION['billing_pending'][$token]);
+            return null;
+        }
+
+        return $payment;
+    }
+
+    private static function clearBillingPayment(string $token): void {
+        if ($token !== '' && isset($_SESSION['billing_pending'][$token])) {
+            unset($_SESSION['billing_pending'][$token]);
+        }
+    }
+
+    private static function extendAdminPaidPlan(PDO $pdo, int $adminId, int $days): string {
+        $admin = User::findById($pdo, $adminId);
+        if (!$admin) {
+            throw new RuntimeException('Admin tidak ditemukan.');
+        }
+
+        $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+        if (!empty($admin['paid_until'])) {
+            $base = new DateTime($admin['paid_until'], new DateTimeZone('Asia/Jakarta'));
+            if ($base < $now) {
+                $base = $now;
+            }
+        } else {
+            $base = $now;
+        }
+
+        $base->modify('+' . $days . ' days');
+        $paidUntil = $base->format('Y-m-d H:i:s');
+        User::updatePlanPaidUntil($pdo, $adminId, $paidUntil);
+
+        return $paidUntil;
+    }
+
+    public static function billingCheckout(): void {
+        require_admin();
+        global $pdo;
+        refresh_user($pdo);
+        $user = current_user();
+
+        $amount = 95000;
+        $days = 30;
+        $error = $_SESSION['billing_error'] ?? null;
+        unset($_SESSION['billing_error']);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $method = trim($_POST['payment_method'] ?? '');
+            $allowedMethods = ['bank_va', 'qris', 'ewallet', 'card'];
+            if (!in_array($method, $allowedMethods, true)) {
+                $error = 'Metode pembayaran tidak valid.';
+            } else {
+                $token = self::createBillingToken($user, $amount, $days);
+                $_SESSION['billing_payment_method'][$token] = $method;
+                header('Location: /billing/pay?token=' . urlencode($token));
+                exit;
+            }
+        }
+
+        $planStatus = admin_plan_status($user);
+        render_view('admin/billing_checkout', [
+            'amount' => $amount,
+            'days' => $days,
+            'error' => $error,
+            'plan_status' => $planStatus,
+        ], 'Checkout Langganan');
+    }
+
+    public static function billingPay(): void {
+        require_admin();
+        global $pdo;
+        refresh_user($pdo);
+        $user = current_user();
+
+        $token = trim($_GET['token'] ?? ($_POST['token'] ?? ''));
+        $payment = self::getBillingPayment($token, (int)$user['id']);
+        if (!$payment) {
+            $_SESSION['billing_error'] = 'Sesi pembayaran tidak ditemukan atau sudah kadaluarsa.';
+            header('Location: /billing/checkout');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            if ($action === 'confirm') {
+                $paidUntil = self::extendAdminPaidPlan($pdo, (int)$user['id'], (int)$payment['days']);
+                self::clearBillingPayment($token);
+                unset($_SESSION['billing_payment_method'][$token]);
+                $_SESSION['billing_notice'] = 'Pembayaran berhasil. Langganan aktif sampai ' . date('d M Y H:i', strtotime($paidUntil)) . '.';
+                header('Location: /dashboard_admin');
+                exit;
+            }
+
+            if ($action === 'cancel') {
+                self::clearBillingPayment($token);
+                unset($_SESSION['billing_payment_method'][$token]);
+                $_SESSION['billing_error'] = 'Pembayaran dibatalkan.';
+                header('Location: /dashboard_admin');
+                exit;
+            }
+        }
+
+        $method = $_SESSION['billing_payment_method'][$token] ?? 'bank_va';
+        $methodLabelMap = [
+            'bank_va' => 'Virtual Account',
+            'qris' => 'QRIS',
+            'ewallet' => 'E-Wallet',
+            'card' => 'Kartu Kredit/Debit',
+        ];
+        $methodLabel = $methodLabelMap[$method] ?? 'Virtual Account';
+
+        render_view('admin/billing_pay', [
+            'token' => $token,
+            'payment' => $payment,
+            'method_label' => $methodLabel,
+        ], 'Payment Gateway');
+    }
+
     public static function dashboard(): void {
         require_admin();
         global $pdo;
@@ -13,24 +169,7 @@ class AdminController {
                 $action = $_POST['action'] ?? '';
 
                 if ($action === 'mark_paid') {
-                    $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
-
-                    if (!empty($user['paid_until'])) {
-                        $base = new DateTime($user['paid_until'], new DateTimeZone('Asia/Jakarta'));
-                        if ($base < $now) {
-                            $base = $now;
-                        }
-                    } else {
-                        $base = $now;
-                    }
-
-                    $base->modify('+30 days');
-
-                    User::updatePlanPaidUntil(
-                        $pdo,
-                        (int)$user['id'],
-                        $base->format('Y-m-d H:i:s')
-                    );
+                    self::extendAdminPaidPlan($pdo, (int)$user['id'], 30);
                 }
 
                 if ($action === 'extend_paid') {
@@ -62,6 +201,9 @@ class AdminController {
 
         $plan_message = admin_plan_message($user);
         $blocked = admin_plan_blocked($user);
+        $billing_notice = $_SESSION['billing_notice'] ?? null;
+        $billing_error = $_SESSION['billing_error'] ?? null;
+        unset($_SESSION['billing_notice'], $_SESSION['billing_error']);
         
         // SET TIMEZONE SAMA SEPERTI DI METHOD BOOKINGS
         date_default_timezone_set('Asia/Jakarta');
@@ -251,6 +393,8 @@ class AdminController {
             'recent' => $recent,
             'stats' => $stats,
             'plan_status' => $plan_status,
+            'billing_notice' => $billing_notice,
+            'billing_error' => $billing_error,
         ], 'Dashboard Admin');
     }
 
