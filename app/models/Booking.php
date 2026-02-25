@@ -1,6 +1,16 @@
 <?php
 
 class Booking {
+    private static function decodeRoomNames(array $rows): array {
+        foreach ($rows as &$row) {
+            if (isset($row['room_name'])) {
+                $row['room_name'] = Room::decodeStoredName($row['room_name']);
+            }
+        }
+        unset($row);
+        return $rows;
+    }
+
     public static function create(PDO $pdo, array $data): void {
         $stmt = $pdo->prepare('INSERT INTO bookings (admin_id, user_id, room_id, start_time, end_time, purpose, created_at)
             VALUES (:admin_id, :user_id, :room_id, :start_time, :end_time, :purpose, :created_at)');
@@ -23,7 +33,7 @@ class Booking {
             WHERE bookings.admin_id = :admin_id
             ORDER BY start_time DESC');
         $stmt->execute([':admin_id' => $adminId]);
-        return $stmt->fetchAll();
+        return self::decodeRoomNames($stmt->fetchAll());
     }
 
     public static function recentByAdmin(PDO $pdo, int $adminId, int $limit = 5): array {
@@ -35,7 +45,7 @@ class Booking {
             ORDER BY start_time DESC
             LIMIT ' . (int)$limit);
         $stmt->execute([':admin_id' => $adminId]);
-        return $stmt->fetchAll();
+        return self::decodeRoomNames($stmt->fetchAll());
     }
 
     public static function byUser(PDO $pdo, int $userId, int $adminId): array {
@@ -45,7 +55,7 @@ class Booking {
             WHERE bookings.user_id = :uid AND bookings.admin_id = :admin_id
             ORDER BY start_time DESC');
         $stmt->execute([':uid' => $userId, ':admin_id' => $adminId]);
-        return $stmt->fetchAll();
+        return self::decodeRoomNames($stmt->fetchAll());
     }
     
     public static function getAllByAdmin(PDO $pdo, int $adminId): array
@@ -66,16 +76,17 @@ class Booking {
         $stmt->execute([
             ':admin_id' => $adminId
         ]);
-        return $stmt->fetchAll();
+        return self::decodeRoomNames($stmt->fetchAll());
     }
     
     public static function all(PDO $pdo): array {
-        return $pdo->query("
+        $rows = $pdo->query("
             SELECT b.*, r.name AS room_name, u.name AS user_name
             FROM bookings b
             JOIN rooms r ON r.id = b.room_id
             JOIN users u ON u.id = b.user_id
             ORDER BY b.start_time DESC
         ")->fetchAll();
+        return self::decodeRoomNames($rows);
     }
 }

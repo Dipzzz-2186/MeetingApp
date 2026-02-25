@@ -356,6 +356,10 @@ class AdminController {
             ");
             $stmt->execute([':admin_id' => $user['id']]);
             $recent = $stmt->fetchAll();
+            foreach ($recent as &$item) {
+                $item['room_name'] = Room::decodeStoredName($item['room_name'] ?? '');
+            }
+            unset($item);
             
             // Tambahkan status override seperti di method bookings
             $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
@@ -629,7 +633,8 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Handle room creation
             if (!isset($_POST['action']) || $_POST['action'] === 'create') {
-                $name = trim($_POST['name'] ?? '');
+                $name = Room::decodeStoredName(trim($_POST['name'] ?? ''));
+                $storedName = Room::encodeNameForOwner($name, (int)$user['id']);
                 $capacity = (int)($_POST['capacity'] ?? 0);
 
                 if ($name === '' || $capacity <= 0) {
@@ -638,6 +643,24 @@ class AdminController {
                     $_SESSION['error'] = 'Kapasitas maksimal 100 orang.';
                 } else {
                     try {
+                        $stmt = $pdo->prepare("
+                            SELECT id
+                            FROM rooms
+                            WHERE owner_admin_id = :owner_admin_id
+                            AND (name = :name_plain OR name = :name_stored)
+                            LIMIT 1
+                        ");
+                        $stmt->execute([
+                            ':owner_admin_id' => $user['id'],
+                            ':name_plain' => $name,
+                            ':name_stored' => $storedName,
+                        ]);
+                        if ($stmt->fetch()) {
+                            $_SESSION['error'] = 'Nama room sudah digunakan di akun admin ini.';
+                            header('Location: ' . $_SERVER['REQUEST_URI']);
+                            exit;
+                        }
+
                         $upload = self::storeRoomWallpaper($_FILES['wallpaper_file'] ?? []);
                         if ($upload['error']) {
                             $_SESSION['error'] = $upload['error'];
@@ -646,7 +669,7 @@ class AdminController {
                         }
                         Room::create($pdo, [
                             'owner_admin_id' => $user['id'],
-                            'name' => $name,
+                            'name' => $storedName,
                             'capacity' => $capacity,
                             'wallpaper_url' => $upload['path'],
                             'created_at' => now_iso(),
@@ -661,7 +684,8 @@ class AdminController {
             // Handle room update
             elseif ($_POST['action'] === 'update') {
                 $id = (int)($_POST['id'] ?? 0);
-                $name = trim($_POST['name'] ?? '');
+                $name = Room::decodeStoredName(trim($_POST['name'] ?? ''));
+                $storedName = Room::encodeNameForOwner($name, (int)$user['id']);
                 $capacity = (int)($_POST['capacity'] ?? 0);
 
                 if ($id <= 0 || $name === '' || $capacity <= 0) {
@@ -692,10 +716,31 @@ class AdminController {
                                     @unlink($oldPath);
                                 }
                             }
+
+                            $stmt = $pdo->prepare("
+                                SELECT id
+                                FROM rooms
+                                WHERE owner_admin_id = :owner_admin_id
+                                AND (name = :name_plain OR name = :name_stored)
+                                AND id <> :id
+                                LIMIT 1
+                            ");
+                            $stmt->execute([
+                                ':owner_admin_id' => $user['id'],
+                                ':name_plain' => $name,
+                                ':name_stored' => $storedName,
+                                ':id' => $id,
+                            ]);
+                            if ($stmt->fetch()) {
+                                $_SESSION['error'] = 'Nama room sudah digunakan di akun admin ini.';
+                                header('Location: ' . $_SERVER['REQUEST_URI']);
+                                exit;
+                            }
+
                             // Update room
                             $stmt = $pdo->prepare("UPDATE rooms SET name = :name, capacity = :capacity, wallpaper_url = :wallpaper_url WHERE id = :id");
                             $stmt->execute([
-                                ':name' => $name,
+                                ':name' => $storedName,
                                 ':capacity' => $capacity,
                                 ':wallpaper_url' => $finalWallpaper,
                                 ':id' => $id
@@ -760,6 +805,7 @@ class AdminController {
                 $roomData = $stmt->fetch();
                 
                 if ($roomData) {
+                    $roomData['name'] = Room::decodeStoredName($roomData['name'] ?? '');
                     $roomData['wallpaper_url'] = trim((string)($roomData['wallpaper_url'] ?? ''), " \t\n\r\0\x0B'\",");
                     header('Content-Type: application/json');
                     echo json_encode($roomData);
@@ -804,6 +850,10 @@ class AdminController {
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         $rooms = $stmt->fetchAll();
+        foreach ($rooms as &$roomRow) {
+            $roomRow['name'] = Room::decodeStoredName($roomRow['name'] ?? '');
+        }
+        unset($roomRow);
         
         // Hitung total rooms untuk pagination
         $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM rooms WHERE owner_admin_id = :owner_admin_id");
@@ -865,6 +915,7 @@ class AdminController {
                 $bookingData = $stmt->fetch();
                 
                 if ($bookingData) {
+                    $bookingData['room_name'] = Room::decodeStoredName($bookingData['room_name'] ?? '');
                     // Format tanggal untuk form
                     $start = new DateTime($bookingData['start_time']);
                     $end = new DateTime($bookingData['end_time']);

@@ -51,6 +51,7 @@ class UserController {
                 $booking = $stmt->fetch();
 
                 if ($booking) {
+                    $booking['room_name'] = Room::decodeStoredName($booking['room_name'] ?? '');
                     $booking['start_time_formatted'] = 
                         (new DateTime($booking['start_time']))->format('Y-m-d\TH:i');
                     $booking['end_time_formatted'] = 
