@@ -1663,7 +1663,7 @@
         </div>
 
         <button type="button" class="monitor-exit-btn" id="monitorExitBtn">
-            <i class="fas fa-unlock"></i> Keluar Monitor
+            <i class="fas fa-unlock"></i>
         </button>
 
         <button type="button" class="monitor-add-btn" id="monitorAddBookingBtn">
