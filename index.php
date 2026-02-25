@@ -47,6 +47,7 @@ $routes = [
     '/' => ['HomeController', 'index'],
     '/login' => ['AuthController', 'login'],
     '/register' => ['AuthController', 'register'],
+    '/register/checkout' => ['AuthController', 'registerCheckout'],
     '/register/pay' => ['AuthController', 'registerPay'],
     '/logout' => ['AuthController', 'logout'],
     '/dashboard_admin' => ['AdminController', 'dashboard'],

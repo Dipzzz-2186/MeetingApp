@@ -401,6 +401,10 @@
             text-decoration: underline;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width: 768px) {
             .auth-layout {
                 flex-direction: column;
@@ -583,7 +587,7 @@
                         </div>
                         <div class="plan-price">Rp95.000/bulan</div>
                         <button type="button" class="btn-gateway" id="payNowGatewayBtn">
-                            Bayar sekarang (aktif 30 hari)
+                            Lanjut ke Checkout (aktif 30 hari)
                         </button>
                     </div>
                 </div>
@@ -614,7 +618,11 @@
             const goGatewayInput = document.getElementById('goGatewayInput');
             const payNowGatewayBtn = document.getElementById('payNowGatewayBtn');
             const permanentPlanRadio = document.querySelector('input[name="plan_type"][value="permanent"]');
-                        
+            const isPermanentSelected = () => {
+                const selected = document.querySelector('input[name="plan_type"]:checked');
+                return selected && selected.value === 'permanent';
+            };
+
             const planRadios = document.querySelectorAll('input[name="plan_type"]');
 
             planRadios.forEach(radio => {
@@ -624,11 +632,14 @@
 
                     trialDetails.classList.toggle('active', this.value === 'trial');
                     permanentDetails.classList.toggle('active', this.value === 'permanent');
+                    syncSubmitState();
                 });
             });
 
             const syncSubmitState = () => {
-                submitBtn.disabled = !termsCheckbox.checked;
+                const permanentSelected = isPermanentSelected();
+                submitBtn.classList.toggle('hidden', permanentSelected);
+                submitBtn.disabled = !termsCheckbox.checked || permanentSelected;
             };
 
             termsCheckbox.addEventListener('change', syncSubmitState);

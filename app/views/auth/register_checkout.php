@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RuangMeet | Checkout Langganan</title>
+    <title>RuangMeet | Checkout Register</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -177,37 +177,39 @@
 <body>
     <div class="wrapper">
         <section class="card">
-            <h1 class="title">Checkout Langganan</h1>
-            <p class="muted">Pilih metode pembayaran untuk aktivasi paket berbayar.</p>
+            <h1 class="title">Checkout Register</h1>
+            <p class="muted">Pilih metode pembayaran sebelum masuk ke payment gateway.</p>
 
             <?php if (!empty($error)): ?>
                 <div class="alert"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
 
             <form method="post" class="methods">
+                <?php $selectedMethod = $pending['payment_method'] ?? 'bank_va'; ?>
+
                 <label class="method">
-                    <input type="radio" name="payment_method" value="bank_va" checked>
+                    <input type="radio" name="payment_method" value="bank_va" <?php echo $selectedMethod === 'bank_va' ? 'checked' : ''; ?>>
                     <span class="method-icon"><i class="fas fa-university"></i></span>
                     <span class="method-text">Virtual Account (BCA/BNI/BRI)</span>
                 </label>
                 <label class="method">
-                    <input type="radio" name="payment_method" value="qris">
+                    <input type="radio" name="payment_method" value="qris" <?php echo $selectedMethod === 'qris' ? 'checked' : ''; ?>>
                     <span class="method-icon"><i class="fas fa-qrcode"></i></span>
                     <span class="method-text">QRIS</span>
                 </label>
                 <label class="method">
-                    <input type="radio" name="payment_method" value="ewallet">
+                    <input type="radio" name="payment_method" value="ewallet" <?php echo $selectedMethod === 'ewallet' ? 'checked' : ''; ?>>
                     <span class="method-icon"><i class="fas fa-wallet"></i></span>
                     <span class="method-text">E-Wallet (OVO, DANA, GoPay)</span>
                 </label>
                 <label class="method">
-                    <input type="radio" name="payment_method" value="card">
+                    <input type="radio" name="payment_method" value="card" <?php echo $selectedMethod === 'card' ? 'checked' : ''; ?>>
                     <span class="method-icon"><i class="fas fa-credit-card"></i></span>
                     <span class="method-text">Kartu Kredit/Debit</span>
                 </label>
 
                 <div class="actions">
-                    <a href="/dashboard_admin" class="btn btn-secondary">Kembali</a>
+                    <a href="/register" class="btn btn-secondary">Kembali</a>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-lock"></i>
                         Lanjut ke Payment
@@ -218,14 +220,16 @@
 
         <aside class="card">
             <h2 style="font-size:20px; margin-bottom:10px;">Ringkasan Tagihan</h2>
+            <div class="summary-item"><span>Nama</span><strong><?php echo htmlspecialchars($pending['name'] ?? '-'); ?></strong></div>
+            <div class="summary-item"><span>Email</span><strong><?php echo htmlspecialchars($pending['email'] ?? '-'); ?></strong></div>
             <div class="summary-item"><span>Paket</span><strong>Langganan Bulanan</strong></div>
-            <div class="summary-item"><span>Masa aktif</span><strong><?php echo (int)$days; ?> hari</strong></div>
-            <div class="summary-item"><span>Status akun saat ini</span><strong><?php echo htmlspecialchars($plan_status['label'] ?? '-'); ?></strong></div>
+            <div class="summary-item"><span>Masa aktif</span><strong><?php echo (int)($pending['days'] ?? 30); ?> hari</strong></div>
+            <div class="summary-item"><span>Metode saat ini</span><strong><?php echo htmlspecialchars($method_label ?? 'Virtual Account'); ?></strong></div>
             <div class="price">
                 <span>Total</span>
-                <b>Rp<?php echo number_format((int)$amount, 0, ',', '.'); ?></b>
+                <b>Rp<?php echo number_format((int)($pending['amount'] ?? 95000), 0, ',', '.'); ?></b>
             </div>
-            <p class="muted" style="margin-top:14px; font-size:13px;">Ini adalah payment gateway internal (simulasi) untuk flow checkout. Bisa disambungkan ke Midtrans/Xendit di tahap berikutnya.</p>
+            <p class="muted" style="margin-top:14px; font-size:13px;">Setelah memilih metode, Anda akan diarahkan ke halaman payment gateway untuk konfirmasi.</p>
         </aside>
     </div>
 </body>
