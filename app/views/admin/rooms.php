@@ -385,6 +385,36 @@
             background: rgba(247, 200, 66, 0.1);
         }
 
+        .action-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(247, 200, 66, 0.16);
+        }
+
+        .edit-wallpaper-gallery {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+        }
+
+        .edit-wallpaper-thumb {
+            position: relative;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(17, 21, 28, 0.75);
+            aspect-ratio: 3 / 4;
+        }
+
+        .edit-wallpaper-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+
         .action-btn.edit:hover {
             border-color: var(--info);
             color: var(--info);
@@ -401,6 +431,17 @@
             border-color: var(--success);
             color: var(--success);
             background: rgba(87, 255, 117, 0.1);
+        }
+
+        .wallpaper-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .wallpaper-input-field {
+            flex: 1;
         }
 
         /* Pagination Styles */
@@ -812,8 +853,15 @@
                     </div>
                     <div>
                         <label><i class="fas fa-image"></i> Wallpaper (Upload)</label>
-                        <input type="file" name="wallpaper_file" accept="image/*">
-                        <small style="color: var(--muted); font-size: 12px;">Format JPG, PNG, WEBP. Disarankan 1920x1080, max 5MB.</small>
+                        <div id="createWallpaperInputs">
+                            <div class="wallpaper-input-row">
+                                <input type="file" name="wallpaper_files[]" accept="image/*" multiple class="wallpaper-input-field">
+                            </div>
+                        </div>
+                        <button type="button" class="action-btn" id="addCreateWallpaperInput">
+                            <i class="fas fa-plus"></i> Tambah File Wallpaper
+                        </button>
+                        <small style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Format JPG, PNG, WEBP. Disarankan 1920x1080, max 5MB per file.</small>
                     </div>
                     <button type="submit">
                         <i class="fas fa-plus"></i>
@@ -833,6 +881,26 @@
                     if ($capacity <= 10) return 'medium';
                     if ($capacity <= 20) return 'large';
                     return 'xlarge';
+                }
+
+                function getPrimaryWallpaper($value) {
+                    $raw = trim((string)$value);
+                    if ($raw === '') return '';
+                    $parts = preg_split('/\r\n|\r|\n/', $raw);
+                    $first = trim((string)($parts[0] ?? ''));
+                    return trim($first, " \t\n\r\0\x0B'\",");
+                }
+
+                function getWallpaperList($value) {
+                    $raw = trim((string)$value);
+                    if ($raw === '') return [];
+                    $parts = preg_split('/\r\n|\r|\n/', $raw);
+                    $list = array_values(array_filter(array_map(static function($item) {
+                        return trim((string)$item, " \t\n\r\0\x0B'\",");
+                    }, $parts), static function($item) {
+                        return $item !== '';
+                    }));
+                    return $list;
                 }
                 ?>
                 
@@ -857,7 +925,9 @@
                                 <?php foreach ($rooms as $row): 
                                     $capacityBadge = getCapacityBadge($row['capacity']);
                                     $createdDate = date('d/m/Y', strtotime($row['created_at']));
-                                    $wallpaperUrl = trim((string)($row['wallpaper_url'] ?? ''), " \t\n\r\0\x0B'\",");
+                                    $wallpaperUrl = getPrimaryWallpaper($row['wallpaper_url'] ?? '');
+                                    $wallpaperList = getWallpaperList($row['wallpaper_url'] ?? '');
+                                    $wallpaperListJson = htmlspecialchars(json_encode($wallpaperList, JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8');
                                 ?>
                                     <tr data-room-id="<?php echo $row['id']; ?>">
                                         <td data-label="Ruangan">
@@ -887,7 +957,8 @@
                                                         data-room-id="<?php echo $row['id']; ?>"
                                                         data-room-name="<?php echo htmlspecialchars($row['name']); ?>"
                                                         data-room-capacity="<?php echo $row['capacity']; ?>"
-                                                        data-room-wallpaper="<?php echo htmlspecialchars($wallpaperUrl); ?>">
+                                                        data-room-wallpaper="<?php echo htmlspecialchars($wallpaperUrl); ?>"
+                                                        data-room-wallpapers="<?php echo $wallpaperListJson; ?>">
                                                     <i class="fas fa-edit"></i>
                                                     Edit
                                                 </button>
@@ -1014,12 +1085,19 @@
                     
                     <div>
                         <label><i class="fas fa-image"></i> Wallpaper (Upload)</label>
-                        <input type="file" name="wallpaper_file" id="editRoomWallpaper" accept="image/*">
-                        <div id="editWallpaperPreview" style="margin-top: 10px; border: 1px dashed var(--stroke); border-radius: 10px; padding: 10px; text-align: center;">
-                            <img id="editWallpaperImg" src="" alt="Wallpaper Preview" style="max-width: 100%; max-height: 160px; border-radius: 8px; display: none;">
-                            <div id="editWallpaperEmpty" style="color: var(--muted); font-size: 12px;">Belum ada wallpaper.</div>
+                        <div id="editWallpaperInputs">
+                            <div class="wallpaper-input-row">
+                                <input type="file" name="wallpaper_files[]" id="editRoomWallpaper" accept="image/*" multiple class="wallpaper-input-field">
+                            </div>
                         </div>
-                        <small style="color: var(--muted); font-size: 12px;">Biarkan kosong untuk mempertahankan wallpaper lama.</small>
+                        <button type="button" class="action-btn" id="addEditWallpaperInput">
+                            <i class="fas fa-plus"></i> Tambah File Wallpaper
+                        </button>
+                        <div id="editWallpaperPreview" style="margin-top: 10px; border: 1px dashed var(--stroke); border-radius: 10px; padding: 10px;">
+                            <div id="editWallpaperGrid" class="edit-wallpaper-gallery"></div>
+                            <div id="editWallpaperEmpty" style="color: var(--muted); font-size: 12px; text-align: center;">Belum ada wallpaper.</div>
+                        </div>
+                        <small style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Biarkan kosong untuk mempertahankan wallpaper lama.</small>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -1091,8 +1169,14 @@
             const editRoomNameInput = document.getElementById('editRoomName');
             const editRoomCapacityInput = document.getElementById('editRoomCapacity');
             const editRoomWallpaperInput = document.getElementById('editRoomWallpaper');
-            const editWallpaperImg = document.getElementById('editWallpaperImg');
+            const createWallpaperInputs = document.getElementById('createWallpaperInputs');
+            const editWallpaperInputs = document.getElementById('editWallpaperInputs');
+            const addCreateWallpaperInputBtn = document.getElementById('addCreateWallpaperInput');
+            const addEditWallpaperInputBtn = document.getElementById('addEditWallpaperInput');
+            const editWallpaperGrid = document.getElementById('editWallpaperGrid');
             const editWallpaperEmpty = document.getElementById('editWallpaperEmpty');
+            let previewObjectUrls = [];
+            let currentRoomWallpaperUrls = [];
 
             function setModalOpenState() {
                 const isOpen =
@@ -1125,40 +1209,141 @@
                 return [...new Set(candidates)];
             }
 
-            function setWallpaperPreview(url) {
-                if (!editWallpaperImg || !editWallpaperEmpty) return;
-                const candidates = getWallpaperCandidates(url);
-                if (candidates.length > 0) {
-                    let index = 0;
-                    editWallpaperImg.style.display = 'none';
-                    editWallpaperEmpty.style.display = 'block';
-                    editWallpaperEmpty.textContent = 'Memuat wallpaper...';
-                    const tryLoad = () => {
-                        const currentUrl = candidates[index];
-                        if (!currentUrl) {
-                            editWallpaperImg.style.display = 'none';
-                            editWallpaperEmpty.style.display = 'block';
-                            editWallpaperEmpty.textContent = 'Wallpaper gagal dimuat.';
-                            return;
-                        }
-                        editWallpaperImg.onload = () => {
-                            editWallpaperImg.style.display = 'block';
-                            editWallpaperEmpty.style.display = 'none';
-                        };
-                        editWallpaperImg.onerror = () => {
-                            index += 1;
-                            tryLoad();
-                        };
-                        editWallpaperImg.src = currentUrl;
-                    };
-                    tryLoad();
-                } else {
-                    editWallpaperImg.removeAttribute('src');
-                    editWallpaperImg.style.display = 'none';
+            function clearPreviewObjectUrls() {
+                previewObjectUrls.forEach(url => URL.revokeObjectURL(url));
+                previewObjectUrls = [];
+            }
+
+            function setWallpaperPreview(urls) {
+                if (!editWallpaperGrid || !editWallpaperEmpty) return;
+                const list = Array.isArray(urls) ? urls : (urls ? [urls] : []);
+                editWallpaperGrid.innerHTML = '';
+
+                const valid = list.map(item => String(item || '').trim()).filter(Boolean);
+                if (!valid.length) {
                     editWallpaperEmpty.style.display = 'block';
                     editWallpaperEmpty.textContent = 'Belum ada wallpaper.';
+                    return;
+                }
+
+                editWallpaperEmpty.style.display = 'none';
+
+                valid.forEach((url, index) => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'edit-wallpaper-thumb';
+                    const img = document.createElement('img');
+                    img.alt = `Wallpaper ${index + 1}`;
+
+                    const candidates = getWallpaperCandidates(url);
+                    if (candidates.length) {
+                        let i = 0;
+                        const tryLoad = () => {
+                            const current = candidates[i];
+                            if (!current) {
+                                wrap.remove();
+                                if (!editWallpaperGrid.children.length) {
+                                    editWallpaperEmpty.style.display = 'block';
+                                    editWallpaperEmpty.textContent = 'Wallpaper gagal dimuat.';
+                                }
+                                return;
+                            }
+                            img.onerror = () => {
+                                i += 1;
+                                tryLoad();
+                            };
+                            img.src = current;
+                        };
+                        tryLoad();
+                    } else {
+                        wrap.remove();
+                    }
+
+                    wrap.appendChild(img);
+                    editWallpaperGrid.appendChild(wrap);
+                });
+            }
+
+            function parseWallpaperArray(raw) {
+                if (!raw) return [];
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        return parsed.map(item => String(item || '').trim()).filter(Boolean);
+                    }
+                } catch (e) {}
+                return [];
+            }
+
+            function updateEditPreviewFromSelectedFiles() {
+                if (!editWallpaperInputs) return;
+                clearPreviewObjectUrls();
+                const inputs = Array.from(editWallpaperInputs.querySelectorAll('input[type="file"]'));
+                const urls = [];
+                inputs.forEach(input => {
+                    const files = input.files ? Array.from(input.files) : [];
+                    files.forEach(file => {
+                        const objectUrl = URL.createObjectURL(file);
+                        previewObjectUrls.push(objectUrl);
+                        urls.push(objectUrl);
+                    });
+                });
+                if (urls.length) {
+                    setWallpaperPreview(urls);
+                } else {
+                    setWallpaperPreview(currentRoomWallpaperUrls);
                 }
             }
+
+            function createWallpaperInputRow() {
+                const row = document.createElement('div');
+                row.className = 'wallpaper-input-row';
+                row.innerHTML = `
+                    <input type="file" name="wallpaper_files[]" accept="image/*" multiple class="wallpaper-input-field">
+                    <button type="button" class="action-btn remove-wallpaper-input">
+                        <i class="fas fa-times"></i> Hapus
+                    </button>
+                `;
+                return row;
+            }
+
+            function bindEditWallpaperPreview(inputEl) {
+                if (!inputEl || inputEl.dataset.previewBound === '1') return;
+                inputEl.dataset.previewBound = '1';
+                inputEl.addEventListener('change', function () {
+                    updateEditPreviewFromSelectedFiles();
+                });
+            }
+
+            if (addCreateWallpaperInputBtn && createWallpaperInputs) {
+                addCreateWallpaperInputBtn.addEventListener('click', function() {
+                    createWallpaperInputs.appendChild(createWallpaperInputRow());
+                });
+            }
+
+            if (addEditWallpaperInputBtn && editWallpaperInputs) {
+                addEditWallpaperInputBtn.addEventListener('click', function() {
+                    const row = createWallpaperInputRow();
+                    editWallpaperInputs.appendChild(row);
+                    const input = row.querySelector('input[type="file"]');
+                    bindEditWallpaperPreview(input);
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.remove-wallpaper-input');
+                if (!btn) return;
+                const row = btn.closest('.wallpaper-input-row');
+                if (!row) return;
+                const parent = row.parentElement;
+                if (parent && parent.children.length <= 1) {
+                    const input = row.querySelector('input[type="file"]');
+                    if (input) input.value = '';
+                    updateEditPreviewFromSelectedFiles();
+                    return;
+                }
+                row.remove();
+                updateEditPreviewFromSelectedFiles();
+            });
             
             // State
             let isLoading = false;
@@ -1174,14 +1359,15 @@
                     const roomName = this.getAttribute('data-room-name');
                     const roomCapacity = this.getAttribute('data-room-capacity');
                     const roomWallpaper = this.getAttribute('data-room-wallpaper') || '';
+                    const roomWallpapers = parseWallpaperArray(this.getAttribute('data-room-wallpapers') || '[]');
                     
                     // Load room data via AJAX for more accurate data
-                    loadRoomData(roomId, roomName, roomCapacity, roomWallpaper);
+                    loadRoomData(roomId, roomName, roomCapacity, roomWallpaper, roomWallpapers);
                 });
             });
             
             // Function to load room data
-            async function loadRoomData(roomId, roomName, roomCapacity, roomWallpaper) {
+            async function loadRoomData(roomId, roomName, roomCapacity, roomWallpaper, roomWallpapers) {
                 // Show loading in modal
                 editSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin spinner"></i> Memuat...';
                 editSubmitBtn.disabled = true;
@@ -1206,20 +1392,23 @@
                             document.getElementById('editRoomId').value = roomId;
                             editRoomNameInput.value = roomName;
                             editRoomCapacityInput.value = roomCapacity;
-                            setWallpaperPreview(roomWallpaper);
+                            currentRoomWallpaperUrls = roomWallpapers && roomWallpapers.length ? roomWallpapers : [roomWallpaper];
+                            setWallpaperPreview(currentRoomWallpaperUrls);
                         } else {
                             // Use fresh data from server
                             document.getElementById('editRoomId').value = roomData.id;
                             editRoomNameInput.value = roomData.name;
                             editRoomCapacityInput.value = roomData.capacity;
-                            setWallpaperPreview(roomData.wallpaper_url || roomWallpaper);
+                            currentRoomWallpaperUrls = roomData.wallpaper_urls || roomWallpapers || [roomData.wallpaper_url || roomWallpaper];
+                            setWallpaperPreview(currentRoomWallpaperUrls);
                         }
                     } else {
                         // Fallback to data attributes
                         document.getElementById('editRoomId').value = roomId;
                         editRoomNameInput.value = roomName;
                         editRoomCapacityInput.value = roomCapacity;
-                        setWallpaperPreview(roomWallpaper);
+                        currentRoomWallpaperUrls = roomWallpapers && roomWallpapers.length ? roomWallpapers : [roomWallpaper];
+                        setWallpaperPreview(currentRoomWallpaperUrls);
                     }
                 } catch (error) {
                     console.error('Error loading room data:', error);
@@ -1227,7 +1416,8 @@
                     document.getElementById('editRoomId').value = roomId;
                     editRoomNameInput.value = roomName;
                     editRoomCapacityInput.value = roomCapacity;
-                    setWallpaperPreview(roomWallpaper);
+                    currentRoomWallpaperUrls = roomWallpapers && roomWallpapers.length ? roomWallpapers : [roomWallpaper];
+                    setWallpaperPreview(currentRoomWallpaperUrls);
                 } finally {
                     // Reset button
                     editSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
@@ -1265,24 +1455,19 @@
                 editSubmitBtn.disabled = false;
                 if (cancelEditBtn) cancelEditBtn.disabled = false;
                 editForm.reset();
-                setWallpaperPreview('');
+                if (editWallpaperInputs) {
+                    const rows = editWallpaperInputs.querySelectorAll('.wallpaper-input-row');
+                    rows.forEach((row, index) => {
+                        if (index > 0) row.remove();
+                    });
+                }
+                clearPreviewObjectUrls();
+                currentRoomWallpaperUrls = [];
+                setWallpaperPreview([]);
                 setModalOpenState();
             }
 
-            if (editRoomWallpaperInput) {
-                editRoomWallpaperInput.addEventListener('change', function () {
-                    const file = this.files && this.files[0];
-                    if (!file) {
-                        setWallpaperPreview('');
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        setWallpaperPreview(e.target?.result || '');
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
+            if (editRoomWallpaperInput) bindEditWallpaperPreview(editRoomWallpaperInput);
             
             function closeDeleteModal() {
                 deleteModal.style.display = 'none';

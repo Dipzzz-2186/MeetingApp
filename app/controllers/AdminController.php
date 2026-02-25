@@ -558,61 +558,127 @@ class AdminController {
         ], 'Add User');
     }
 
-    private static function storeRoomWallpaper(array $file): array {
-        if (empty($file) || !isset($file['error'])) {
-            return ['path' => null, 'error' => null];
+    private static function parseRoomWallpaperPaths($value): array {
+        if ($value === null) {
+            return [];
+        }
+        $raw = trim((string)$value);
+        if ($raw === '') {
+            return [];
         }
 
-        if ($file['error'] === UPLOAD_ERR_NO_FILE) {
-            return ['path' => null, 'error' => null];
+        $decoded = json_decode($raw, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $normalized = array_map(static function($item) {
+                return trim((string)$item);
+            }, $decoded);
+            return array_values(array_filter($normalized, static function($item) {
+                return $item !== '';
+            }));
         }
 
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            return ['path' => null, 'error' => 'Upload wallpaper gagal.'];
+        if (strpos($raw, "\n") !== false) {
+            return array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $raw))));
         }
 
-        if (!is_uploaded_file($file['tmp_name'])) {
-            return ['path' => null, 'error' => 'File upload tidak valid.'];
+        return [$raw];
+    }
+
+    private static function storeRoomWallpapers(array $fileInput): array {
+        if (empty($fileInput) || !isset($fileInput['error'])) {
+            return ['paths' => [], 'error' => null];
         }
 
-        $maxSize = 5 * 1024 * 1024; // 5MB
-        if ($file['size'] > $maxSize) {
-            return ['path' => null, 'error' => 'Ukuran wallpaper maksimal 5MB.'];
+        $flatten = static function($value): array {
+            if (!is_array($value)) {
+                return [$value];
+            }
+            $result = [];
+            $stack = [$value];
+            while (!empty($stack)) {
+                $current = array_pop($stack);
+                foreach ($current as $item) {
+                    if (is_array($item)) {
+                        $stack[] = $item;
+                    } else {
+                        $result[] = $item;
+                    }
+                }
+            }
+            return $result;
+        };
+
+        $errors = $flatten($fileInput['error']);
+        $tmpNames = $flatten($fileInput['tmp_name'] ?? []);
+        $sizes = $flatten($fileInput['size'] ?? []);
+
+        $allNoFile = true;
+        foreach ($errors as $err) {
+            if ((int)$err !== UPLOAD_ERR_NO_FILE) {
+                $allNoFile = false;
+                break;
+            }
+        }
+        if ($allNoFile) {
+            return ['paths' => [], 'error' => null];
         }
 
+        $maxSize = 5 * 1024 * 1024; // 5MB per file
         $finfo = new finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($file['tmp_name']);
         $allowed = [
             'image/jpeg' => 'jpg',
             'image/png' => 'png',
             'image/webp' => 'webp',
         ];
 
-        if (!isset($allowed[$mime])) {
-            return ['path' => null, 'error' => 'Format wallpaper harus JPG, PNG, atau WEBP.'];
-        }
-
         $publicDir = dirname(__DIR__, 2) . '/public';
         $uploadDir = $publicDir . '/uploads/rooms';
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-                return ['path' => null, 'error' => 'Gagal membuat folder upload.'];
+                return ['paths' => [], 'error' => 'Gagal membuat folder upload.'];
             }
         }
 
-        try {
-            $rand = bin2hex(random_bytes(8));
-        } catch (Exception $e) {
-            $rand = uniqid();
-        }
-        $filename = 'room_' . date('Ymd_His') . '_' . $rand . '.' . $allowed[$mime];
-        $targetPath = $uploadDir . '/' . $filename;
+        $savedPaths = [];
+        foreach ($errors as $index => $err) {
+            $err = (int)$err;
+            if ($err === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+            if ($err !== UPLOAD_ERR_OK) {
+                return ['paths' => [], 'error' => 'Upload wallpaper gagal.'];
+            }
 
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-            return ['path' => null, 'error' => 'Gagal menyimpan file wallpaper.'];
+            $tmp = (string)($tmpNames[$index] ?? '');
+            $size = (int)($sizes[$index] ?? 0);
+            if ($tmp === '' || !is_uploaded_file($tmp)) {
+                return ['paths' => [], 'error' => 'File upload tidak valid.'];
+            }
+            if ($size > $maxSize) {
+                return ['paths' => [], 'error' => 'Ukuran wallpaper maksimal 5MB per file.'];
+            }
+
+            $mime = $finfo->file($tmp);
+            if (!isset($allowed[$mime])) {
+                return ['paths' => [], 'error' => 'Format wallpaper harus JPG, PNG, atau WEBP.'];
+            }
+
+            try {
+                $rand = bin2hex(random_bytes(8));
+            } catch (Exception $e) {
+                $rand = uniqid();
+            }
+            $filename = 'room_' . date('Ymd_His') . '_' . $index . '_' . $rand . '.' . $allowed[$mime];
+            $targetPath = $uploadDir . '/' . $filename;
+
+            if (!move_uploaded_file($tmp, $targetPath)) {
+                return ['paths' => [], 'error' => 'Gagal menyimpan file wallpaper.'];
+            }
+
+            $savedPaths[] = '/uploads/rooms/' . $filename;
         }
 
-        return ['path' => '/uploads/rooms/' . $filename, 'error' => null];
+        return ['paths' => $savedPaths, 'error' => null];
     }
 
     public static function rooms(): void {
@@ -661,17 +727,19 @@ class AdminController {
                             exit;
                         }
 
-                        $upload = self::storeRoomWallpaper($_FILES['wallpaper_file'] ?? []);
+                        $uploadInput = $_FILES['wallpaper_files'] ?? ($_FILES['wallpaper_file'] ?? []);
+                        $upload = self::storeRoomWallpapers($uploadInput);
                         if ($upload['error']) {
                             $_SESSION['error'] = $upload['error'];
                             header('Location: ' . $_SERVER['REQUEST_URI']);
                             exit;
                         }
+                        $wallpaperValue = !empty($upload['paths']) ? implode("\n", $upload['paths']) : null;
                         Room::create($pdo, [
                             'owner_admin_id' => $user['id'],
                             'name' => $storedName,
                             'capacity' => $capacity,
-                            'wallpaper_url' => $upload['path'],
+                            'wallpaper_url' => $wallpaperValue,
                             'created_at' => now_iso(),
                         ]);
                         $_SESSION['notice'] = 'Room berhasil ditambahkan.';
@@ -700,20 +768,24 @@ class AdminController {
                         
                         $roomRow = $stmt->fetch();
                         if ($roomRow) {
-                            $existingWallpaper = $roomRow['wallpaper_url'] ?? null;
-                            $upload = self::storeRoomWallpaper($_FILES['wallpaper_file'] ?? []);
+                            $existingWallpapers = self::parseRoomWallpaperPaths($roomRow['wallpaper_url'] ?? null);
+                            $uploadInput = $_FILES['wallpaper_files'] ?? ($_FILES['wallpaper_file'] ?? []);
+                            $upload = self::storeRoomWallpapers($uploadInput);
                             if ($upload['error']) {
                                 $_SESSION['error'] = $upload['error'];
                                 header('Location: ' . $_SERVER['REQUEST_URI']);
                                 exit;
                             }
-                            $finalWallpaper = $upload['path'] ?? $existingWallpaper;
+                            $finalWallpapers = !empty($upload['paths']) ? $upload['paths'] : $existingWallpapers;
+                            $finalWallpaper = !empty($finalWallpapers) ? implode("\n", $finalWallpapers) : null;
 
-                            if ($upload['path'] && $existingWallpaper) {
+                            if (!empty($upload['paths']) && !empty($existingWallpapers)) {
                                 $publicDir = dirname(__DIR__, 2) . '/public';
-                                $oldPath = $publicDir . $existingWallpaper;
-                                if (is_file($oldPath)) {
-                                    @unlink($oldPath);
+                                foreach ($existingWallpapers as $existingWallpaper) {
+                                    $oldPath = $publicDir . $existingWallpaper;
+                                    if (is_file($oldPath)) {
+                                        @unlink($oldPath);
+                                    }
                                 }
                             }
 
@@ -806,7 +878,9 @@ class AdminController {
                 
                 if ($roomData) {
                     $roomData['name'] = Room::decodeStoredName($roomData['name'] ?? '');
-                    $roomData['wallpaper_url'] = trim((string)($roomData['wallpaper_url'] ?? ''), " \t\n\r\0\x0B'\",");
+                    $wallpaperPaths = self::parseRoomWallpaperPaths($roomData['wallpaper_url'] ?? null);
+                    $roomData['wallpaper_urls'] = $wallpaperPaths;
+                    $roomData['wallpaper_url'] = $wallpaperPaths[0] ?? '';
                     header('Content-Type: application/json');
                     echo json_encode($roomData);
                     exit;
