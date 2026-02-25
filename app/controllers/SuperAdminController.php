@@ -75,10 +75,15 @@ class SuperAdminController
         $totalBookings = (int)$bookingsCount->fetchColumn();
 
         header('Content-Type: application/json');
+        $roomRows = $rooms->fetchAll();
+        foreach ($roomRows as &$row) {
+            $row['name'] = Room::decodeStoredName($row['name'] ?? '');
+        }
+        unset($row);
         echo json_encode([
             'admin' => $admin,
             'users' => $users->fetchAll(),
-            'rooms' => $rooms->fetchAll(),
+            'rooms' => $roomRows,
             'bookings' => $totalBookings,
         ]);
     }
@@ -145,6 +150,10 @@ class SuperAdminController
         $rooms->execute([':uid' => $userId]);
         
         $roomsData = $rooms->fetchAll();
+        foreach ($roomsData as &$row) {
+            $row['room_name'] = Room::decodeStoredName($row['room_name'] ?? '');
+        }
+        unset($row);
         
         // Count total bookings
         $totalBookings = count($roomsData);
@@ -174,6 +183,10 @@ class SuperAdminController
             JOIN users a ON a.id=b.admin_id
             ORDER BY b.start_time DESC
         ")->fetchAll();
+        foreach ($bookings as &$row) {
+            $row['room_name'] = Room::decodeStoredName($row['room_name'] ?? '');
+        }
+        unset($row);
 
         render_view('super/bookings', compact('bookings'), 'All Bookings');
     }
