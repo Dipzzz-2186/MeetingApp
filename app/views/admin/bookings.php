@@ -3706,6 +3706,13 @@
                 setModalOpenState();
             };
 
+            const closeAllMonitorModals = () => {
+                closeMonitorModal();
+                closeMonitorRoomModal();
+                closeMonitorAuthModal();
+                closeMonitorCreateModal();
+            };
+
             if (monitorAddBookingBtn) {
                 monitorAddBookingBtn.addEventListener('click', openMonitorCreateModal);
             }
@@ -3791,6 +3798,8 @@
                     setActiveFilterBtn('all');
                     updatePagination();
                     resetMonitorCreatorVerification();
+                    closeAllMonitorModals();
+                    closeAllModals();
                 }
 
                 if (isFs && monitorCreateBody && createBookingCard) {
