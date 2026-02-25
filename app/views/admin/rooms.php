@@ -524,8 +524,10 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
             animation: fadeIn 0.3s ease;
         }
 
@@ -538,6 +540,9 @@
             box-shadow: var(--shadow);
             border: 1px solid var(--stroke);
             position: relative;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            margin: 20px 0;
             animation: slideUp 0.3s ease;
         }
 
