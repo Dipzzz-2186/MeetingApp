@@ -1715,7 +1715,7 @@
                     </p>
                     <div class="detail-item">
                         <label><i class="fas fa-envelope"></i> Email User</label>
-                        <input type="email" id="monitor_user_email" placeholder="user@email.com" autocomplete="username">
+                        <input type="email" id="monitor_user_email" placeholder="user@email.com" autocomplete="off" autocapitalize="off" spellcheck="false">
                     </div>
                     <div class="detail-item">
                         <label><i class="fas fa-key"></i> Password User</label>
