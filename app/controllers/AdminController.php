@@ -769,6 +769,27 @@ class AdminController {
                         $roomRow = $stmt->fetch();
                         if ($roomRow) {
                             $existingWallpapers = self::parseRoomWallpaperPaths($roomRow['wallpaper_url'] ?? null);
+                            $requestedRemovals = $_POST['remove_wallpapers'] ?? [];
+                            if (!is_array($requestedRemovals)) {
+                                $requestedRemovals = [$requestedRemovals];
+                            }
+                            $requestedRemovals = array_values(array_filter(array_map(static function($item) {
+                                return trim((string)$item);
+                            }, $requestedRemovals), static function($item) {
+                                return $item !== '';
+                            }));
+                            $requestedRemovalsSet = array_fill_keys($requestedRemovals, true);
+
+                            $keptWallpapers = [];
+                            $removedWallpapers = [];
+                            foreach ($existingWallpapers as $path) {
+                                if (isset($requestedRemovalsSet[$path])) {
+                                    $removedWallpapers[] = $path;
+                                } else {
+                                    $keptWallpapers[] = $path;
+                                }
+                            }
+
                             $uploadInput = $_FILES['wallpaper_files'] ?? ($_FILES['wallpaper_file'] ?? []);
                             $upload = self::storeRoomWallpapers($uploadInput);
                             if ($upload['error']) {
@@ -776,13 +797,20 @@ class AdminController {
                                 header('Location: ' . $_SERVER['REQUEST_URI']);
                                 exit;
                             }
-                            $finalWallpapers = !empty($upload['paths']) ? $upload['paths'] : $existingWallpapers;
+                            // Mode edit menambahkan wallpaper baru tanpa menghapus wallpaper lama.
+                            $finalWallpapers = $keptWallpapers;
+                            if (!empty($upload['paths'])) {
+                                $finalWallpapers = array_values(array_unique(array_merge($finalWallpapers, $upload['paths'])));
+                            }
                             $finalWallpaper = !empty($finalWallpapers) ? implode("\n", $finalWallpapers) : null;
 
-                            if (!empty($upload['paths']) && !empty($existingWallpapers)) {
+                            if (!empty($removedWallpapers)) {
                                 $publicDir = dirname(__DIR__, 2) . '/public';
-                                foreach ($existingWallpapers as $existingWallpaper) {
-                                    $oldPath = $publicDir . $existingWallpaper;
+                                foreach ($removedWallpapers as $removedPath) {
+                                    if (strpos($removedPath, '/uploads/rooms/') !== 0) {
+                                        continue;
+                                    }
+                                    $oldPath = $publicDir . $removedPath;
                                     if (is_file($oldPath)) {
                                         @unlink($oldPath);
                                     }

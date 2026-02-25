@@ -1,11 +1,9 @@
 <?php
 
 class Room {
-    private const INTERNAL_SUFFIX_PREFIX = '__adm_';
-
     public static function encodeNameForOwner(string $name, int $ownerAdminId): string {
-        $clean = self::decodeStoredName(trim($name));
-        return $clean . self::INTERNAL_SUFFIX_PREFIX . $ownerAdminId;
+        // Nama room disimpan apa adanya; owner dipisahkan lewat kolom owner_admin_id.
+        return self::decodeStoredName(trim($name));
     }
 
     public static function decodeStoredName(?string $storedName): string {
@@ -13,7 +11,8 @@ class Room {
         if ($value === '') {
             return '';
         }
-        return preg_replace('/' . preg_quote(self::INTERNAL_SUFFIX_PREFIX, '/') . '\d+$/', '', $value) ?? $value;
+        // Kompatibilitas data lama yang terlanjur pakai suffix internal (_adm_ / __adm_).
+        return preg_replace('/(?:__adm_|_adm_)\d+$/', '', $value) ?? $value;
     }
 
     public static function create(PDO $pdo, array $data): void {
