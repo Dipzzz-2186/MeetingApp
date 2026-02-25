@@ -134,6 +134,7 @@
         <div class="box">
             <div class="row"><span>Nama</span><strong><?php echo htmlspecialchars($pending['name'] ?? '-'); ?></strong></div>
             <div class="row"><span>Email</span><strong><?php echo htmlspecialchars($pending['email'] ?? '-'); ?></strong></div>
+            <div class="row"><span>Metode</span><strong><?php echo htmlspecialchars($method_label ?? 'Virtual Account'); ?></strong></div>
             <div class="row"><span>Durasi Aktif</span><strong><?php echo (int)($pending['days'] ?? 30); ?> hari</strong></div>
             <div class="total">
                 <span>Total Bayar</span>
