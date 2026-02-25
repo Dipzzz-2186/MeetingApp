@@ -404,7 +404,7 @@
             border-radius: 12px;
             overflow: hidden;
             background: rgba(17, 21, 28, 0.75);
-            aspect-ratio: 3 / 4;
+            aspect-ratio: 16 / 9;
         }
 
         .edit-wallpaper-thumb img {
@@ -412,6 +412,7 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            cursor: zoom-in;
         }
 
         .edit-wallpaper-remove {
@@ -719,6 +720,45 @@
             }
         }
 
+        .wallpaper-lightbox-content {
+            width: min(96vw, 1200px);
+            height: min(92vh, 760px);
+            padding: 12px;
+            background: rgba(9, 12, 18, 0.96);
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .wallpaper-lightbox-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            background: #06090f;
+        }
+
+        #closeWallpaperModal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid var(--stroke);
+            background: rgba(17, 21, 28, 0.9);
+            color: var(--ink);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -876,14 +916,15 @@
                     </div>
                     <div>
                         <label><i class="fas fa-image"></i> Wallpaper (Upload)</label>
-                        <div id="createWallpaperInputs">
-                            <div class="wallpaper-input-row">
-                                <input type="file" name="wallpaper_files[]" accept="image/*" multiple class="wallpaper-input-field">
-                            </div>
-                        </div>
+                        <div id="createWallpaperInputs"></div>
                         <button type="button" class="action-btn" id="addCreateWallpaperInput">
                             <i class="fas fa-plus"></i> Tambah File Wallpaper
                         </button>
+                        <div id="createWallpaperPreview" style="margin-top: 10px; border: 1px dashed var(--stroke); border-radius: 10px; padding: 10px;">
+                            <div style="font-size: 12px; color: var(--muted); margin-bottom: 6px;">Preview Wallpaper</div>
+                            <div id="createSelectedWallpaperGrid" class="edit-wallpaper-gallery"></div>
+                            <div id="createSelectedWallpaperEmpty" style="color: var(--muted); font-size: 12px; text-align: center;">Belum ada file dipilih.</div>
+                        </div>
                         <small style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Format JPG, PNG, WEBP. Disarankan 1920x1080, max 5MB per file.</small>
                     </div>
                     <button type="submit">
@@ -1108,11 +1149,7 @@
                     
                     <div>
                         <label><i class="fas fa-image"></i> Wallpaper (Upload)</label>
-                        <div id="editWallpaperInputs">
-                            <div class="wallpaper-input-row">
-                                <input type="file" name="wallpaper_files[]" id="editRoomWallpaper" accept="image/*" multiple class="wallpaper-input-field">
-                            </div>
-                        </div>
+                        <div id="editWallpaperInputs"></div>
                         <div id="editRemovedWallpapers"></div>
                         <button type="button" class="action-btn" id="addEditWallpaperInput">
                             <i class="fas fa-plus"></i> Tambah File Wallpaper
@@ -1180,12 +1217,25 @@
             </form>
         </div>
     </div>
+
+    <!-- Modal Preview Wallpaper -->
+    <div id="wallpaperModal" class="modal">
+        <div class="wallpaper-lightbox-content">
+            <button type="button" id="closeWallpaperModal" aria-label="Tutup preview">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="wallpaperModalImage" src="" alt="Preview wallpaper">
+        </div>
+    </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
             const editModal = document.getElementById('editModal');
             const deleteModal = document.getElementById('deleteModal');
+            const wallpaperModal = document.getElementById('wallpaperModal');
+            const wallpaperModalImage = document.getElementById('wallpaperModalImage');
+            const closeWallpaperModalBtn = document.getElementById('closeWallpaperModal');
             const editForm = document.getElementById('editForm');
             const deleteForm = document.getElementById('deleteForm');
             const closeEditModalBtn = document.getElementById('closeEditModal');
@@ -1196,11 +1246,12 @@
             const deleteSubmitBtn = document.getElementById('deleteSubmitBtn');
             const editRoomNameInput = document.getElementById('editRoomName');
             const editRoomCapacityInput = document.getElementById('editRoomCapacity');
-            const editRoomWallpaperInput = document.getElementById('editRoomWallpaper');
             const createWallpaperInputs = document.getElementById('createWallpaperInputs');
             const editWallpaperInputs = document.getElementById('editWallpaperInputs');
             const addCreateWallpaperInputBtn = document.getElementById('addCreateWallpaperInput');
             const addEditWallpaperInputBtn = document.getElementById('addEditWallpaperInput');
+            const createSelectedWallpaperGrid = document.getElementById('createSelectedWallpaperGrid');
+            const createSelectedWallpaperEmpty = document.getElementById('createSelectedWallpaperEmpty');
             const editRemovedWallpapers = document.getElementById('editRemovedWallpapers');
             const editWallpaperGrid = document.getElementById('editWallpaperGrid');
             const editWallpaperEmpty = document.getElementById('editWallpaperEmpty');
@@ -1210,6 +1261,8 @@
             const editSelectedWallpaperEmpty = document.getElementById('editSelectedWallpaperEmpty');
             const editWallpaperHint = document.getElementById('editWallpaperHint');
             let previewObjectUrls = [];
+            let createPreviewObjectUrls = [];
+            let createSelectedUploadEntries = [];
             let existingWallpaperUrls = [];
             let removedExistingWallpapers = [];
             let selectedUploadEntries = [];
@@ -1219,8 +1272,28 @@
             function setModalOpenState() {
                 const isOpen =
                     (editModal && editModal.style.display === 'flex') ||
-                    (deleteModal && deleteModal.style.display === 'flex');
+                    (deleteModal && deleteModal.style.display === 'flex') ||
+                    (wallpaperModal && wallpaperModal.style.display === 'flex');
                 document.body.classList.toggle('modal-open', !!isOpen);
+            }
+
+            function openWallpaperModal(src, altText) {
+                if (!wallpaperModal || !wallpaperModalImage || !src) return;
+                wallpaperModalImage.src = src;
+                wallpaperModalImage.alt = altText || 'Preview wallpaper';
+                wallpaperModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                setModalOpenState();
+            }
+
+            function closeWallpaperModal() {
+                if (!wallpaperModal || !wallpaperModalImage) return;
+                wallpaperModal.style.display = 'none';
+                wallpaperModalImage.src = '';
+                if (editModal.style.display !== 'flex' && deleteModal.style.display !== 'flex') {
+                    document.body.style.overflow = 'auto';
+                }
+                setModalOpenState();
             }
 
             function normalizeWallpaperUrl(url) {
@@ -1257,6 +1330,12 @@
                 previewObjectUrls.forEach(url => URL.revokeObjectURL(url));
                 previewObjectUrls = [];
                 selectedUploadEntries = [];
+            }
+
+            function clearCreatePreviewObjectUrls() {
+                createPreviewObjectUrls.forEach(url => URL.revokeObjectURL(url));
+                createPreviewObjectUrls = [];
+                createSelectedUploadEntries = [];
             }
 
             function syncRemovedWallpaperInputs() {
@@ -1351,6 +1430,7 @@
                     }
 
                     wrap.appendChild(img);
+                    img.addEventListener('click', () => openWallpaperModal(img.src, img.alt));
                     const removeBtn = document.createElement('button');
                     removeBtn.type = 'button';
                     removeBtn.className = 'edit-wallpaper-remove';
@@ -1412,8 +1492,57 @@
                         updateEditPreviewFromSelectedFiles();
                     });
                     wrap.appendChild(img);
+                    img.addEventListener('click', () => openWallpaperModal(img.src, img.alt));
                     wrap.appendChild(removeBtn);
                     editSelectedWallpaperGrid.appendChild(wrap);
+                });
+            }
+
+            function setCreateSelectedWallpaperPreview(entries) {
+                if (!createSelectedWallpaperGrid || !createSelectedWallpaperEmpty) return;
+                createSelectedWallpaperGrid.innerHTML = '';
+                const list = Array.isArray(entries) ? entries : [];
+
+                if (!list.length) {
+                    createSelectedWallpaperEmpty.style.display = 'block';
+                    return;
+                }
+
+                createSelectedWallpaperEmpty.style.display = 'none';
+                list.forEach((entry, index) => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'edit-wallpaper-thumb';
+                    const img = document.createElement('img');
+                    img.alt = `Preview create ${index + 1}`;
+                    img.src = entry.objectUrl;
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'edit-wallpaper-remove';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.title = 'Hapus file ini';
+                    removeBtn.addEventListener('click', () => {
+                        const targetInput = entry.input;
+                        if (!targetInput || !targetInput.files) return;
+
+                        const dt = new DataTransfer();
+                        const files = Array.from(targetInput.files);
+                        files.forEach(file => {
+                            const key = `${file.name}__${file.size}__${file.lastModified}`;
+                            if (key !== entry.fileKey) {
+                                dt.items.add(file);
+                            }
+                        });
+
+                        targetInput.files = dt.files;
+                        if (targetInput.classList.contains('create-extra-wallpaper-input') && dt.files.length === 0) {
+                            targetInput.remove();
+                        }
+                        updateCreatePreviewFromSelectedFiles();
+                    });
+                    wrap.appendChild(img);
+                    img.addEventListener('click', () => openWallpaperModal(img.src, img.alt));
+                    wrap.appendChild(removeBtn);
+                    createSelectedWallpaperGrid.appendChild(wrap);
                 });
             }
 
@@ -1446,16 +1575,22 @@
                 setSelectedWallpaperPreview(selectedUploadEntries);
             }
 
-            function createWallpaperInputRow() {
-                const row = document.createElement('div');
-                row.className = 'wallpaper-input-row';
-                row.innerHTML = `
-                    <input type="file" name="wallpaper_files[]" accept="image/*" multiple class="wallpaper-input-field">
-                    <button type="button" class="action-btn remove-wallpaper-input">
-                        <i class="fas fa-times"></i> Hapus
-                    </button>
-                `;
-                return row;
+            function updateCreatePreviewFromSelectedFiles() {
+                if (!createWallpaperInputs) return;
+                clearCreatePreviewObjectUrls();
+                const inputs = Array.from(createWallpaperInputs.querySelectorAll('input[type="file"][name="wallpaper_files[]"]'));
+                const entries = [];
+                inputs.forEach(input => {
+                    const files = input.files ? Array.from(input.files) : [];
+                    files.forEach(file => {
+                        const objectUrl = URL.createObjectURL(file);
+                        createPreviewObjectUrls.push(objectUrl);
+                        const fileKey = `${file.name}__${file.size}__${file.lastModified}`;
+                        entries.push({ input, objectUrl, fileKey });
+                    });
+                });
+                createSelectedUploadEntries = entries;
+                setCreateSelectedWallpaperPreview(createSelectedUploadEntries);
             }
 
             function bindEditWallpaperPreview(inputEl) {
@@ -1466,9 +1601,34 @@
                 });
             }
 
+            function bindCreateWallpaperPreview(inputEl) {
+                if (!inputEl || inputEl.dataset.previewBound === '1') return;
+                inputEl.dataset.previewBound = '1';
+                inputEl.addEventListener('change', function () {
+                    updateCreatePreviewFromSelectedFiles();
+                });
+            }
+
             if (addCreateWallpaperInputBtn && createWallpaperInputs) {
                 addCreateWallpaperInputBtn.addEventListener('click', function() {
-                    createWallpaperInputs.appendChild(createWallpaperInputRow());
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.name = 'wallpaper_files[]';
+                    input.accept = 'image/*';
+                    input.multiple = true;
+                    input.className = 'create-extra-wallpaper-input';
+                    input.style.display = 'none';
+                    bindCreateWallpaperPreview(input);
+                    input.addEventListener('change', function() {
+                        const files = this.files ? Array.from(this.files) : [];
+                        if (!files.length) {
+                            this.remove();
+                            return;
+                        }
+                        updateCreatePreviewFromSelectedFiles();
+                    });
+                    createWallpaperInputs.appendChild(input);
+                    input.click();
                 });
             }
 
@@ -1503,11 +1663,19 @@
                 if (parent && parent.children.length <= 1) {
                     const input = row.querySelector('input[type="file"]');
                     if (input) input.value = '';
-                    updateEditPreviewFromSelectedFiles();
+                    if (parent.id === 'createWallpaperInputs') {
+                        updateCreatePreviewFromSelectedFiles();
+                    } else {
+                        updateEditPreviewFromSelectedFiles();
+                    }
                     return;
                 }
                 row.remove();
-                updateEditPreviewFromSelectedFiles();
+                if (parent && parent.id === 'createWallpaperInputs') {
+                    updateCreatePreviewFromSelectedFiles();
+                } else {
+                    updateEditPreviewFromSelectedFiles();
+                }
             });
             
             // State
@@ -1627,10 +1795,6 @@
                 if (cancelEditBtn) cancelEditBtn.disabled = false;
                 editForm.reset();
                 if (editWallpaperInputs) {
-                    const rows = editWallpaperInputs.querySelectorAll('.wallpaper-input-row');
-                    rows.forEach((row, index) => {
-                        if (index > 0) row.remove();
-                    });
                     const extraInputs = editWallpaperInputs.querySelectorAll('input.edit-extra-wallpaper-input');
                     extraInputs.forEach(input => input.remove());
                 }
@@ -1642,7 +1806,6 @@
                 setModalOpenState();
             }
 
-            if (editRoomWallpaperInput) bindEditWallpaperPreview(editRoomWallpaperInput);
             
             function closeDeleteModal() {
                 deleteModal.style.display = 'none';
@@ -1656,6 +1819,7 @@
             // Event listeners for modal close buttons
             closeEditModalBtn.addEventListener('click', closeEditModal);
             closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+            if (closeWallpaperModalBtn) closeWallpaperModalBtn.addEventListener('click', closeWallpaperModal);
             cancelEditBtn.addEventListener('click', closeEditModal);
             cancelDeleteBtn.addEventListener('click', closeDeleteModal);
             
@@ -1671,10 +1835,22 @@
                     closeDeleteModal();
                 }
             });
+
+            if (wallpaperModal) {
+                wallpaperModal.addEventListener('click', function(e) {
+                    if (e.target === wallpaperModal) {
+                        closeWallpaperModal();
+                    }
+                });
+            }
             
             // Close modal with ESC key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
+                    if (wallpaperModal && wallpaperModal.style.display === 'flex') {
+                        closeWallpaperModal();
+                        return;
+                    }
                     if (editModal.style.display === 'flex') {
                         closeEditModal();
                     }
