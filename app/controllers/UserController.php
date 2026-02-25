@@ -23,6 +23,7 @@ class UserController {
 
         refresh_user($pdo);
         $user = current_user();
+        date_default_timezone_set('Asia/Jakarta');
 
         // =====================
         // AJAX GET BOOKING (DETAIL / EDIT)
@@ -90,87 +91,52 @@ class UserController {
             // =====================
             if ($action === 'create') {
                 $room_id = (int)($_POST['room_id'] ?? 0);
-                $start   = $_POST['start_time'] ?? '';
-                $end     = $_POST['end_time'] ?? '';
+                $start   = normalize_datetime($_POST['start_time'] ?? '');
+                $end     = normalize_datetime($_POST['end_time'] ?? '');
                 $purpose = trim($_POST['purpose'] ?? '');
-                
-                // Debug logging
-                error_log("=== CREATE BOOKING ===");
-                error_log("Room ID: $room_id");
-                error_log("Start: $start");
-                error_log("End: $end");
-                error_log("Purpose: $purpose");
-                error_log("User ID: " . $user['id']);
-                error_log("Admin ID: " . $user['owner_admin_id']);
 
                 // Validation
                 if ($room_id <= 0) {
                     $error = 'Pilih room yang valid.';
-                    error_log("Validation Error: Room ID invalid");
-                } elseif (empty($start) || empty($end)) {
+                } elseif ($start === '' || $end === '') {
                     $error = 'Waktu mulai dan selesai wajib diisi.';
-                    error_log("Validation Error: Time empty");
                 } elseif (strtotime($end) <= strtotime($start)) {
                     $error = 'Waktu selesai harus setelah waktu mulai.';
-                    error_log("Validation Error: End time <= Start time");
                 } elseif (strtotime($start) < time()) {
                     $error = 'Tidak dapat membuat booking di waktu yang sudah lewat.';
-                    error_log("Validation Error: Start time in past");
                 } else {
-                    // Convert datetime format
-                    $start_time = date('Y-m-d H:i:s', strtotime($start));
-                    $end_time = date('Y-m-d H:i:s', strtotime($end));
-                    $created_at = date('Y-m-d H:i:s');
-                    
-                    error_log("Formatted Start: $start_time");
-                    error_log("Formatted End: $end_time");
-                    
-                    // Check for overlapping bookings
                     $stmt = $pdo->prepare("
-                        SELECT COUNT(*) as count 
-                        FROM bookings 
-                        WHERE room_id = :room_id 
-                        AND (
-                            (start_time < :end_time AND end_time > :start_time)
-                        )
+                        SELECT id
+                        FROM rooms
+                        WHERE id = :id
+                        AND owner_admin_id = :owner_admin_id
+                        LIMIT 1
                     ");
                     $stmt->execute([
-                        ':room_id' => $room_id,
-                        ':start_time' => $start_time,
-                        ':end_time' => $end_time
+                        ':id' => $room_id,
+                        ':owner_admin_id' => $user['owner_admin_id'],
                     ]);
-                    
-                    $result = $stmt->fetch();
-                    
+
+                    if (!$stmt->fetch()) {
+                        $error = 'Room tidak valid.';
+                    } elseif (!is_room_available($pdo, $room_id, $start, $end)) {
+                        $error = 'Room sudah terbooking pada waktu tersebut.';
+                    } else {
                         try {
-                            // Create booking
-                            $bookingData = [
+                            Booking::create($pdo, [
                                 'admin_id'   => (int)$user['owner_admin_id'],
                                 'user_id'    => (int)$user['id'],
                                 'room_id'    => $room_id,
-                                'start_time' => $start_time,
-                                'end_time'   => $end_time,
+                                'start_time' => $start,
+                                'end_time'   => $end,
                                 'purpose'    => $purpose,
-                                'created_at' => $created_at,
-                            ];
-                            
-                            error_log("Attempting to create booking with data: " . json_encode($bookingData));
-                            
-                            // Use the existing create method
-                            Booking::create($pdo, $bookingData);
-                            
-                            $notice = 'Booking berhasil dibuat!';
-                            error_log("SUCCESS: Booking created successfully");
-                            
-                        } catch (PDOException $e) {
-                            $error = 'Gagal membuat booking. Error: ' . $e->getMessage();
-                            error_log("PDO Exception: " . $e->getMessage());
-                            error_log("Error Code: " . $e->getCode());
-                            error_log("SQL State: " . $e->errorInfo[0] ?? '');
+                                'created_at' => now_iso(),
+                            ]);
+                            $notice = 'Booking berhasil dibuat.';
                         } catch (Exception $e) {
-                            $error = 'Terjadi kesalahan sistem.';
-                            error_log("General Exception: " . $e->getMessage());
+                            $error = 'Gagal membuat booking: ' . $e->getMessage();
                         }
+                    }
                 }
             }
 
@@ -180,37 +146,70 @@ class UserController {
             elseif ($action === 'edit') {
                 $booking_id = (int)($_POST['booking_id'] ?? 0);
                 $room_id    = (int)($_POST['edit_room_id'] ?? 0);
-                $start      = $_POST['edit_start_time'] ?? '';
-                $end        = $_POST['edit_end_time'] ?? '';
+                $start      = normalize_datetime($_POST['edit_start_time'] ?? '');
+                $end        = normalize_datetime($_POST['edit_end_time'] ?? '');
                 $purpose    = trim($_POST['edit_purpose'] ?? '');
 
-                if ($booking_id <= 0 || $room_id <= 0 || empty($start) || empty($end)) {
+                if ($booking_id <= 0 || $room_id <= 0 || $start === '' || $end === '') {
                     $error = 'Data tidak lengkap.';
                 } elseif (strtotime($end) <= strtotime($start)) {
                     $error = 'Waktu tidak valid.';
                 } else {
-                    $start_time = date('Y-m-d H:i:s', strtotime($start));
-                    $end_time = date('Y-m-d H:i:s', strtotime($end));
-                    
-                    // Check for overlapping bookings (excluding current)
                     $stmt = $pdo->prepare("
-                        SELECT COUNT(*) as count 
-                        FROM bookings 
-                        WHERE room_id = :room_id 
-                        AND id != :booking_id
-                        AND (
-                            (start_time < :end_time AND end_time > :start_time)
-                        )
+                        SELECT id
+                        FROM bookings
+                        WHERE id = :id
+                        AND user_id = :user_id
+                        AND admin_id = :admin_id
+                        LIMIT 1
                     ");
                     $stmt->execute([
-                        ':room_id' => $room_id,
-                        ':booking_id' => $booking_id,
-                        ':start_time' => $start_time,
-                        ':end_time' => $end_time
+                        ':id' => $booking_id,
+                        ':user_id' => $user['id'],
+                        ':admin_id' => $user['owner_admin_id'],
                     ]);
-                    
-                    $result = $stmt->fetch();
-                    
+
+                    if (!$stmt->fetch()) {
+                        $error = 'Booking tidak ditemukan.';
+                    } else {
+                        $stmt = $pdo->prepare("
+                            SELECT id
+                            FROM rooms
+                            WHERE id = :id
+                            AND owner_admin_id = :owner_admin_id
+                            LIMIT 1
+                        ");
+                        $stmt->execute([
+                            ':id' => $room_id,
+                            ':owner_admin_id' => $user['owner_admin_id'],
+                        ]);
+
+                        if (!$stmt->fetch()) {
+                            $error = 'Room tidak valid.';
+                        }
+                    }
+
+                    if (!$error) {
+                        $stmt = $pdo->prepare("
+                            SELECT COUNT(*) as count
+                            FROM bookings
+                            WHERE room_id = :room_id
+                            AND id <> :booking_id
+                            AND (start_time < :end_time AND end_time > :start_time)
+                        ");
+                        $stmt->execute([
+                            ':room_id' => $room_id,
+                            ':booking_id' => $booking_id,
+                            ':start_time' => $start,
+                            ':end_time' => $end,
+                        ]);
+                        $overlapCount = (int)($stmt->fetch()['count'] ?? 0);
+                        if ($overlapCount > 0) {
+                            $error = 'Room sudah terbooking pada waktu tersebut.';
+                        }
+                    }
+
+                    if (!$error) {
                         try {
                             $stmt = $pdo->prepare("
                                 UPDATE bookings
@@ -224,8 +223,8 @@ class UserController {
                             ");
                             $stmt->execute([
                                 ':room_id'   => $room_id,
-                                ':start_time' => $start_time,
-                                ':end_time'  => $end_time,
+                                ':start_time' => $start,
+                                ':end_time'  => $end,
                                 ':purpose'   => $purpose,
                                 ':id'        => $booking_id,
                                 ':user_id'   => $user['id'],
@@ -237,9 +236,10 @@ class UserController {
                             } else {
                                 $error = 'Gagal memperbarui booking atau booking tidak ditemukan.';
                             }
-                        } catch (PDOException $e) {
-                            $error = 'Gagal memperbarui booking. Error: ' . $e->getMessage();
+                        } catch (Exception $e) {
+                            $error = 'Gagal memperbarui booking: ' . $e->getMessage();
                         }
+                    }
                 }
             }
 
@@ -311,10 +311,9 @@ class UserController {
         unset($_SESSION['notice']);
         unset($_SESSION['error']);
 
-        // Get bookings
-        $bookings = Booking::byUser(
+        // Get bookings (semua booking di admin yang sama)
+        $bookings = Booking::byAdmin(
             $pdo,
-            (int)$user['id'],
             (int)$user['owner_admin_id']
         );
 

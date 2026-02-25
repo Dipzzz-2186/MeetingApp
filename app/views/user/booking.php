@@ -1181,44 +1181,10 @@
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> Scheduling & Booking</h1>
             <div class="header-actions">
-                <a href="/dashboard_admin" class="back-btn">
+                <a href="/dashboard_user" class="back-btn">
                     <i class="fas fa-arrow-left"></i>
                     Kembali ke Dashboard
                 </a>
-            </div>
-        </div>
-
-        <button type="button" class="monitor-exit-btn" id="monitorExitBtn">
-            <i class="fas fa-unlock"></i> Keluar Monitor
-        </button>
-
-        <!-- Modal: Exit Monitor -->
-        <div class="modal" id="monitorExitModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2><i class="fas fa-lock"></i> Keluar Mode Monitor</h2>
-                    <button class="modal-close" type="button" id="monitorExitClose">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p style="color: var(--muted); margin-bottom: 16px;">
-                        Masukkan password akun admin untuk keluar dari mode monitor.
-                    </p>
-                    <div class="detail-item">
-                        <label><i class="fas fa-key"></i> Password</label>
-                        <input type="password" id="monitor_password" placeholder="Password admin" autocomplete="current-password">
-                        <div class="monitor-error" id="monitor_password_error" style="display:none;"></div>
-                    </div>
-                    <div class="modal-actions" style="margin-top: 20px;">
-                        <button class="action-btn" type="button" id="monitorExitCancel">
-                            <i class="fas fa-times"></i> Batal
-                        </button>
-                        <button class="action-btn monitor-confirm" type="button" id="monitorExitConfirm">
-                            <i class="fas fa-unlock"></i> Keluar
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
         
@@ -1241,7 +1207,7 @@
                     </div>
                 <?php endif; ?>
                 
-                <form method="post" class="grid">
+                <form id="createBookingForm" method="post" class="grid">
                     <input type="hidden" name="action" value="create">
                     <div class="form-row">
                         <div>
@@ -1262,6 +1228,8 @@
                             <label><i class="fas fa-calendar-day"></i> Mulai</label>
                             <input type="datetime-local" name="start_time" id="start_time" required 
                                   min="<?php echo date('Y-m-d\TH:i'); ?>"
+                                  oninput="window.setUserBookingEndFromStart && window.setUserBookingEndFromStart(this)"
+                                  onchange="window.setUserBookingEndFromStart && window.setUserBookingEndFromStart(this)"
                                   placeholder="Pilih waktu mulai">
                             <div class="time-helper">
                                 <i class="fas fa-clock"></i>
@@ -1272,6 +1240,8 @@
                             <label><i class="fas fa-calendar-check"></i> Selesai</label>
                             <input type="datetime-local" name="end_time" id="end_time" required
                                   min="<?php echo date('Y-m-d\TH:i'); ?>"
+                                  oninput="window.refreshUserBookingTimeDisplays && window.refreshUserBookingTimeDisplays()"
+                                  onchange="window.refreshUserBookingTimeDisplays && window.refreshUserBookingTimeDisplays()"
                                   placeholder="Pilih waktu selesai">
                             <div class="time-helper">
                                 <i class="fas fa-clock"></i>
@@ -1373,6 +1343,11 @@
                                     $statusClass = 'status-' . $status;
                                     $statusText = $status == 'upcoming' ? 'Akan Datang' : 
                                                 ($status == 'ongoing' ? 'Berlangsung' : 'Selesai');
+                                    $rowUserName = trim((string)($row['user_name'] ?? ''));
+                                    if ($rowUserName === '') {
+                                        $rowUserName = $user['name'];
+                                    }
+                                    $isOwnBooking = ((int)($row['user_id'] ?? 0) === (int)$user['id']);
                                 ?>
                                     <tr data-status="<?php echo $status; ?>" 
                                         data-date="<?php echo $start->format('Y-m-d'); ?>"
@@ -1380,11 +1355,11 @@
                                         <td data-label="User & Room">
                                             <div style="display: flex; align-items: center; gap: 12px;">
                                                 <div class="user-avatar">
-                                                    <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                                                    <?php echo strtoupper(substr($rowUserName, 0, 1)); ?>
                                                 </div>
                                                 <div>
                                                     <div style="font-weight: 600; color: var(--ink);">
-                                                        <?php echo htmlspecialchars($user['name']); ?>
+                                                        <?php echo htmlspecialchars($rowUserName); ?>
                                                     </div>
                                                     <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
                                                         <span class="room-badge">
@@ -1425,15 +1400,21 @@
                                         </td>
                                         <td data-label="Aksi">
                                             <div class="actions">
-                                                <button class="action-btn view" onclick="viewBooking(<?php echo $row['id']; ?>)">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="action-btn edit" onclick="editBooking(<?php echo $row['id']; ?>)">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn delete" onclick="deleteBooking(<?php echo $row['id']; ?>)">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <?php if ($isOwnBooking): ?>
+                                                    <button class="action-btn view" onclick="viewBooking(<?php echo $row['id']; ?>)">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="action-btn edit" onclick="editBooking(<?php echo $row['id']; ?>)">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="action-btn delete" onclick="deleteBooking(<?php echo $row['id']; ?>)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <span style="font-size: 12px; color: var(--muted);">
+                                                        <i class="fas fa-lock"></i> Milik user lain
+                                                    </span>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -1661,6 +1642,94 @@
     </div>
     
 <script>
+    window.refreshUserBookingTimeDisplays = function() {
+        const startInput = document.getElementById('start_time');
+        const endInput = document.getElementById('end_time');
+        const startDisplay = document.getElementById('start_time_display');
+        const endDisplay = document.getElementById('end_time_display');
+        if (!startInput || !endInput || !startDisplay || !endDisplay) return;
+
+        const formatDateTimeDisplay = (raw) => {
+            if (!raw) return 'Belum dipilih';
+            let dateObj = null;
+            if (raw instanceof Date) {
+                dateObj = raw;
+            } else {
+                const value = String(raw).trim();
+                const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+                if (iso) {
+                    dateObj = new Date(
+                        Number(iso[1]),
+                        Number(iso[2]) - 1,
+                        Number(iso[3]),
+                        Number(iso[4]),
+                        Number(iso[5])
+                    );
+                } else {
+                    const fallback = new Date(value);
+                    if (!isNaN(fallback.getTime())) dateObj = fallback;
+                }
+            }
+            if (!dateObj || isNaN(dateObj.getTime())) return 'Belum dipilih';
+            const options = {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return dateObj.toLocaleDateString('id-ID', options);
+        };
+
+        startDisplay.textContent = formatDateTimeDisplay(startInput.value);
+        startDisplay.style.color = startInput.value ? 'var(--ink)' : 'var(--muted)';
+        startDisplay.style.fontWeight = startInput.value ? '500' : 'normal';
+
+        endDisplay.textContent = formatDateTimeDisplay(endInput.value);
+        endDisplay.style.color = endInput.value ? 'var(--ink)' : 'var(--muted)';
+        endDisplay.style.fontWeight = endInput.value ? '500' : 'normal';
+    };
+
+    window.setUserBookingEndFromStart = function(startEl) {
+        const endEl = document.getElementById('end_time');
+        if (!startEl || !endEl) return;
+        const raw = String(startEl.value || '').trim();
+        if (!raw) return;
+
+        let start = null;
+        if (startEl.valueAsDate && !isNaN(startEl.valueAsDate.getTime())) {
+            start = startEl.valueAsDate;
+        } else {
+            const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (iso) {
+                start = new Date(
+                    Number(iso[1]),
+                    Number(iso[2]) - 1,
+                    Number(iso[3]),
+                    Number(iso[4]),
+                    Number(iso[5])
+                );
+            } else {
+                const fallback = new Date(raw);
+                if (!isNaN(fallback.getTime())) start = fallback;
+            }
+        }
+        if (!start || isNaN(start.getTime())) return;
+
+        const pad = (n) => String(n).padStart(2, '0');
+        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+        const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+        const defaultEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+        endEl.min = fmt(minEnd);
+        endEl.value = fmt(defaultEnd);
+
+        if (typeof window.refreshUserBookingTimeDisplays === 'function') {
+            window.refreshUserBookingTimeDisplays();
+        }
+    };
+
     // Modal Functions
     const detailModal = document.getElementById('detailModal');
     const editModal = document.getElementById('editModal');
@@ -2033,12 +2102,11 @@
     let currentFilter = 'all';
 
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
+        const form = document.getElementById('createBookingForm');
         const startInput = document.getElementById('start_time');
         const endInput = document.getElementById('end_time');
         const startDisplay = document.getElementById('start_time_display');
         const endDisplay = document.getElementById('end_time_display');
-        const monitorToggle = document.getElementById('monitorToggle');
         
         // Initialize pagination
         initializePagination();
@@ -2064,49 +2132,61 @@
         
         // Update display saat input berubah
         function updateTimeDisplays() {
-            if (startInput.value) {
-                startDisplay.textContent = formatDateTimeDisplay(startInput.value);
-                startDisplay.style.color = 'var(--ink)';
-                startDisplay.style.fontWeight = '500';
-            } else {
-                startDisplay.textContent = 'Belum dipilih';
-                startDisplay.style.color = 'var(--muted)';
-                startDisplay.style.fontWeight = 'normal';
-            }
-            
-            if (endInput.value) {
-                endDisplay.textContent = formatDateTimeDisplay(endInput.value);
-                endDisplay.style.color = 'var(--ink)';
-                endDisplay.style.fontWeight = '500';
-            } else {
-                endDisplay.textContent = 'Belum dipilih';
-                endDisplay.style.color = 'var(--muted)';
-                endDisplay.style.fontWeight = 'normal';
+            if (typeof window.refreshUserBookingTimeDisplays === 'function') {
+                window.refreshUserBookingTimeDisplays();
+                return;
             }
         }
-        
-        // Update end time minimum saat start time berubah
-        startInput.addEventListener('change', function() {
-            if (this.value) {
-                const start = new Date(this.value);
-                const minEnd = new Date(start.getTime() + 30 * 60 * 1000); // Minimal 30 menit setelah mulai
-                endInput.min = minEnd.toISOString().slice(0, 16);
-                
-                // Jika end time sudah dipilih dan kurang dari minimal, reset
-                if (endInput.value) {
-                    const currentEnd = new Date(endInput.value);
-                    if (currentEnd < minEnd) {
-                        endInput.value = '';
-                        showAlert('Waktu selesai harus minimal 30 menit setelah waktu mulai. Silahkan pilih ulang.', 'warning');
-                    }
+        window.__updateUserBookingTimeDisplays = updateTimeDisplays;
+
+        function toLocalInputValue(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        function applyDefaultEndTime() {
+            if (!startInput.value) return;
+
+            endInput.removeAttribute('max');
+
+            // Parse local datetime dengan fallback untuk format browser yang berbeda
+            let start = null;
+            const raw = String(startInput.value || '').trim();
+            const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (isoMatch) {
+                const y = Number(isoMatch[1]);
+                const m = Number(isoMatch[2]);
+                const d = Number(isoMatch[3]);
+                const hh = Number(isoMatch[4]);
+                const mm = Number(isoMatch[5]);
+                start = new Date(y, m - 1, d, hh, mm);
+            } else {
+                const fallback = new Date(raw);
+                if (!isNaN(fallback.getTime())) {
+                    start = fallback;
                 }
             }
-            updateTimeDisplays();
-        });
+
+            if (!start || isNaN(start.getTime())) return;
+
+            const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+            endInput.min = toLocalInputValue(minEnd);
+
+            const defaultEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+            endInput.value = toLocalInputValue(defaultEnd);
+        }
+        
+        // Samakan perilaku dengan admin: set default selesai +2 jam saat mulai berubah
+        const syncEndFromStart = function() {
+            window.setUserBookingEndFromStart(startInput);
+        };
+        startInput.addEventListener('input', syncEndFromStart);
+        startInput.addEventListener('change', syncEndFromStart);
         
         endInput.addEventListener('change', updateTimeDisplays);
         
         // Initial display
+        applyDefaultEndTime();
         updateTimeDisplays();
         
         // Form validation
@@ -2175,134 +2255,6 @@
             window.history.replaceState(null, null, window.location.pathname + window.location.search);
         }
 
-        // Monitor mode (fullscreen)
-        if (monitorToggle) {
-            const setActiveFilterBtn = (filter) => {
-                const filterBtns = document.querySelectorAll('.filter-btn');
-                filterBtns.forEach(btn => btn.classList.remove('active'));
-                const target = Array.from(filterBtns).find(btn => btn.getAttribute('onclick')?.includes(`'${filter}'`));
-                if (target) target.classList.add('active');
-            };
-
-            const monitorExitModal = document.getElementById('monitorExitModal');
-            const monitorExitBtn = document.getElementById('monitorExitBtn');
-            const monitorExitClose = document.getElementById('monitorExitClose');
-            const monitorExitCancel = document.getElementById('monitorExitCancel');
-            const monitorExitConfirm = document.getElementById('monitorExitConfirm');
-            const monitorPassword = document.getElementById('monitor_password');
-            const monitorPasswordError = document.getElementById('monitor_password_error');
-
-            const openMonitorModal = () => {
-                if (!monitorExitModal) return;
-                monitorExitModal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                if (monitorPassword) {
-                    monitorPassword.value = '';
-                    monitorPassword.focus();
-                }
-                if (monitorPasswordError) {
-                    monitorPasswordError.style.display = 'none';
-                    monitorPasswordError.textContent = '';
-                }
-            };
-
-            const closeMonitorModal = () => {
-                if (!monitorExitModal) return;
-                monitorExitModal.classList.remove('active');
-                document.body.style.overflow = '';
-            };
-
-            if (monitorExitClose) monitorExitClose.addEventListener('click', closeMonitorModal);
-            if (monitorExitCancel) monitorExitCancel.addEventListener('click', closeMonitorModal);
-            if (monitorExitModal) {
-                monitorExitModal.addEventListener('click', (e) => {
-                    if (e.target === monitorExitModal) closeMonitorModal();
-                });
-            }
-            if (monitorExitBtn) {
-                monitorExitBtn.addEventListener('click', openMonitorModal);
-            }
-
-            if (monitorExitConfirm) {
-                monitorExitConfirm.addEventListener('click', () => {
-                    const password = monitorPassword ? monitorPassword.value : '';
-                    if (!password) {
-                        if (monitorPasswordError) {
-                            monitorPasswordError.textContent = 'Password wajib diisi.';
-                            monitorPasswordError.style.display = 'block';
-                        }
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    formData.append('action', 'verify_password');
-                    formData.append('password', password);
-                    formData.append('ajax', 'true');
-
-                    monitorExitConfirm.disabled = true;
-                    const originalText = monitorExitConfirm.innerHTML;
-                    monitorExitConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa...';
-
-                    fetch('', {
-                        method: 'POST',
-                        body: formData,
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data && data.success) {
-                            closeMonitorModal();
-                            document.exitFullscreen?.();
-                        } else {
-                            if (monitorPasswordError) {
-                                monitorPasswordError.textContent = data?.error || 'Password salah.';
-                                monitorPasswordError.style.display = 'block';
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        if (monitorPasswordError) {
-                            monitorPasswordError.textContent = 'Gagal memeriksa password.';
-                            monitorPasswordError.style.display = 'block';
-                        }
-                    })
-                    .finally(() => {
-                        monitorExitConfirm.disabled = false;
-                        monitorExitConfirm.innerHTML = originalText;
-                    });
-                });
-            }
-
-            const updateMonitorState = () => {
-                const isFs = !!document.fullscreenElement;
-                document.body.classList.toggle('fullscreen-mode', isFs);
-                monitorToggle.innerHTML = isFs
-                    ? '<i class="fas fa-compress"></i> Keluar Monitor'
-                    : '<i class="fas fa-expand"></i> Mode Monitor';
-
-                if (isFs) {
-                    currentFilter = 'today';
-                    currentPage = 1;
-                    setActiveFilterBtn('today');
-                    updatePagination();
-                } else {
-                    currentFilter = 'all';
-                    currentPage = 1;
-                    setActiveFilterBtn('all');
-                    updatePagination();
-                }
-            };
-
-            monitorToggle.addEventListener('click', () => {
-                if (document.fullscreenElement) {
-                    openMonitorModal();
-                } else {
-                    document.documentElement.requestFullscreen?.();
-                }
-            });
-
-            document.addEventListener('fullscreenchange', updateMonitorState);
-        }
     });
 
     // Pagination functions
@@ -2534,19 +2486,33 @@
                 // Set minimum time untuk end time
                 const startInput = document.getElementById('edit_start_time');
                 const endInput = document.getElementById('edit_end_time');
-                
-                startInput.addEventListener('change', function() {
-                    if (this.value) {
-                        const start = new Date(this.value);
-                        const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
-                        endInput.min = formatForDateTimeLocal(minEnd);
+
+                const syncEditEndTime = (forceDefault = false) => {
+                    if (!startInput.value) return;
+                    const start = new Date(startInput.value);
+                    if (isNaN(start.getTime())) return;
+
+                    const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+                    const defaultEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+                    endInput.min = formatForDateTimeLocal(minEnd);
+
+                    if (!endInput.value || forceDefault) {
+                        endInput.value = formatForDateTimeLocal(defaultEnd);
+                        return;
                     }
-                });
-                
-                // Trigger change untuk set min value
-                if (startInput.value) {
-                    startInput.dispatchEvent(new Event('change'));
+
+                    const currentEnd = new Date(endInput.value);
+                    if (isNaN(currentEnd.getTime()) || currentEnd < minEnd) {
+                        endInput.value = formatForDateTimeLocal(defaultEnd);
+                    }
+                };
+
+                if (!startInput.dataset.endSyncBound) {
+                    startInput.addEventListener('change', () => syncEditEndTime());
+                    startInput.dataset.endSyncBound = '1';
                 }
+
+                syncEditEndTime();
             })
             .catch(error => {
                 console.error('Error:', error);
