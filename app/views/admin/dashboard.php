@@ -985,6 +985,7 @@
                 </div>
                 <?php endif; ?>
             </div>
+            
 
             <!-- Right Column -->
             <div class="right-column">
