@@ -1905,6 +1905,32 @@
                 if (startInput.value) {
                     startInput.dispatchEvent(new Event('change'));
                 }
+
+                // ✅ VALIDASI JAM MUNDUR untuk edit form user
+                function updateEditStartTimeMinimum() {
+                    const now = new Date();
+                    const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    startInput.min = minDateTime;
+                }
+
+                // Set initial min value untuk edit form
+                updateEditStartTimeMinimum();
+
+                // Tambahkan validasi saat user blur dari edit_start_time input
+                startInput.addEventListener('blur', function() {
+                    if (!this.value) return;
+                    const [date, time] = this.value.split('T');
+                    const [y, m, d] = date.split('-').map(Number);
+                    const [hh, mm] = time.split(':').map(Number);
+                    const selectedStart = new Date(y, m - 1, d, hh, mm);
+                    const now = new Date();
+                    now.setSeconds(0, 0);
+
+                    if (selectedStart < now) {
+                        this.value = '';
+                        showAlert('⚠️ Waktu tidak bisa dipilih di masa lalu. Pilih waktu yang akan datang.', 'warning');
+                    }
+                });
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -1973,6 +1999,50 @@
         e.preventDefault();
         
         if (isLoading) return;
+
+        // ✅ Validasi waktu sebelum submit
+        const startTimeInput = this.querySelector('input[name="edit_start_time"]');
+        const endTimeInput = this.querySelector('input[name="edit_end_time"]');
+        
+        if (!startTimeInput.value) {
+            showAlert('Harap pilih waktu mulai.', 'error');
+            startTimeInput.focus();
+            return;
+        }
+        
+        if (!endTimeInput.value) {
+            showAlert('Harap pilih waktu selesai.', 'error');
+            endTimeInput.focus();
+            return;
+        }
+
+        // Parse waktu dengan handling local timezone
+        const [startDate, startTime] = startTimeInput.value.split('T');
+        const [startY, startM, startD] = startDate.split('-').map(Number);
+        const [startHh, startMm] = startTime.split(':').map(Number);
+        const start = new Date(startY, startM - 1, startD, startHh, startMm);
+
+        const [endDate, endTime] = endTimeInput.value.split('T');
+        const [endY, endM, endD] = endDate.split('-').map(Number);
+        const [endHh, endMm] = endTime.split(':').map(Number);
+        const end = new Date(endY, endM - 1, endD, endHh, endMm);
+
+        // ⚠️ STRICT VALIDATION: Waktu mulai HARUS lebih besar dari sekarang
+        const now = new Date();
+        
+        if (start <= now) {
+            showAlert('❌ Waktu booking TIDAK BOLEH di masa lalu atau saat ini. Pilih waktu yang akan datang.', 'error');
+            startTimeInput.focus();
+            startTimeInput.value = '';
+            return;
+        }
+
+        if (end <= start) {
+            showAlert('Waktu selesai harus setelah waktu mulai.', 'error');
+            endTimeInput.focus();
+            return;
+        }
+
         isLoading = true;
         
         const formData = new FormData(this);
@@ -2185,14 +2255,89 @@
         
         endInput.addEventListener('change', updateTimeDisplays);
         
+        // ✅ VALIDASI JAM MUNDUR - Update min attribute setiap detik
+        function updateStartTimeMinimum() {
+            const now = new Date();
+            const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            startInput.min = minDateTime;
+        }
+
+        // Set initial min value
+        updateStartTimeMinimum();
+
+        // Update min value setiap 10 detik untuk memastikan selalu current time
+        setInterval(updateStartTimeMinimum, 10000);
+
+        // Fungsi validasi waktu start_time
+        function validateStartTime() {
+            if (!startInput.value) return true;
+            
+            const [date, time] = startInput.value.split('T');
+            const [y, m, d] = date.split('-').map(Number);
+            const [hh, mm] = time.split(':').map(Number);
+            const selectedStart = new Date(y, m - 1, d, hh, mm);
+            const now = new Date();
+            
+            // Tambahkan 5 menit buffer minimal ke masa depan
+            if (selectedStart <= now) {
+                return false;
+            }
+            return true;
+        }
+
+        // Validasi saat input event (real-time saat user type/select)
+        startInput.addEventListener('input', function() {
+            if (!validateStartTime() && this.value) {
+                this.value = '';
+                startDisplay.textContent = 'Belum dipilih';
+                startDisplay.style.color = 'var(--muted)';
+                startDisplay.style.fontWeight = 'normal';
+            } else if (this.value) {
+                // Update end time jika valid
+                const [date, time] = this.value.split('T');
+                const [y, m, d] = date.split('-').map(Number);
+                const [hh, mm] = time.split(':').map(Number);
+                const start = new Date(y, m - 1, d, hh, mm);
+                const minEnd = new Date(start.getTime() + 30 * 60 * 1000);
+                endInput.min = toLocalInputValue(minEnd);
+            }
+        });
+
+        // Validasi saat blur
+        startInput.addEventListener('blur', function() {
+            if (!validateStartTime() && this.value) {
+                this.value = '';
+                startDisplay.textContent = 'Belum dipilih';
+                startDisplay.style.color = 'var(--muted)';
+                startDisplay.style.fontWeight = 'normal';
+                showAlert('❌ Waktu tidak boleh di masa lalu atau saat ini. Pilih waktu yang akan datang.', 'error');
+            }
+        });
+
         // Initial display
         applyDefaultEndTime();
         updateTimeDisplays();
         
         // Form validation
         form.addEventListener('submit', function(e) {
-            const start = startInput.value ? new Date(startInput.value) : null;
-            const end = endInput.value ? new Date(endInput.value) : null;
+            // Parse dengan cara lokal (bukan UTC)
+            let start = null;
+            let end = null;
+            
+            if (startInput.value) {
+                const [date, time] = startInput.value.split('T');
+                const [y, m, d] = date.split('-').map(Number);
+                const [hh, mm] = time.split(':').map(Number);
+                start = new Date(y, m - 1, d, hh, mm);
+            }
+            
+            if (endInput.value) {
+                const [date, time] = endInput.value.split('T');
+                const [y, m, d] = date.split('-').map(Number);
+                const [hh, mm] = time.split(':').map(Number);
+                end = new Date(y, m - 1, d, hh, mm);
+            }
+            
             const now = new Date();
             
             // Validasi waktu sudah dipilih
@@ -2207,6 +2352,17 @@
                 e.preventDefault();
                 showAlert('Harap pilih waktu selesai.', 'error');
                 endInput.focus();
+                return false;
+            }
+
+            // ⚠️ STRICT VALIDATION: Waktu mulai HARUS lebih besar dari sekarang
+            if (start <= now) {
+                e.preventDefault();
+                showAlert('❌ Waktu booking TIDAK BOLEH di masa lalu atau saat ini. Pilih waktu yang akan datang.', 'error');
+                startInput.focus();
+                startInput.value = '';
+                startDisplay.textContent = 'Belum dipilih';
+                startDisplay.style.color = 'var(--muted)';
                 return false;
             }
             
@@ -2231,13 +2387,6 @@
             if (durationHours > 8) {
                 e.preventDefault();
                 showAlert('Durasi booking maksimal 8 jam.', 'error');
-                return false;
-            }
-            
-            // Validasi booking di masa lalu
-            if (start < now) {
-                e.preventDefault();
-                showAlert('Tidak bisa membuat booking di waktu yang sudah lewat.', 'error');
                 return false;
             }
             
