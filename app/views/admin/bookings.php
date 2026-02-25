@@ -360,6 +360,7 @@
             font-family: "Space Grotesk", sans-serif;
             color: var(--ink);
             transition: all 0.2s ease;
+            margin-bottom: 8px;
         }
 
         select.room-locked {
@@ -1277,6 +1278,9 @@
 
         .modal-body {
             padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         /* Detail Grid */
@@ -1296,6 +1300,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            margin-bottom: 4px;
         }
 
         .detail-item.full-width {
