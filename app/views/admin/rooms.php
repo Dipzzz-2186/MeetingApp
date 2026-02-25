@@ -1118,14 +1118,14 @@
                             <i class="fas fa-plus"></i> Tambah File Wallpaper
                         </button>
                         <div id="editWallpaperPreview" style="margin-top: 10px; border: 1px dashed var(--stroke); border-radius: 10px; padding: 10px;">
-                            <div style="font-size: 12px; color: var(--muted); margin-bottom: 6px;">Wallpaper Saat Ini</div>
+                            <div id="editWallpaperCurrentLabel" style="font-size: 12px; color: var(--muted); margin-bottom: 6px;">Wallpaper Saat Ini</div>
                             <div id="editWallpaperGrid" class="edit-wallpaper-gallery"></div>
                             <div id="editWallpaperEmpty" style="color: var(--muted); font-size: 12px; text-align: center;">Belum ada wallpaper.</div>
-                            <div style="font-size: 12px; color: var(--muted); margin: 12px 0 6px;">File Akan Diupload</div>
+                            <div id="editWallpaperUploadLabel" style="font-size: 12px; color: var(--muted); margin: 12px 0 6px;">File Akan Diupload</div>
                             <div id="editSelectedWallpaperGrid" class="edit-wallpaper-gallery"></div>
                             <div id="editSelectedWallpaperEmpty" style="color: var(--muted); font-size: 12px; text-align: center;">Belum ada file baru dipilih.</div>
                         </div>
-                        <small style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Biarkan kosong untuk mempertahankan wallpaper lama.</small>
+                        <small id="editWallpaperHint" style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Biarkan kosong untuk mempertahankan wallpaper lama.</small>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -1204,12 +1204,17 @@
             const editRemovedWallpapers = document.getElementById('editRemovedWallpapers');
             const editWallpaperGrid = document.getElementById('editWallpaperGrid');
             const editWallpaperEmpty = document.getElementById('editWallpaperEmpty');
+            const editWallpaperCurrentLabel = document.getElementById('editWallpaperCurrentLabel');
+            const editWallpaperUploadLabel = document.getElementById('editWallpaperUploadLabel');
             const editSelectedWallpaperGrid = document.getElementById('editSelectedWallpaperGrid');
             const editSelectedWallpaperEmpty = document.getElementById('editSelectedWallpaperEmpty');
+            const editWallpaperHint = document.getElementById('editWallpaperHint');
             let previewObjectUrls = [];
             let existingWallpaperUrls = [];
             let removedExistingWallpapers = [];
             let selectedUploadEntries = [];
+            let hasExistingWallpaper = false;
+            let hasSelectedWallpaper = false;
 
             function setModalOpenState() {
                 const isOpen =
@@ -1266,19 +1271,54 @@
                 });
             }
 
+            function updateWallpaperPreviewVisibility() {
+                const isCompletelyEmpty = !hasExistingWallpaper && !hasSelectedWallpaper;
+
+                if (editWallpaperCurrentLabel) {
+                    editWallpaperCurrentLabel.style.display = isCompletelyEmpty ? 'none' : 'block';
+                }
+
+                if (editWallpaperUploadLabel) {
+                    editWallpaperUploadLabel.style.display = isCompletelyEmpty ? 'none' : 'block';
+                }
+
+                if (editSelectedWallpaperGrid) {
+                    editSelectedWallpaperGrid.style.display = isCompletelyEmpty ? 'none' : 'grid';
+                }
+
+                if (editSelectedWallpaperEmpty) {
+                    if (isCompletelyEmpty || hasSelectedWallpaper) {
+                        editSelectedWallpaperEmpty.style.display = 'none';
+                    } else {
+                        editSelectedWallpaperEmpty.style.display = 'block';
+                    }
+                }
+
+                if (editWallpaperHint) {
+                    editWallpaperHint.style.display = isCompletelyEmpty ? 'none' : 'block';
+                }
+
+                if (editWallpaperEmpty) {
+                    if (hasExistingWallpaper) {
+                        editWallpaperEmpty.style.display = 'none';
+                    } else {
+                        editWallpaperEmpty.style.display = 'block';
+                        editWallpaperEmpty.textContent = 'Belum ada wallpaper.';
+                    }
+                }
+            }
+
             function setWallpaperPreview(urls) {
                 if (!editWallpaperGrid || !editWallpaperEmpty) return;
                 const list = Array.isArray(urls) ? urls : (urls ? [urls] : []);
                 editWallpaperGrid.innerHTML = '';
 
                 const valid = list.map(item => String(item || '').trim()).filter(Boolean);
+                hasExistingWallpaper = valid.length > 0;
                 if (!valid.length) {
-                    editWallpaperEmpty.style.display = 'block';
-                    editWallpaperEmpty.textContent = 'Belum ada wallpaper.';
+                    updateWallpaperPreviewVisibility();
                     return;
                 }
-
-                editWallpaperEmpty.style.display = 'none';
 
                 valid.forEach((url, index) => {
                     const wrap = document.createElement('div');
@@ -1326,18 +1366,20 @@
                     wrap.appendChild(removeBtn);
                     editWallpaperGrid.appendChild(wrap);
                 });
+
+                updateWallpaperPreviewVisibility();
             }
 
             function setSelectedWallpaperPreview(entries) {
                 if (!editSelectedWallpaperGrid || !editSelectedWallpaperEmpty) return;
                 editSelectedWallpaperGrid.innerHTML = '';
                 const list = Array.isArray(entries) ? entries : [];
+                hasSelectedWallpaper = list.length > 0;
                 if (!list.length) {
-                    editSelectedWallpaperEmpty.style.display = 'block';
-                    editSelectedWallpaperEmpty.textContent = 'Belum ada file baru dipilih.';
+                    updateWallpaperPreviewVisibility();
                     return;
                 }
-                editSelectedWallpaperEmpty.style.display = 'none';
+                updateWallpaperPreviewVisibility();
 
                 list.forEach((entry, index) => {
                     const wrap = document.createElement('div');
