@@ -611,6 +611,7 @@ class AdminController {
         $errors = $flatten($fileInput['error']);
         $tmpNames = $flatten($fileInput['tmp_name'] ?? []);
         $sizes = $flatten($fileInput['size'] ?? []);
+        $names = $flatten($fileInput['name'] ?? []);
 
         $allNoFile = true;
         foreach ($errors as $err) {
@@ -625,12 +626,6 @@ class AdminController {
 
         $maxSize = 5 * 1024 * 1024; // 5MB per file
         $finfo = new finfo(FILEINFO_MIME_TYPE);
-        $allowed = [
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-        ];
-
         $publicDir = dirname(__DIR__, 2) . '/public';
         $uploadDir = $publicDir . '/uploads/rooms';
         if (!is_dir($uploadDir)) {
@@ -661,10 +656,42 @@ class AdminController {
                 return ['paths' => [], 'error' => 'Ukuran wallpaper maksimal 5MB per file.'];
             }
 
-            $mime = $finfo->file($tmp);
-            if (!isset($allowed[$mime])) {
+            $mime = (string)$finfo->file($tmp);
+            if ($mime === '' || strpos($mime, 'image/') !== 0) {
                 self::deleteRoomWallpaperFiles($savedPaths);
-                return ['paths' => [], 'error' => 'Format wallpaper harus JPG, PNG, atau WEBP.'];
+                return ['paths' => [], 'error' => 'Format wallpaper harus file gambar yang valid.'];
+            }
+
+            $extension = '';
+            $imageType = @exif_imagetype($tmp);
+            if ($imageType !== false) {
+                $detectedExt = image_type_to_extension($imageType, false);
+                if (is_string($detectedExt) && $detectedExt !== '') {
+                    $extension = strtolower($detectedExt);
+                }
+            }
+
+            if ($extension === '') {
+                $mimeSubtype = strtolower(substr($mime, 6));
+                $mimeSubtype = preg_replace('/[^a-z0-9]+/', '', $mimeSubtype ?? '');
+                if ($mimeSubtype === 'jpeg') {
+                    $mimeSubtype = 'jpg';
+                }
+                if ($mimeSubtype !== '') {
+                    $extension = $mimeSubtype;
+                }
+            }
+
+            if ($extension === '') {
+                $originalName = (string)($names[$index] ?? '');
+                $pathExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                if ($pathExt !== '') {
+                    $extension = preg_replace('/[^a-z0-9]+/', '', $pathExt) ?? '';
+                }
+            }
+
+            if ($extension === '') {
+                $extension = 'img';
             }
 
             try {
@@ -672,7 +699,7 @@ class AdminController {
             } catch (Exception $e) {
                 $rand = uniqid();
             }
-            $filename = 'room_' . date('Ymd_His') . '_' . $index . '_' . $rand . '.' . $allowed[$mime];
+            $filename = 'room_' . date('Ymd_His') . '_' . $index . '_' . $rand . '.' . $extension;
             $targetPath = $uploadDir . '/' . $filename;
 
             if (!move_uploaded_file($tmp, $targetPath)) {

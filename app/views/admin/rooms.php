@@ -925,7 +925,7 @@
                             <div id="createSelectedWallpaperGrid" class="edit-wallpaper-gallery"></div>
                             <div id="createSelectedWallpaperEmpty" style="color: var(--muted); font-size: 12px; text-align: center;">Belum ada file dipilih.</div>
                         </div>
-                        <small style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Format JPG, PNG, WEBP. Disarankan 1920x1080, max 5MB per file.</small>
+                        <small style="color: var(--muted); font-size: 12px;">Bisa pilih lebih dari 1 file. Semua format gambar didukung. Disarankan 1920x1080, max 5MB per file.</small>
                     </div>
                     <button type="submit">
                         <i class="fas fa-plus"></i>
