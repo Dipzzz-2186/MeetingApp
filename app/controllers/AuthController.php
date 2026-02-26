@@ -26,6 +26,23 @@ class AuthController {
     }
 
     public static function login(): void {
+        $error = $_SESSION['auth_error'] ?? null;
+        unset($_SESSION['auth_error']);
+
+        if (current_user()) {
+            global $pdo;
+            $sessionUser = current_user();
+            if ($pdo && ($sessionUser['role'] ?? '') === 'user') {
+                refresh_user($pdo);
+                $sessionUser = current_user() ?? $sessionUser;
+                $blockedReason = user_owner_admin_block_reason($pdo, $sessionUser);
+                if ($blockedReason !== null) {
+                    unset($_SESSION['user']);
+                    $error = $blockedReason;
+                }
+            }
+        }
+
         if (current_user()) {
             switch (current_user()['role']) {
                 case 'superadmin':
@@ -41,7 +58,6 @@ class AuthController {
             exit;
         }
 
-        $error = null;
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
@@ -50,6 +66,13 @@ class AuthController {
             $user = User::findByEmail($pdo, $email);
 
             if ($user && password_verify($password, $user['password_hash'])) {
+                $blockedReason = user_owner_admin_block_reason($pdo, $user);
+                if ($blockedReason !== null) {
+                    $error = $blockedReason;
+                    render_view('auth/login', ['error' => $error], 'Login', 'auth');
+                    return;
+                }
+
                 login_user($user);
 
                 switch ($user['role']) {
@@ -226,7 +249,13 @@ class AuthController {
     }
 
     public static function logout(): void {
+        $reason = trim((string)($_GET['reason'] ?? ''));
+        session_unset();
         session_destroy();
+        if ($reason !== '') {
+            session_start();
+            $_SESSION['auth_error'] = $reason;
+        }
         header('Location: /login');
         exit;
     }

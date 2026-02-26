@@ -12,6 +12,7 @@ function render_header(string $title, string $body_class = ''): void {
     if ($path === '') {
         $path = '/';
     }
+    $is_admin_dashboard = $path === '/dashboard_admin';
     $is_active = function (string $target) use ($path): bool {
         $target = rtrim($target, '/');
         if ($target === '') {
@@ -33,10 +34,33 @@ function render_header(string $title, string $body_class = ''): void {
     }
     $body_class_attr = $body_classes ? ' class="' . htmlspecialchars(implode(' ', $body_classes)) . '"' : '';
     $body_data_attr = '';
-    $is_admin_dashboard = $path === '/dashboard_admin';
-    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user) && !$is_admin_dashboard) {
+    if ($user && $user['role'] === 'admin') {
+        $planEndEpoch = null;
+        if (($user['plan_type'] ?? '') === 'permanent' && !empty($user['paid_until'])) {
+            $ts = strtotime((string)$user['paid_until']);
+            if ($ts !== false) {
+                $planEndEpoch = (int)$ts;
+            }
+        } elseif (($user['plan_type'] ?? '') === 'trial' && !empty($user['trial_end'])) {
+            $ts = strtotime((string)$user['trial_end']);
+            if ($ts !== false) {
+                $planEndEpoch = (int)$ts;
+            }
+        }
+        if ($planEndEpoch !== null) {
+            $body_data_attr .= ' data-admin-plan-end-epoch="' . $planEndEpoch . '"';
+        }
+    }
+    if ($user && $user['role'] === 'user' && $pdo) {
+        $ownerPlanEndEpoch = user_owner_admin_plan_end_epoch($pdo, $user);
+        if ($ownerPlanEndEpoch !== null) {
+            $body_data_attr .= ' data-owner-plan-end-epoch="' . $ownerPlanEndEpoch . '"';
+            $body_data_attr .= ' data-owner-plan-expired-message="' . htmlspecialchars('Sesi Anda berakhir. Masa aktif admin pemilik akun sudah habis.') . '"';
+        }
+    }
+    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user)) {
         $plan_message = admin_plan_message($user) ?? 'Akses terkunci karena masa trial/pembayaran habis.';
-        $body_data_attr = ' data-plan-blocked="1" data-plan-message="' . htmlspecialchars($plan_message) . '"';
+        $body_data_attr .= ' data-plan-blocked="1" data-plan-message="' . htmlspecialchars($plan_message) . '"';
     }
     $main_class = 'container' . ($body_class !== '' ? ' container-' . $body_class : '');
     
@@ -166,7 +190,12 @@ function render_header(string $title, string $body_class = ''): void {
 
 function render_footer(): void {
     $user = current_user();
-    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user) && $path !== '/dashboard_admin') {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $path = rtrim($path, '/');
+    if ($path === '') {
+        $path = '/';
+    }
+    if ($user && $user['role'] === 'admin' && admin_plan_blocked($user)) {
         $plan_message = admin_plan_message($user) ?? 'Akses terkunci karena masa trial/pembayaran habis.';
         echo '<div class="modal" data-plan-blocked-modal>';
         echo '<div class="modal-content">';

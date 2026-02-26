@@ -911,7 +911,7 @@
             <!-- Extend Paid -->
             <div class="subscription-form">
                 <h3><i class="fas fa-plus-circle"></i> Perpanjang Langganan</h3>
-                <a href="/billing/checkout" class="btn btn-primary">
+                <a href="/billing/checkout" class="btn btn-primary" data-allow-plan>
                     <i class="fas fa-credit-card"></i>
                     Bayar  - Rp95.000/30 hari
                 </a>
@@ -980,7 +980,7 @@
                     
                     <div class="subscription-form">
                         <h3><i class="fas fa-rocket"></i> Aktifkan Kembali</h3>
-                        <a href="/billing/checkout" class="btn btn-primary">
+                        <a href="/billing/checkout" class="btn btn-primary" data-allow-plan>
                             <i class="fas fa-credit-card"></i>
                             Bayar & Aktifkan 30 Hari
                         </a>

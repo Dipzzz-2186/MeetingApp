@@ -43,6 +43,15 @@ if ($path === '') {
     $path = '/';
 }
 
+$user = current_user();
+if ($user && ($user['role'] ?? '') === 'admin' && admin_plan_blocked($user)) {
+    $allowedWhenBlocked = ['/dashboard_admin', '/logout', '/billing/checkout', '/billing/pay'];
+    if (!in_array($path, $allowedWhenBlocked, true)) {
+        header('Location: /dashboard_admin');
+        exit;
+    }
+}
+
 $routes = [
     '/' => ['HomeController', 'index'],
     '/login' => ['AuthController', 'login'],

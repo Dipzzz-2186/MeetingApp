@@ -45,15 +45,82 @@ function refresh_user(PDO $pdo): void {
     }
 }
 
+function user_owner_admin_block_reason(PDO $pdo, array $user): ?string {
+    if (($user['role'] ?? '') !== 'user') {
+        return null;
+    }
+
+    $ownerAdminId = (int)($user['owner_admin_id'] ?? 0);
+    if ($ownerAdminId <= 0) {
+        return 'Akses ditolak. Akun Anda tidak terhubung ke admin aktif.';
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id, name, role, plan_type, trial_end, paid_until
+        FROM users
+        WHERE id = :id
+        LIMIT 1
+    ");
+    $stmt->execute([':id' => $ownerAdminId]);
+    $ownerAdmin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$ownerAdmin || ($ownerAdmin['role'] ?? '') !== 'admin') {
+        return 'Akses ditolak. Admin pemilik akun tidak ditemukan.';
+    }
+
+    if (admin_plan_blocked($ownerAdmin)) {
+        $ownerName = trim((string)($ownerAdmin['name'] ?? 'admin'));
+        return 'Akses ditolak. Masa aktif admin ' . $ownerName . ' sudah habis.';
+    }
+
+    return null;
+}
+
+function user_owner_admin_plan_end_epoch(PDO $pdo, array $user): ?int {
+    if (($user['role'] ?? '') !== 'user') {
+        return null;
+    }
+
+    $ownerAdminId = (int)($user['owner_admin_id'] ?? 0);
+    if ($ownerAdminId <= 0) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id, role, plan_type, trial_end, paid_until
+        FROM users
+        WHERE id = :id
+        LIMIT 1
+    ");
+    $stmt->execute([':id' => $ownerAdminId]);
+    $ownerAdmin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$ownerAdmin || ($ownerAdmin['role'] ?? '') !== 'admin') {
+        return null;
+    }
+
+    return admin_plan_end_epoch($ownerAdmin);
+}
+
 
 function require_login(): void {
     global $pdo;
     if ($pdo && current_user()) {
         refresh_user($pdo);
     }
-    if (!current_user()) {
+    $user = current_user();
+    if (!$user) {
         header('Location: /login');
         exit;
+    }
+    if ($pdo && ($user['role'] ?? '') === 'user') {
+        $blockedReason = user_owner_admin_block_reason($pdo, $user);
+        if ($blockedReason !== null) {
+            unset($_SESSION['user']);
+            $_SESSION['auth_error'] = $blockedReason;
+            header('Location: /login');
+            exit;
+        }
     }
 }
 
@@ -74,22 +141,14 @@ function require_superadmin(): void {
 }
 
 function admin_plan_blocked(array $user): bool {
-    if ($user['role'] !== 'admin') {
+    if (($user['role'] ?? '') !== 'admin') {
         return false;
     }
-    if ($user['plan_type'] === 'permanent') {
-        if (!$user['paid_until']) {
-            return true;
-        }
-        return strtotime($user['paid_until']) < time();
+    $endEpoch = admin_plan_end_epoch($user);
+    if ($endEpoch === null) {
+        return true;
     }
-    if ($user['plan_type'] === 'trial') {
-        if (!$user['trial_end']) {
-            return true;
-        }
-        return strtotime($user['trial_end']) < time();
-    }
-    return true;
+    return $endEpoch <= time();
 }
 
 function admin_plan_message(array $user): ?string {
@@ -102,5 +161,36 @@ function admin_plan_message(array $user): ?string {
     if ($user['plan_type'] === 'permanent') {
         return 'Pembayaran aktif sampai ' . date('d M Y H:i', strtotime($user['paid_until']));
     }
+    return null;
+}
+
+function admin_plan_end_epoch(array $user): ?int {
+    if (($user['role'] ?? '') !== 'admin') {
+        return null;
+    }
+
+    $tz = new DateTimeZone('Asia/Jakarta');
+    if (($user['plan_type'] ?? '') === 'trial') {
+        if (empty($user['trial_end'])) {
+            return null;
+        }
+        try {
+            return (new DateTime((string)$user['trial_end'], $tz))->getTimestamp();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    if (($user['plan_type'] ?? '') === 'permanent') {
+        if (empty($user['paid_until'])) {
+            return null;
+        }
+        try {
+            return (new DateTime((string)$user['paid_until'], $tz))->getTimestamp();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
     return null;
 }

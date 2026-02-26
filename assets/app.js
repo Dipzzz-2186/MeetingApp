@@ -74,6 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const planBlocked = document.body.dataset.planBlocked === '1';
+  const pathname = window.location.pathname || '';
+  const isDashboardPage = pathname === '/dashboard_admin';
+  const isBillingPage = pathname === '/billing/checkout' || pathname === '/billing/pay';
+  const adminPlanEndEpoch = Number(document.body.dataset.adminPlanEndEpoch || 0);
+  const ownerPlanEndEpoch = Number(document.body.dataset.ownerPlanEndEpoch || 0);
+  const ownerPlanExpiredMessage = document.body.dataset.ownerPlanExpiredMessage || 'Masa aktif admin pemilik akun sudah habis.';
   const blockedModal = document.querySelector('[data-plan-blocked-modal]');
   const closeBlockedBtns = document.querySelectorAll('[data-close-plan-blocked]');
   const openBlocked = () => {
@@ -81,14 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
       blockedModal.classList.add('open');
     }
   };
-  if (planBlocked) {
+  if (planBlocked && !isBillingPage) {
+    if (!isDashboardPage) {
+      openBlocked();
+    }
     document.addEventListener('click', (e) => {
       const link = e.target.closest('a');
       if (!link) {
         return;
       }
       const href = link.getAttribute('href') || '';
-      if (link.hasAttribute('data-allow-plan') || href === '/logout' || href === '/dashboard_admin') {
+      const isAllowedBillingLink = href === '/billing/checkout' || href.startsWith('/billing/pay');
+      if (link.hasAttribute('data-allow-plan') || href === '/logout' || href === '/dashboard_admin' || isAllowedBillingLink) {
         return;
       }
       if (href.startsWith('mailto:') || href.startsWith('tel:') || link.target === '_blank') {
@@ -116,5 +126,26 @@ document.addEventListener('DOMContentLoaded', () => {
         blockedModal.classList.remove('open');
       }
     });
+  }
+
+  if (adminPlanEndEpoch > 0 && !isDashboardPage && !isBillingPage) {
+    const checkAdminPlanExpiry = () => {
+      if (Date.now() >= adminPlanEndEpoch * 1000) {
+        window.location.replace('/dashboard_admin');
+      }
+    };
+    checkAdminPlanExpiry();
+    setInterval(checkAdminPlanExpiry, 10000);
+  }
+
+  if (ownerPlanEndEpoch > 0) {
+    const checkOwnerPlanExpiry = () => {
+      if (Date.now() >= ownerPlanEndEpoch * 1000) {
+        const target = `/logout?reason=${encodeURIComponent(ownerPlanExpiredMessage)}`;
+        window.location.replace(target);
+      }
+    };
+    checkOwnerPlanExpiry();
+    setInterval(checkOwnerPlanExpiry, 5000);
   }
 });
