@@ -261,7 +261,7 @@
             margin-bottom: 25px;
             font-size: 14px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
             animation: slideIn 0.3s ease;
         }
@@ -286,6 +286,18 @@
 
         .alert i {
             font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .alert-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .alert-text strong {
+            font-size: inherit;
+            line-height: inherit;
         }
 
         /* Table Styles */
@@ -868,25 +880,31 @@
             <?php if ($plan_status['type'] === 'paid'): ?>
                 <div class="alert success">
                     <i class="fas fa-check-circle"></i>
+                    <div class="alert-text">
                     Akun <strong>Berbayar</strong> — sisa
                     <strong><?php echo $plan_status['days_left']; ?> hari</strong>
                     <br>
                     Aktif sampai: <?php echo $plan_status['until']; ?>
+                    </div>
                 </div>
 
             <?php elseif ($plan_status['type'] === 'trial'): ?>
                 <div class="alert warning">
                     <i class="fas fa-hourglass-half"></i>
+                    <div class="alert-text">
                     Akun <strong>Trial</strong> — sisa
                     <strong><?php echo $plan_status['days_left']; ?> hari</strong>
                     <br>
                     Berakhir: <?php echo $plan_status['until']; ?>
+                    </div>
                 </div>
 
             <?php else: ?>
                 <div class="alert error">
                     <i class="fas fa-ban"></i>
+                    <div class="alert-text">
                     Akun <strong>Tidak Aktif</strong> — perlu perpanjangan
+                    </div>
                 </div>
             <?php endif; ?>
 
