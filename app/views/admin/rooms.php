@@ -144,6 +144,12 @@
             color: var(--info);
         }
 
+        .alert.warning {
+            background: rgba(255, 168, 87, 0.1);
+            border: 1px solid rgba(255, 168, 87, 0.3);
+            color: var(--warning);
+        }
+
         .alert i {
             font-size: 16px;
         }
@@ -875,6 +881,15 @@
 </head>
 <body>
     <div class="container">
+
+        <?php if (!empty($plan_expiry_reminder)): ?>
+            <div class="alert warning">
+                <i class="fas fa-hourglass-half"></i>
+                Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
+                (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
+            </div>
+        <?php endif; ?>
+
         <div class="header">
             <h1><i class="fas fa-door-closed"></i> Manajemen Ruangan</h1>
             <a href="/dashboard_admin" class="back-btn">
@@ -899,14 +914,6 @@
                     <div class="alert error">
                         <i class="fas fa-exclamation-circle"></i>
                         <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($plan_expiry_reminder)): ?>
-                    <div class="alert info">
-                        <i class="fas fa-hourglass-half"></i>
-                        Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
-                        (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
                     </div>
                 <?php endif; ?>
                 

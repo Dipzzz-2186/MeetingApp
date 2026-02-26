@@ -1648,6 +1648,15 @@
 </head>
 <body>
     <div class="container">
+
+        <?php if (!empty($plan_expiry_reminder)): ?>
+            <div class="alert warning">
+                <i class="fas fa-hourglass-half"></i>
+                Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
+                (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
+            </div>
+        <?php endif; ?>
+
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> Scheduling & Booking</h1>
             <div class="header-actions">
@@ -1811,14 +1820,6 @@
                     <div class="alert error">
                         <i class="fas fa-exclamation-circle"></i>
                         <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($plan_expiry_reminder)): ?>
-                    <div class="alert warning">
-                        <i class="fas fa-hourglass-half"></i>
-                        Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
-                        (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
                     </div>
                 <?php endif; ?>
                 
