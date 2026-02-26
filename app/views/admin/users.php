@@ -20,6 +20,7 @@
             --shadow: 0 22px 55px rgba(5, 6, 9, 0.65);
             --success: #57ff75;
             --error: #ff5757;
+            --warning: #ffa857;
         }
 
         * { 
@@ -138,6 +139,12 @@
             background: rgba(255, 87, 87, 0.1);
             border: 1px solid rgba(255, 87, 87, 0.3);
             color: var(--error);
+        }
+
+        .alert.warning {
+            background: rgba(255, 168, 87, 0.1);
+            border: 1px solid rgba(255, 168, 87, 0.3);
+            color: var(--warning);
         }
 
         .alert i {
@@ -726,6 +733,14 @@
                     <div class="alert error">
                         <i class="fas fa-exclamation-circle"></i>
                         <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($plan_expiry_reminder)): ?>
+                    <div class="alert warning">
+                        <i class="fas fa-hourglass-half"></i>
+                        Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
+                        (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
                     </div>
                 <?php endif; ?>
                 

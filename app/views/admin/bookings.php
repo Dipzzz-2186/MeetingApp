@@ -1813,6 +1813,14 @@
                         <?php echo htmlspecialchars($error); ?>
                     </div>
                 <?php endif; ?>
+
+                <?php if (!empty($plan_expiry_reminder)): ?>
+                    <div class="alert warning">
+                        <i class="fas fa-hourglass-half"></i>
+                        Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
+                        (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
+                    </div>
+                <?php endif; ?>
                 
                 <form id="createBookingForm" method="post" class="grid">
                     <input type="hidden" name="action" value="create">

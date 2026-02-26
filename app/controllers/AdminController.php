@@ -1,6 +1,44 @@
 <?php
 
 class AdminController {
+    private static function getPlanExpiryReminder(array $user, int $thresholdDays = 5): ?array {
+        if (($user['role'] ?? '') !== 'admin') {
+            return null;
+        }
+
+        if ($thresholdDays < 1) {
+            $thresholdDays = 1;
+        }
+
+        $tz = new DateTimeZone('Asia/Jakarta');
+        $now = new DateTime('now', $tz);
+        $end = null;
+
+        if (($user['plan_type'] ?? '') === 'permanent' && !empty($user['paid_until'])) {
+            $end = new DateTime((string)$user['paid_until'], $tz);
+        } elseif (($user['plan_type'] ?? '') === 'trial' && !empty($user['trial_end'])) {
+            $end = new DateTime((string)$user['trial_end'], $tz);
+        }
+
+        if (!$end || $end <= $now) {
+            return null;
+        }
+
+        $interval = $now->diff($end);
+        $daysLeft = (int)$interval->format('%a');
+        if ($daysLeft < 1) {
+            $daysLeft = 1;
+        }
+        if ($daysLeft > $thresholdDays) {
+            return null;
+        }
+
+        return [
+            'days_left' => $daysLeft,
+            'until' => $end->format('d M Y H:i'),
+        ];
+    }
+
     private static function createBillingToken(array $user, int $amount, int $days): string {
         try {
             $token = bin2hex(random_bytes(16));
@@ -201,6 +239,7 @@ class AdminController {
 
         $plan_message = admin_plan_message($user);
         $blocked = admin_plan_blocked($user);
+        $plan_expiry_reminder = self::getPlanExpiryReminder($user, 5);
         $billing_notice = $_SESSION['billing_notice'] ?? null;
         $billing_error = $_SESSION['billing_error'] ?? null;
         unset($_SESSION['billing_notice'], $_SESSION['billing_error']);
@@ -397,6 +436,7 @@ class AdminController {
             'recent' => $recent,
             'stats' => $stats,
             'plan_status' => $plan_status,
+            'plan_expiry_reminder' => $plan_expiry_reminder,
             'billing_notice' => $billing_notice,
             'billing_error' => $billing_error,
         ], 'Dashboard Admin');
@@ -407,6 +447,7 @@ class AdminController {
         global $pdo;
         refresh_user($pdo);
         $user = current_user();
+        $plan_expiry_reminder = self::getPlanExpiryReminder($user, 5);
 
         if (admin_plan_blocked($user)) {
             header('Location: /dashboard_admin');
@@ -555,6 +596,7 @@ class AdminController {
             'notice' => $notice,
             'error' => $error,
             'users' => $users,
+            'plan_expiry_reminder' => $plan_expiry_reminder,
         ], 'Add User');
     }
 
@@ -735,6 +777,7 @@ class AdminController {
         global $pdo;
         refresh_user($pdo);
         $user = current_user();
+        $plan_expiry_reminder = self::getPlanExpiryReminder($user, 5);
 
         if (admin_plan_blocked($user)) {
             header('Location: /dashboard_admin');
@@ -1030,6 +1073,7 @@ class AdminController {
             'currentPage' => $currentPage,
             'totalPages' => $totalPages,
             'totalRooms' => $totalRooms,
+            'plan_expiry_reminder' => $plan_expiry_reminder,
         ], 'Kelola Ruangan');
     }
 
@@ -1038,6 +1082,7 @@ class AdminController {
         global $pdo;
         refresh_user($pdo);
         $user = current_user();
+        $plan_expiry_reminder = self::getPlanExpiryReminder($user, 5);
 
         if (admin_plan_blocked($user)) {
             header('Location: /dashboard_admin');
@@ -1503,6 +1548,7 @@ class AdminController {
             'users' => $users,
             'rooms' => $rooms,
             'bookings' => $bookings,
+            'plan_expiry_reminder' => $plan_expiry_reminder,
         ], 'Scheduling');
     }
 }

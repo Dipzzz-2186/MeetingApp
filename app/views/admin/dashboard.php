@@ -812,6 +812,13 @@
                 <?php echo htmlspecialchars($billing_error); ?>
             </div>
         <?php endif; ?>
+        <?php if (!empty($plan_expiry_reminder)): ?>
+            <div class="alert warning">
+                <i class="fas fa-hourglass-half"></i>
+                Langganan akan berakhir dalam <?php echo (int)$plan_expiry_reminder['days_left']; ?> hari
+                (<?php echo htmlspecialchars($plan_expiry_reminder['until']); ?>).
+            </div>
+        <?php endif; ?>
         <!-- Header -->
         <header class="dashboard-header">
             <div class="header-left">
@@ -988,7 +995,7 @@
                     
                     <div class="subscription-form">
                         <h3><i class="fas fa-calendar-plus"></i> Perpanjang Manual</h3>
-                        <form method="post">
+                        <form method="post" data-allow-plan>
                             <input type="hidden" name="action" value="extend_paid">
                             <div class="form-group">
                                 <label>Tanggal Berakhir</label>
@@ -1181,8 +1188,9 @@
                 
                 const href = link.getAttribute('href');
                 const allowedPaths = ['/users', '/rooms', '/bookings', '/reports', '/logout'];
+                const allowPlan = link.hasAttribute('data-allow-plan');
                 
-                if (href && !allowedPaths.includes(href) && href !== '#' && !href.startsWith('#')) {
+                if (href && !allowPlan && !allowedPaths.includes(href) && href !== '#' && !href.startsWith('#')) {
                     link.addEventListener('click', function(e) {
                         if (blocked) {
                             e.preventDefault();
