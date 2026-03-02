@@ -611,14 +611,22 @@
             font-weight: 600;
             letter-spacing: 1px;
             color: var(--ink);
+            display: inline-flex;
+            align-items: baseline;
+            gap: 1px;
         }
 
-        .monitor-clock span {
+        .monitor-clock-time {
+            display: inline-block;
+            width: 7ch;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .monitor-clock-date {
             font-size: 18px;
             font-weight: 500;
             color: var(--muted);
             display: inline-block;
-            margin-left: 8px;
             letter-spacing: 0.5px;
         }
 
@@ -1902,7 +1910,8 @@
                 
                 <div class="monitor-banner" id="monitorBanner">
                     <div class="monitor-clock" id="monitorClock">
-                        00:00 <span>--/--/----</span>
+                        <span class="monitor-clock-time">00.00.00</span>
+                        <span class="monitor-clock-date">--/--/----</span>
                     </div>
                     <div class="monitor-wallpapers" id="monitorWallpapers"></div>
                     <div class="monitor-wallpaper-note" id="monitorWallpaperNote" style="display: none;">
@@ -3834,7 +3843,10 @@
                         const now = new Date();
                         const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         const date = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                        monitorClock.innerHTML = `${time} <span>${date}</span>`;
+                        const timeEl = monitorClock.querySelector('.monitor-clock-time');
+                        const dateEl = monitorClock.querySelector('.monitor-clock-date');
+                        if (timeEl) timeEl.textContent = time;
+                        if (dateEl) dateEl.textContent = date;
                     };
                     tick();
                     if (monitorClockTimer) clearInterval(monitorClockTimer);
